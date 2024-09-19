@@ -1,0 +1,23 @@
+version: '3.9'
+
+services:
+  app:
+    build: .
+    environment:
+      - OPENAI_API_KEY=${OPENAI_API_KEY}
+      - OPENAI_BASE_ADDRESS=${OPENAI_BASE_ADDRESS}
+      - Seq__ServerUrls=http://seq:5341
+    depends_on:
+      - seq
+    ports:
+      - "5000:80" # Expose port 80 of the container to port 5000 on the host
+
+  seq:
+    image: datalust/seq:latest
+    ports:
+      - "5341:5341"
+    volumes:
+      - seq-data:/data
+
+volumes:
+  seq-data:
