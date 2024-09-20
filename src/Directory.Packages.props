@@ -1,0 +1,34 @@
+<Project>
+  <Import Project=".\Packages.props" />
+  <PropertyGroup>
+    <ManagePackageVersionsCentrally>true</ManagePackageVersionsCentrally>
+    <CentralPackageTransitivePinningEnabled>true</CentralPackageTransitivePinningEnabled>
+    <EnablePackageVersionOverride>true</EnablePackageVersionOverride>
+  </PropertyGroup>
+  <ItemGroup>
+    <PackageVersion Include="DotNetEnv" Version="3.1.1" />
+    <PackageVersion Include="Microsoft.Extensions.Hosting" Version="8.0.0" />
+    <PackageVersion Include="Microsoft.Extensions.Logging.Abstractions" Version="8.0.1" />
+    <PackageVersion Include="System.Net.Http.Json" Version="8.0.0" />
+    <PackageVersion Include="Microsoft.Extensions.DependencyInjection" Version="8.0.0" />
+    <PackageVersion Include="Microsoft.Extensions.Http" Version="8.0.0" />
+    <PackageVersion Include="Newtonsoft.Json" Version="13.0.3" />
+    <PackageVersion Include="Serilog" Version="4.0.1" />
+    <PackageVersion Include="Serilog.Extensions.Hosting" Version="8.0.0" />
+    <PackageVersion Include="Serilog.Sinks.Console" Version="6.0.0" />
+    <PackageVersion Include="Serilog.Sinks.Seq" Version="8.0.0" />
+    <PackageVersion Include="Spectre.Console" Version="0.49.1" />
+  </ItemGroup>
+  <ItemGroup>
+    <PackageVersion Include="Microsoft.Kiota.Abstractions" Version="1.12.4" />
+    <PackageVersion Include="Microsoft.Kiota.Authentication.Azure" Version="1.12.4" />
+    <PackageVersion Include="Microsoft.Kiota.Http.HttpClientLibrary" Version="1.12.4" />
+    <PackageVersion Include="Microsoft.Kiota.Serialization.Form" Version="1.12.4" />
+    <PackageVersion Include="Microsoft.Kiota.Serialization.Json" Version="1.12.4" />
+    <PackageVersion Include="Microsoft.Kiota.Serialization.Multipart" Version="1.12.4" />
+    <PackageVersion Include="Microsoft.Kiota.Serialization.Text" Version="1.12.4" />
+    <PackageVersion Include="Newtonsoft.Json" Version="13.0.3" />
+    <PackageVersion Include="NSwag.ApiDescription.Client" Version="14.1.0" />
+    <PackageVersion Include="NSwag.MSBuild" Version="14.1.0" />
+  </ItemGroup>
+</Project>

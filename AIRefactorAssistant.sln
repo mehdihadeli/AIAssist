@@ -5,7 +5,34 @@ VisualStudioVersion = 17.0.31903.59
 MinimumVisualStudioVersion = 10.0.40219.1
 Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "App", "App", "{514BACB7-9EAA-4C91-94C5-198DB395C371}"
 EndProject
-Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "AIRefactorAssistant", "App\AIRefactorAssistant.csproj", "{F0C3EF7F-3FB8-4170-ADFE-CA2F969F73A4}"
+Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "Clients", "Clients", "{11DAF3C4-345B-4961-8FEF-C2478B62DA41}"
+EndProject
+Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "Sdks", "Sdks", "{FD75860A-CFF7-4BB9-AA9D-43A57B3FE42C}"
+EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "AIRefactorAssistant", "src\App\AIRefactorAssistant.csproj", "{D63ADD19-5A64-4121-BD12-B948552EC3D8}"
+EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Clients", "src\Clients\Clients.csproj", "{4973B5D3-67CE-47CC-A0C7-55EC268A2268}"
+EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Sdks", "src\Sdks\Sdks.csproj", "{9372F10E-C0E2-4A1F-BA51-C5A592669A40}"
+EndProject
+Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "src", "src", "{97D741A1-DEFC-4241-99BC-7123A2D981E4}"
+	ProjectSection(SolutionItems) = preProject
+		src\Directory.Build.props = src\Directory.Build.props
+		src\Directory.Build.targets = src\Directory.Build.targets
+		src\Directory.Packages.props = src\Directory.Packages.props
+		src\Packages.props = src\Packages.props
+	EndProjectSection
+EndProject
+Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "solution items", "solution items", "{01301B5F-71C0-476B-BC8F-C25F1B6E2A46}"
+	ProjectSection(SolutionItems) = preProject
+		.csharpierrc.yaml = .csharpierrc.yaml
+		.editorconfig = .editorconfig
+		.gitattributes = .gitattributes
+		.gitignore = .gitignore
+		docker-compose.yml = docker-compose.yml
+		global.json = global.json
+		readme.md = readme.md
+	EndProjectSection
 EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
@@ -16,12 +43,25 @@ Global
 		HideSolutionNode = FALSE
 	EndGlobalSection
 	GlobalSection(NestedProjects) = preSolution
-		{F0C3EF7F-3FB8-4170-ADFE-CA2F969F73A4} = {514BACB7-9EAA-4C91-94C5-198DB395C371}
+		{D63ADD19-5A64-4121-BD12-B948552EC3D8} = {514BACB7-9EAA-4C91-94C5-198DB395C371}
+		{4973B5D3-67CE-47CC-A0C7-55EC268A2268} = {11DAF3C4-345B-4961-8FEF-C2478B62DA41}
+		{9372F10E-C0E2-4A1F-BA51-C5A592669A40} = {FD75860A-CFF7-4BB9-AA9D-43A57B3FE42C}
+		{514BACB7-9EAA-4C91-94C5-198DB395C371} = {97D741A1-DEFC-4241-99BC-7123A2D981E4}
+		{11DAF3C4-345B-4961-8FEF-C2478B62DA41} = {97D741A1-DEFC-4241-99BC-7123A2D981E4}
+		{FD75860A-CFF7-4BB9-AA9D-43A57B3FE42C} = {97D741A1-DEFC-4241-99BC-7123A2D981E4}
 	EndGlobalSection
 	GlobalSection(ProjectConfigurationPlatforms) = postSolution
-		{F0C3EF7F-3FB8-4170-ADFE-CA2F969F73A4}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
-		{F0C3EF7F-3FB8-4170-ADFE-CA2F969F73A4}.Debug|Any CPU.Build.0 = Debug|Any CPU
-		{F0C3EF7F-3FB8-4170-ADFE-CA2F969F73A4}.Release|Any CPU.ActiveCfg = Release|Any CPU
-		{F0C3EF7F-3FB8-4170-ADFE-CA2F969F73A4}.Release|Any CPU.Build.0 = Release|Any CPU
+		{D63ADD19-5A64-4121-BD12-B948552EC3D8}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{D63ADD19-5A64-4121-BD12-B948552EC3D8}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{D63ADD19-5A64-4121-BD12-B948552EC3D8}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{D63ADD19-5A64-4121-BD12-B948552EC3D8}.Release|Any CPU.Build.0 = Release|Any CPU
+		{4973B5D3-67CE-47CC-A0C7-55EC268A2268}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{4973B5D3-67CE-47CC-A0C7-55EC268A2268}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{4973B5D3-67CE-47CC-A0C7-55EC268A2268}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{4973B5D3-67CE-47CC-A0C7-55EC268A2268}.Release|Any CPU.Build.0 = Release|Any CPU
+		{9372F10E-C0E2-4A1F-BA51-C5A592669A40}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{9372F10E-C0E2-4A1F-BA51-C5A592669A40}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{9372F10E-C0E2-4A1F-BA51-C5A592669A40}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{9372F10E-C0E2-4A1F-BA51-C5A592669A40}.Release|Any CPU.Build.0 = Release|Any CPU
 	EndGlobalSection
 EndGlobal

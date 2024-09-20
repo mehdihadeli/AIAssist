@@ -1,0 +1,48 @@
+﻿<Project Sdk="Microsoft.NET.Sdk">
+    <ItemGroup>
+        <PackageReference Include="Microsoft.Kiota.Abstractions"/>
+        <PackageReference Include="Microsoft.Kiota.Authentication.Azure"/>
+        <PackageReference Include="Microsoft.Kiota.Http.HttpClientLibrary"/>
+        <PackageReference Include="Microsoft.Kiota.Serialization.Form"/>
+        <PackageReference Include="Microsoft.Kiota.Serialization.Json"/>
+        <PackageReference Include="Microsoft.Kiota.Serialization.Multipart"/>
+        <PackageReference Include="Microsoft.Kiota.Serialization.Text"/>
+        <PackageReference Include="Newtonsoft.Json"/>
+        <PackageReference Include="NSwag.ApiDescription.Client">
+            <PrivateAssets>all</PrivateAssets>
+            <IncludeAssets>runtime; build; native; contentfiles; analyzers; buildtransitive</IncludeAssets>
+        </PackageReference>
+        <PackageReference Include="NSwag.MSBuild">
+            <PrivateAssets>all</PrivateAssets>
+            <IncludeAssets>runtime; build; native; contentfiles; analyzers; buildtransitive</IncludeAssets>
+        </PackageReference>
+    </ItemGroup>
+    <ItemGroup>
+      <Folder Include="Olama\" />
+      <Folder Include="OpenAI\" />
+    </ItemGroup>
+
+    <!-- build SDK client every time we build the project. This way we don’t need to use Kiota CLI everytime -->
+    <Target Name="GenerateClient" AfterTargets="Build" Condition="$(Configuration)=='Debug'">
+        <Exec Command="dotnet kiota generate -l csharp --output ./ --namespace-name OpenAI.Sdk --class-name OpenAIApiClient --exclude-backward-compatible --openapi https://raw.githubusercontent.com/openai/openai-openapi/master/openapi.yaml" WorkingDirectory="$(ProjectDir)"/>
+    </Target>
+
+    <!--    &lt;!&ndash;  https://learn.microsoft.com/en-us/aspnet/core/web-api/microsoft.dotnet-openapi&ndash;&gt;-->
+    <!--    &lt;!&ndash;  https://stevetalkscode.co.uk/openapireference-commands&ndash;&gt;-->
+    <!--    &lt;!&ndash;  https://devblogs.microsoft.com/dotnet/generating-http-api-clients-using-visual-studio-connected-services/&ndash;&gt;-->
+    <!--    &lt;!&ndash;  https://github.com/dotnet/aspnetcore/blob/main/src/Tools/Extensions.ApiDescription.Client/src/build/Microsoft.Extensions.ApiDescription.Client.props#L65&ndash;&gt;-->
+    <!--    &lt;!&ndash;  https://gist.github.com/stevetalkscode/69719465d8271f1e9fa412626fdadfcd&ndash;&gt;-->
+    <!--    &lt;!&ndash;  For existing options like Namespace command args in options tag doesn't work&ndash;&gt;-->
+    <!--    &lt;!&ndash;  dotnet openapi add url https://raw.githubusercontent.com/openai/openai-openapi/master/openapi.yaml&ndash;&gt;-->
+    <!--    &lt;!&ndash;  dotnet openapi refresh https://raw.githubusercontent.com/openai/openai-openapi/master/openapi.yaml&ndash;&gt;-->
+    <!--    <ItemGroup>-->
+    <!--        <OpenApiReference Include="openapi.yaml" SourceUrl="https://raw.githubusercontent.com/openai/openai-openapi/master/openapi.yaml">-->
+    <!--            <Namespace>OpenAI.Sdk</Namespace>-->
+    <!--            <ClassName>OpenAIApiClient</ClassName>-->
+    <!--            <OutputPath>$(ProjectDir)/src/Sdks/OpenAI.Sdk/OpenAIApiClient.g.cs</OutputPath>-->
+    <!--            &lt;!&ndash; this options configs are equals to nswag.jsson configs&ndash;&gt;-->
+    <!--            <Options>/ClassStyle:Record /DateTimeType:System.DateTime /UseBaseUrl:false /GenerateBaseUrlProperty:true  /GenerateClientInterfaces:true</Options>-->
+    <!--        </OpenApiReference>-->
+    <!--    </ItemGroup>-->
+
+</Project>

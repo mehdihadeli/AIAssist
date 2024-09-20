@@ -1,23 +1,38 @@
-version: '3.9'
-
+name: aiassist
 services:
-  app:
-    build: .
-    environment:
-      - OPENAI_API_KEY=${OPENAI_API_KEY}
-      - OPENAI_BASE_ADDRESS=${OPENAI_BASE_ADDRESS}
-      - Seq__ServerUrls=http://seq:5341
-    depends_on:
-      - seq
-    ports:
-      - "5000:80" # Expose port 80 of the container to port 5000 on the host
-
-  seq:
-    image: datalust/seq:latest
-    ports:
-      - "5341:5341"
+  ollama:
+    # Uncomment below for GPU support
+    # deploy:
+    #   resources:
+    #     reservations:
+    #       devices:
+    #         - driver: nvidia
+    #           count: 1
+    #           capabilities:
+    #             - gpu
     volumes:
-      - seq-data:/data
+      - ollama:/root/.ollama
+    ports:
+       - 11434:11434
+    container_name: ollama
+    pull_policy: always
+    healthcheck:
+      test: ollama --version || exit 1
+    tty: true
+    restart: unless-stopped
+    image: ollama/ollama:latest
+    command: >
+      /bin/sh -c "
+        sleep 3 &&
+        ollama pull llama3.1
+      "
+    networks:
+      - ai-network
+
+networks:
+  ai-network:
+    driver: bridge
 
 volumes:
-  seq-data:
+  seq-data: {}
+  ollama: {}
