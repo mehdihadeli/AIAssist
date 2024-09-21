@@ -2,6 +2,6 @@ namespace Clients;
 
 public interface ILanguageModelService
 {
-    Task<string> GetCompletionAsync(string prompt, string context);
-    Task<string> GetEmbeddingAsync(string text);
+    Task<string> GetCompletionAsync(string userQuery, string codeContext);
+    Task<string> GetEmbeddingAsync(string input);
 }

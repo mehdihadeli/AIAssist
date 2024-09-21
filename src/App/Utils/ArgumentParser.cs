@@ -1,4 +1,4 @@
-namespace AIRefactorAssistant;
+namespace AIRefactorAssistant.Utils;
 
 public static class ArgumentParser
 {

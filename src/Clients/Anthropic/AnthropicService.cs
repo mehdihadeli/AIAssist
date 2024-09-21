@@ -3,9 +3,9 @@ using Clients.Olama.Models;
 using Microsoft.Extensions.Logging;
 using Newtonsoft.Json;
 
-namespace Clients.Olama;
+namespace Clients.Anthropic;
 
-public class LlamaService(HttpClient client, ILogger<LlamaService> logger) : ILanguageModelService
+public class AnthropicService(HttpClient client, ILogger<AnthropicService> logger) : ILanguageModelService
 {
     public async Task<string> GetCompletionAsync(string userQuery, string codeContext)
     {
@@ -13,39 +13,29 @@ public class LlamaService(HttpClient client, ILogger<LlamaService> logger) : ILa
 
         var requestBody = new
         {
-            model = "llama3.1",
-            messages = new[]
-            {
-                new
-                {
-                    role = "system",
-                    content = "You are an expert code assistant. Your job is to help users analyze and improve their code.",
-                },
-                new { role = "user", content = userContent },
-            },
+            model = "claude-2.1",
+            prompt = userContent,
+            max_tokens_to_sample = 2024,
             temperature = 0.5,
         };
 
-        logger.LogInformation("Sending completion request to LLaMA");
+        logger.LogInformation("Sending completion request to Anthropic");
 
-        // https://ollama.com/blog/openai-compatibility
-        // https://www.youtube.com/watch?v=38jlvmBdBrU
         // https://platform.openai.com/docs/api-reference/chat/create
-        // https://github.com/ollama/ollama/blob/main/docs/api.md#generate-a-chat-completion
-        var response = await client.PostAsJsonAsync("v1/chat/completions", requestBody);
+        var response = await client.PostAsJsonAsync("v1/complete", requestBody);
 
         var responseContent = await response.Content.ReadAsStringAsync();
 
         if (response.IsSuccessStatusCode)
         {
             logger.LogInformation(
-                "Received successful response from LLaMA. ResponseContent: {ResponseContent}",
+                "Received successful response from Anthropic. ResponseContent: {ResponseContent}",
                 responseContent
             );
         }
         else
         {
-            logger.LogError("Error in LLaMA completion response: {ResponseContent}", responseContent);
+            logger.LogError("Error in Anthropic completion response: {ResponseContent}", responseContent);
         }
 
         var completionResponse = JsonConvert.DeserializeObject<LlamaCompletionResponse>(responseContent);
@@ -55,18 +45,12 @@ public class LlamaService(HttpClient client, ILogger<LlamaService> logger) : ILa
 
     public async Task<string> GetEmbeddingAsync(string input)
     {
-        var requestBody = new
-        {
-            input = new[] { input },
-            model = "llama3.1",
-            encoding_format = "float",
-        };
+        var requestBody = new { input = new[] { input }, model = "voyage-2" };
 
         logger.LogInformation("Sending embedding request to LLaMA");
 
-        // https://github.com/ollama/ollama/blob/main/docs/api.md#generate-embeddings
-        // https://platform.openai.com/docs/api-reference/embeddings
-        var response = await client.PostAsJsonAsync("v1/embeddings", requestBody);
+        // https://docs.anthropic.com/en/docs/build-with-claude/embeddings
+        var response = await client.PostAsJsonAsync("v1/embeddings", requestBody); // Adjust endpoint as needed
 
         var responseContent = await response.Content.ReadAsStringAsync();
 

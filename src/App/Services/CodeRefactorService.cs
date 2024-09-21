@@ -11,7 +11,7 @@ public class CodeRefactorService(ILanguageModelService languageModelService, ILo
         var userEmbeddingVector = userEmbedding.Split(',').Select(double.Parse).ToArray();
 
         var relevantCodes = codeEmbeddings
-            .Select(ce => (CodeEmbedding: ce, score: CosineSimilarity(ce.Embedding, userEmbeddingVector)))
+            .Select(ce => (CodeEmbedding: ce, score: CosineSimilarity(ce.EmbeddingData, userEmbeddingVector)))
             .OrderByDescending(ce => ce.score)
             .Select(x => x.CodeEmbedding)
             .Take(3)
@@ -20,9 +20,22 @@ public class CodeRefactorService(ILanguageModelService languageModelService, ILo
         return relevantCodes;
     }
 
+    /// <summary>
+    ///  Creates a md code blocks for relevant codes
+    /// </summary>
+    /// <param name="relevantCode"></param>
+    /// <returns></returns>
     public string PrepareContextFromCode(IList<CodeEmbedding> relevantCode)
     {
-        return string.Join(Environment.NewLine + Environment.NewLine, relevantCode.Select(rc => rc.Chunk));
+        return string.Join(
+            Environment.NewLine + Environment.NewLine,
+            relevantCode.Select(rc =>
+                $@"```csharp
+{rc.RelativeFilePath}
+{rc.Code}
+```"
+            )
+        );
     }
 
     public async Task<string> GenerateRefactoringSuggestions(string userInput, string context)
@@ -36,7 +49,7 @@ public class CodeRefactorService(ILanguageModelService languageModelService, ILo
 
         foreach (var relevantCode in relevantCodes)
         {
-            var oldChunk = relevantCode.Chunk;
+            var oldChunk = relevantCode.Code;
             var relevantFilePath = relevantCode.RelativeFilePath;
 
             var filePath = Path.Combine(rootPath, relevantFilePath);
@@ -45,6 +58,7 @@ public class CodeRefactorService(ILanguageModelService languageModelService, ILo
             if (fileContent.Contains(oldChunk, StringComparison.InvariantCulture))
             {
                 var updatedContent = fileContent.Replace(oldChunk, completion, StringComparison.InvariantCulture);
+
                 File.WriteAllText(filePath, updatedContent);
                 logger.LogInformation("Changes applied to {RelevantFilePath}", relevantFilePath);
             }

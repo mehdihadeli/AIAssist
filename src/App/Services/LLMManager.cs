@@ -16,19 +16,19 @@ public class LLMManager(
     {
         logger.LogInformation("Initializing code embeddings...");
 
-        // Load code chunks
-        var codeChunks = codeLoaderService.LoadApplicationCode(codePath);
+        // Load code chunks without embeddings
+        var codeEmbeddings = codeLoaderService.LoadApplicationCode(codePath);
 
-        // Generate embeddings for code chunks
-        _codeEmbeddings = await embeddingService.GenerateEmbeddingsForCode(codeChunks);
+        // fill embeddings data with using llms embeddings apis
+        _codeEmbeddings = await embeddingService.GenerateEmbeddingsForCode(codeEmbeddings);
 
         logger.LogInformation("Embeddings initialized successfully.");
     }
 
-    public async Task<string> ProcessUserRequestAsync(string userInput)
+    public async Task<string> ProcessUserRequestAsync(string userQuery)
     {
         // Generate embedding for user input
-        var userEmbedding = await embeddingService.GenerateEmbeddingForUserInput(userInput);
+        var userEmbedding = await embeddingService.GenerateEmbeddingForUserInput(userQuery);
 
         // Find relevant code based on the user query
         var relevantCodes = codeRefactorService.FindMostRelevantCode(userEmbedding, _codeEmbeddings);
@@ -37,7 +37,7 @@ public class LLMManager(
         var context = codeRefactorService.PrepareContextFromCode(relevantCodes);
 
         // Generate a response from the language model (e.g., OpenAI or Llama)
-        var completion = await codeRefactorService.GenerateRefactoringSuggestions(userInput, context);
+        var completion = await codeRefactorService.GenerateRefactoringSuggestions(userQuery, context);
 
         return completion;
     }

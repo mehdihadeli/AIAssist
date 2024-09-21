@@ -7,13 +7,21 @@ namespace Clients.OpenAI;
 
 public class OpenAiService(HttpClient client, ILogger<OpenAiService> logger) : ILanguageModelService
 {
-    public async Task<string> GetCompletionAsync(string prompt, string context)
+    public async Task<string> GetCompletionAsync(string userQuery, string codeContext)
     {
+        // https://platform.openai.com/docs/api-reference/chat/create
         var requestBody = new
         {
             model = "gpt-3.5-turbo",
-            prompt = $"The following is code from the application: {context}. Based on the user's input: {prompt}, suggest changes or enhancements.",
-            max_tokens = 150,
+            messages = new[]
+            {
+                new
+                {
+                    role = "system",
+                    content = "You are an expert code assistant. Your job is to help users analyze and improve their code.",
+                },
+                new { role = "user", content = PromptHelper.GenerateSuggestedCodePrompt(codeContext, userQuery) },
+            },
             temperature = 0.5,
         };
 
@@ -35,15 +43,17 @@ public class OpenAiService(HttpClient client, ILogger<OpenAiService> logger) : I
         }
 
         var completionResponse = JsonConvert.DeserializeObject<OpenAiCompletionResponse>(responseContent);
+
         return completionResponse?.Choices.FirstOrDefault()?.Text.Trim() ?? string.Empty;
     }
 
-    public async Task<string> GetEmbeddingAsync(string text)
+    public async Task<string> GetEmbeddingAsync(string input)
     {
-        var requestBody = new { input = new[] { text }, model = "text-embedding-ada-002" };
+        var requestBody = new { input = new[] { input }, model = "text-embedding-ada-002" };
 
         logger.LogInformation("Sending embedding request to OpenAI");
 
+        // https://platform.openai.com/docs/api-reference/embeddings
         var response = await client.PostAsJsonAsync("v1/embeddings", requestBody);
         var responseContent = await response.Content.ReadAsStringAsync();
 
@@ -60,6 +70,7 @@ public class OpenAiService(HttpClient client, ILogger<OpenAiService> logger) : I
         }
 
         var embeddingResponse = JsonConvert.DeserializeObject<OpenAiEmbeddingResponse>(responseContent);
+
         return string.Join(",", embeddingResponse?.Data.FirstOrDefault()?.Embedding ?? new List<double>());
     }
 }

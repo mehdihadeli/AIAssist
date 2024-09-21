@@ -1,6 +1,6 @@
 ﻿using System.Net.Http.Headers;
-using AIRefactorAssistant;
 using AIRefactorAssistant.Services;
+using AIRefactorAssistant.Utils;
 using Clients;
 using Clients.Olama;
 using Clients.OpenAI;
@@ -14,6 +14,8 @@ Log.Logger = new LoggerConfiguration()
     .WriteTo.Seq(serverUrl: Environment.GetEnvironmentVariable("SEQ_ADDRESS") ?? "http://localhost:5341")
     .WriteTo.Console()
     .CreateLogger();
+
+AnsiConsole.WriteLine("Welcome to AssistAI.");
 
 var builder = Host.CreateApplicationBuilder(args);
 
@@ -38,7 +40,25 @@ if (selectedModel == "openai")
     builder.Services.AddHttpClient<ILanguageModelService, OpenAiService>(client =>
     {
         client.BaseAddress = new Uri(openAiBaseAddress);
+        client.Timeout = TimeSpan.FromMinutes(5);
         client.DefaultRequestHeaders.Authorization = new AuthenticationHeaderValue("Bearer", openAiApiKey);
+    });
+}
+else if (selectedModel == "anthropic")
+{
+    var anthropicApiKey =
+        Environment.GetEnvironmentVariable("Anthropic_API_KEY")
+        ?? throw new InvalidOperationException("Anthropic_API_KEY environment variable is not set.");
+    var anthropicApiKeyBaseAddress =
+        Environment.GetEnvironmentVariable("Anthropic_BASE_ADDRESS")
+        ?? throw new InvalidOperationException("Anthropic_BASE_ADDRESS environment variable is not set.");
+
+    builder.Services.AddHttpClient<ILanguageModelService, OpenAiService>(client =>
+    {
+        client.BaseAddress = new Uri(anthropicApiKeyBaseAddress);
+        client.Timeout = TimeSpan.FromMinutes(5);
+        client.DefaultRequestHeaders.Add("x-api-key", anthropicApiKey);
+        // client.DefaultRequestHeaders.Add("anthropic-version", "");
     });
 }
 else
@@ -49,6 +69,7 @@ else
 
     builder.Services.AddHttpClient<ILanguageModelService, LlamaService>(client =>
     {
+        client.Timeout = TimeSpan.FromMinutes(5);
         client.BaseAddress = new Uri(llamaApiBaseAddress);
         client.DefaultRequestHeaders.Accept.Add(new MediaTypeWithQualityHeaderValue("application/json"));
     });

@@ -1,4 +1,6 @@
 using AIRefactorAssistant.Models;
+using Microsoft.CodeAnalysis.CSharp;
+using Microsoft.CodeAnalysis.CSharp.Syntax;
 using Microsoft.Extensions.Logging;
 
 namespace AIRefactorAssistant.Services;
@@ -21,25 +23,46 @@ public class CodeLoaderService(ILogger<CodeLoaderService> logger)
             logger.LogInformation("App relative path is: {RelativePath}", relativePath);
 
             var fileContent = File.ReadAllText(file);
-            var chunks = ChunkCode(fileContent);
+            var codeEmbedding = CodeEmbeddingByFile(fileContent, relativePath);
 
-            foreach (var chunk in chunks)
-            {
-                // Add chunk without embeddings initially
-                embeddings.Add(new CodeEmbedding { Chunk = chunk, RelativeFilePath = relativePath });
-            }
+            // Add chunk without embeddings initially
+            embeddings.Add(codeEmbedding);
         }
 
         return embeddings;
     }
 
-    private static List<string> ChunkCode(string code, int maxChunkSize = 1000)
+    private static CodeEmbedding CodeEmbeddingByFile(string code, string relativeFilePath)
     {
-        var chunks = new List<string>();
-        for (int i = 0; i < code.Length; i += maxChunkSize)
+        var syntaxTree = CSharpSyntaxTree.ParseText(code);
+        var root = syntaxTree.GetRoot();
+
+        var classNames = new List<string>();
+        var methodNames = new List<string>();
+
+        // Extract all class names
+        var classDeclarations = root.DescendantNodes().OfType<ClassDeclarationSyntax>();
+        foreach (var classDeclaration in classDeclarations)
         {
-            chunks.Add(code.Substring(i, Math.Min(maxChunkSize, code.Length - i)));
+            classNames.Add(classDeclaration.Identifier.Text);
+
+            // Extract all method names within the class
+            var methodDeclarations = classDeclaration.DescendantNodes().OfType<MethodDeclarationSyntax>();
+            foreach (var methodDeclaration in methodDeclarations)
+            {
+                methodNames.Add(methodDeclaration.Identifier.Text);
+            }
         }
-        return chunks;
+
+        // Create a single chunk for the entire file
+        var codeEmbedding = new CodeEmbedding
+        {
+            ClassName = string.Join(", ", classNames),
+            MethodsName = string.Join(", ", methodNames),
+            Code = code,
+            RelativeFilePath = relativeFilePath,
+        };
+
+        return codeEmbedding;
     }
 }
