@@ -2,6 +2,7 @@ namespace AIRefactorAssistant.Models;
 
 public class CodeEmbedding
 {
+    public Guid SessionId { get; set; }
     public string ClassName { get; set; }
     public string MethodsName { get; set; }
     public string Code { get; set; }

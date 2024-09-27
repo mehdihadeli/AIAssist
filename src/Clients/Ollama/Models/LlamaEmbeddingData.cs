@@ -1,8 +1,8 @@
 using System.Text.Json.Serialization;
 
-namespace Clients.OpenAI.Models;
+namespace Clients.Ollama.Models;
 
-public class OpenAiEmbeddingData
+public class LlamaEmbeddingData
 {
     [JsonPropertyName("embedding")]
     public IList<double> Embedding { get; set; } = new List<double>();

@@ -1,15 +1,21 @@
-using Newtonsoft.Json;
+using System.Text.Json.Serialization;
 
 namespace Clients.Models;
 
 public class CodeChange
 {
-    [JsonProperty("fileRelativePath")]
+    [JsonPropertyName("fileRelativePath")]
     public string FileRelativePath { get; set; }
 
-    [JsonProperty("beforeChange")]
+    [JsonPropertyName("beforeChange")]
     public string BeforeChange { get; set; }
 
-    [JsonProperty("afterChange")]
+    [JsonPropertyName("afterChange")]
     public string AfterChange { get; set; }
+
+    [JsonPropertyName("diffs")]
+    public List<string> Diffs { get; set; }
+
+    [JsonPropertyName("explanation")]
+    public string Explanation { get; set; }
 }

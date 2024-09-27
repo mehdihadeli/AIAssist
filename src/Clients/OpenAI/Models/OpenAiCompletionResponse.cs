@@ -1,11 +1,9 @@
-using Newtonsoft.Json;
+using System.Text.Json.Serialization;
 
 namespace Clients.OpenAI.Models;
 
 public class OpenAiCompletionResponse
 {
-    [JsonProperty("choices")]
-    public List<OpenAiCompletionChoice> Choices { get; set; } = new();
-
-    // Add other properties if needed
+    [JsonPropertyName("choices")]
+    public IList<OpenAiCompletionChoice> Choices { get; set; } = new List<OpenAiCompletionChoice>();
 }

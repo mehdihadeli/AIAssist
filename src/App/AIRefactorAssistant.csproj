@@ -4,28 +4,16 @@
     <!-- dotnet pack -c Release-->
     <!-- dotnet tool install &#45;&#45;global &#45;&#45;add-source ./ AIRefactorAssistant &#45;&#45;version 1.0.0-->
     <PropertyGroup>
-        <PackAsTool>true</PackAsTool>
-        <ToolCommandName>aiassist</ToolCommandName>
-        <PackageId>AIRefactorAssistant</PackageId>
+<!--        <PackAsTool>true</PackAsTool>-->
+<!--        <ToolCommandName>aiassist</ToolCommandName>-->
+        <AssemblyName>aiassist</AssemblyName>
+        <PackageId>AIAssist</PackageId>
         <Version>1.0.0</Version>
         <OutputType>Exe</OutputType>
     </PropertyGroup>
 
     <ItemGroup>
-        <PackageReference Include="DotNetEnv" />
-        <PackageReference Include="Microsoft.CodeAnalysis.CSharp" />
-        <PackageReference Include="Microsoft.Extensions.DependencyInjection"/>
-        <PackageReference Include="Microsoft.Extensions.Hosting" />
-        <PackageReference Include="Microsoft.Extensions.Http"/>
-        <PackageReference Include="Newtonsoft.Json"/>
-        <PackageReference Include="Serilog"/>
-        <PackageReference Include="Serilog.Extensions.Hosting"/>
-        <PackageReference Include="Serilog.Sinks.Console"/>
-        <PackageReference Include="Serilog.Sinks.Seq"/>
-        <PackageReference Include="Spectre.Console"/>
-    </ItemGroup>
-
-    <ItemGroup>
+      <ProjectReference Include="..\BuildingBlocks\BuildingBlocks.csproj" />
       <ProjectReference Include="..\Clients\Clients.csproj" />
     </ItemGroup>
 

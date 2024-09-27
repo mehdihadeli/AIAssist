@@ -1,7 +1,8 @@
 using System.Net.Http.Json;
+using System.Text.Json;
 using Clients.OpenAI.Models;
+using Clients.Prompts;
 using Microsoft.Extensions.Logging;
-using Newtonsoft.Json;
 
 namespace Clients.OpenAI;
 
@@ -9,6 +10,11 @@ public class OpenAiService(HttpClient client, ILogger<OpenAiService> logger) : I
 {
     public async Task<string> GetCompletionAsync(string userQuery, string codeContext)
     {
+        var codeModificationPrompt = PromptManager.RenderPromptTemplate(
+            PromptConstants.CodeAssistantTemplate,
+            new { codeContext, userQuery }
+        );
+
         // https://platform.openai.com/docs/api-reference/chat/create
         var requestBody = new
         {
@@ -20,7 +26,7 @@ public class OpenAiService(HttpClient client, ILogger<OpenAiService> logger) : I
                     role = "system",
                     content = "You are an expert code assistant. Your job is to help users analyze and improve their code.",
                 },
-                new { role = "user", content = PromptHelper.GenerateSuggestedCodePrompt(codeContext, userQuery) },
+                new { role = "user", content = codeModificationPrompt },
             },
             temperature = 0.5,
         };
@@ -42,7 +48,7 @@ public class OpenAiService(HttpClient client, ILogger<OpenAiService> logger) : I
             logger.LogError("Error in OpenAI completion response: {ResponseContent}", responseContent);
         }
 
-        var completionResponse = JsonConvert.DeserializeObject<OpenAiCompletionResponse>(responseContent);
+        var completionResponse = JsonSerializer.Deserialize<OpenAiCompletionResponse>(responseContent);
 
         return completionResponse?.Choices.FirstOrDefault()?.Text.Trim() ?? string.Empty;
     }
@@ -69,7 +75,7 @@ public class OpenAiService(HttpClient client, ILogger<OpenAiService> logger) : I
             logger.LogError("Error in OpenAI embedding response: {ResponseContent}", responseContent);
         }
 
-        var embeddingResponse = JsonConvert.DeserializeObject<OpenAiEmbeddingResponse>(responseContent);
+        var embeddingResponse = JsonSerializer.Deserialize<OpenAiEmbeddingResponse>(responseContent);
 
         return string.Join(",", embeddingResponse?.Data.FirstOrDefault()?.Embedding ?? new List<double>());
     }

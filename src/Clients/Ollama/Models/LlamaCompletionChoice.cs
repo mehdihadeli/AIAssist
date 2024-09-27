@@ -1,8 +1,8 @@
 using System.Text.Json.Serialization;
 
-namespace Clients.OpenAI.Models;
+namespace Clients.Ollama.Models;
 
-public class OpenAiCompletionChoice
+public class LlamaCompletionChoice
 {
     [JsonPropertyName("text")]
     public string Text { get; set; } = string.Empty;

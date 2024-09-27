@@ -7,7 +7,7 @@ namespace AIRefactorAssistant.Services;
 
 public class CodeLoaderService(ILogger<CodeLoaderService> logger)
 {
-    public IList<CodeEmbedding> LoadApplicationCode(string appRelativePath)
+    public IEnumerable<ApplicationCode> LoadApplicationCodes(string appRelativePath)
     {
         var rootPath = Directory.GetCurrentDirectory();
         var appPath = Path.Combine(rootPath, appRelativePath);
@@ -15,7 +15,7 @@ public class CodeLoaderService(ILogger<CodeLoaderService> logger)
         logger.LogInformation("AppPath is: {AppPath}", appPath);
 
         var csFiles = Directory.GetFiles(appPath, "*.cs", SearchOption.AllDirectories);
-        var embeddings = new List<CodeEmbedding>();
+        var applicationCodes = new List<ApplicationCode>();
 
         foreach (var file in csFiles)
         {
@@ -23,16 +23,14 @@ public class CodeLoaderService(ILogger<CodeLoaderService> logger)
             logger.LogInformation("App relative path is: {RelativePath}", relativePath);
 
             var fileContent = File.ReadAllText(file);
-            var codeEmbedding = CodeEmbeddingByFile(fileContent, relativePath);
 
-            // Add chunk without embeddings initially
-            embeddings.Add(codeEmbedding);
+            applicationCodes.Add(CreateApplicationCode(fileContent, relativePath));
         }
 
-        return embeddings;
+        return applicationCodes;
     }
 
-    private static CodeEmbedding CodeEmbeddingByFile(string code, string relativeFilePath)
+    private static ApplicationCode CreateApplicationCode(string code, string relativeFilePath)
     {
         var syntaxTree = CSharpSyntaxTree.ParseText(code);
         var root = syntaxTree.GetRoot();
@@ -54,15 +52,8 @@ public class CodeLoaderService(ILogger<CodeLoaderService> logger)
             }
         }
 
-        // Create a single chunk for the entire file
-        var codeEmbedding = new CodeEmbedding
-        {
-            ClassName = string.Join(", ", classNames),
-            MethodsName = string.Join(", ", methodNames),
-            Code = code,
-            RelativeFilePath = relativeFilePath,
-        };
+        var applicationCode = new ApplicationCode(code, relativeFilePath, classNames, methodNames);
 
-        return codeEmbedding;
+        return applicationCode;
     }
 }

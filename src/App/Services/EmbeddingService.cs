@@ -1,27 +1,46 @@
-using System.Text.Json;
+using AIRefactorAssistant.Data;
 using AIRefactorAssistant.Models;
+using BuildingBlocks.Utils;
 using Clients;
+using Clients.Prompts;
 using Microsoft.Extensions.Logging;
 
 namespace AIRefactorAssistant.Services;
 
-public class EmbeddingService(ILanguageModelService languageModelService, ILogger<EmbeddingService> logger)
+public class EmbeddingService(
+    ILanguageModelService languageModelService,
+    EmbeddingsStore embeddingsStore,
+    ILogger<EmbeddingService> logger
+)
 {
-    public async Task<IList<CodeEmbedding>> GenerateEmbeddingsForCode(IList<CodeEmbedding> codeEmbeddings)
+    public async Task<IReadOnlyList<CodeEmbedding>> GenerateEmbeddingsForCodeFiles(
+        IEnumerable<ApplicationCode> applicationCodes,
+        Guid sessionId
+    )
     {
         logger.LogInformation("Started generating embeddings for code");
 
-        foreach (var codeEmbedding in codeEmbeddings)
+        var codeEmbeddings = new List<CodeEmbedding>();
+        foreach (var applicationCode in applicationCodes)
         {
-            var input = GenerateInputString(codeEmbedding);
+            var input = GenerateInputString(applicationCode);
             var embeddingData = await languageModelService.GetEmbeddingAsync(input);
-
-            codeEmbedding.EmbeddingData = embeddingData;
+            codeEmbeddings.Add(
+                new CodeEmbedding
+                {
+                    RelativeFilePath = applicationCode.RelativePath,
+                    Code = applicationCode.Code,
+                    EmbeddingData = embeddingData,
+                    MethodsName = applicationCode.MethodsName,
+                    ClassName = applicationCode.ClassesName,
+                    SessionId = sessionId,
+                }
+            );
         }
 
-        logger.LogInformation("Embeddings data generated for all code chunks");
+        logger.LogInformation("Code Embeddings generated from all files via llm.");
 
-        return codeEmbeddings;
+        return codeEmbeddings.AsReadOnly();
     }
 
     public async Task<string> GenerateEmbeddingForUserInput(string userInput)
@@ -29,31 +48,54 @@ public class EmbeddingService(ILanguageModelService languageModelService, ILogge
         return await languageModelService.GetEmbeddingAsync(userInput);
     }
 
-    public static string GenerateInputString(CodeEmbedding codeEmbedding)
+    public IEnumerable<CodeEmbedding> FindMostRelevantCode(string userEmbedding, Guid sessionId)
     {
-        return $@"
-        Class: {
-            codeEmbedding.ClassName
-        }
-        Methods: {
-            codeEmbedding.MethodsName
-        }
-        File Path: {
-            codeEmbedding.RelativeFilePath
-        }
+        return embeddingsStore.FindMostRelevantCode(userEmbedding, sessionId).Take(3);
+    }
 
-        Code:
-        {
-            codeEmbedding.Code
-        }";
+    public string PrepareLLmContextCodeEmbeddings(IEnumerable<CodeEmbedding> relevantCode)
+    {
+        return string.Join(
+            Environment.NewLine + Environment.NewLine,
+            relevantCode.Select(rc =>
+            {
+                var mdLanguage = MdCodeBlockHelper.GetMdLanguage(rc.RelativeFilePath);
+                string fileName = Path.GetFileName(rc.RelativeFilePath);
+
+                return PromptManager.RenderPromptTemplate(
+                    PromptConstants.CodeBlockTemplate,
+                    new
+                    {
+                        relativeFilePath = rc.RelativeFilePath,
+                        code = rc.Code,
+                        fileName,
+                        mdLanguage,
+                    }
+                );
+            })
+        );
+    }
+
+    private static string GenerateInputString(ApplicationCode applicationCode)
+    {
+        return PromptManager.RenderPromptTemplate(
+            PromptConstants.CodeEmbeddingTemplate,
+            new
+            {
+                relativePath = applicationCode.RelativePath,
+                code = applicationCode.Code,
+                classesName = applicationCode.ClassesName,
+                methodsName = applicationCode.MethodsName,
+            }
+        );
 
         // return JsonSerializer.Serialize(
         //     new
         //     {
-        //         ClassName = codeEmbedding.ClassName,
-        //         MethodNames = codeEmbedding.MethodsName,
-        //         RelativeFilePath = codeEmbedding.RelativeFilePath,
-        //         Code = codeEmbedding.Code,
+        //         ClassName = applicationCode.ClassName,
+        //         MethodNames = applicationCode.MethodsName,
+        //         RelativeFilePath = applicationCode.RelativeFilePath,
+        //         Code = applicationCode.Code,
         //     },
         //     new JsonSerializerOptions { WriteIndented = true }
         // );

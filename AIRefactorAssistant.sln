@@ -34,6 +34,15 @@ Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "solution items", "solution 
 		readme.md = readme.md
 	EndProjectSection
 EndProject
+Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "BuildingBlocks", "BuildingBlocks", "{5A9D49CF-CECC-48B4-BE93-CB907CA4455A}"
+EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "BuildingBlocks", "src\BuildingBlocks\BuildingBlocks.csproj", "{70C8FD32-522B-476E-8072-FB9421B5D710}"
+EndProject
+Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "scripts", "scripts", "{0A4FAEA9-4557-415E-AEDB-94C1832A7ADE}"
+	ProjectSection(SolutionItems) = preProject
+		scripts\install_tree_sitter.sh = scripts\install_tree_sitter.sh
+	EndProjectSection
+EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
 		Debug|Any CPU = Debug|Any CPU
@@ -49,6 +58,9 @@ Global
 		{514BACB7-9EAA-4C91-94C5-198DB395C371} = {97D741A1-DEFC-4241-99BC-7123A2D981E4}
 		{11DAF3C4-345B-4961-8FEF-C2478B62DA41} = {97D741A1-DEFC-4241-99BC-7123A2D981E4}
 		{FD75860A-CFF7-4BB9-AA9D-43A57B3FE42C} = {97D741A1-DEFC-4241-99BC-7123A2D981E4}
+		{5A9D49CF-CECC-48B4-BE93-CB907CA4455A} = {97D741A1-DEFC-4241-99BC-7123A2D981E4}
+		{70C8FD32-522B-476E-8072-FB9421B5D710} = {5A9D49CF-CECC-48B4-BE93-CB907CA4455A}
+		{0A4FAEA9-4557-415E-AEDB-94C1832A7ADE} = {01301B5F-71C0-476B-BC8F-C25F1B6E2A46}
 	EndGlobalSection
 	GlobalSection(ProjectConfigurationPlatforms) = postSolution
 		{D63ADD19-5A64-4121-BD12-B948552EC3D8}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
@@ -63,5 +75,9 @@ Global
 		{9372F10E-C0E2-4A1F-BA51-C5A592669A40}.Debug|Any CPU.Build.0 = Debug|Any CPU
 		{9372F10E-C0E2-4A1F-BA51-C5A592669A40}.Release|Any CPU.ActiveCfg = Release|Any CPU
 		{9372F10E-C0E2-4A1F-BA51-C5A592669A40}.Release|Any CPU.Build.0 = Release|Any CPU
+		{70C8FD32-522B-476E-8072-FB9421B5D710}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{70C8FD32-522B-476E-8072-FB9421B5D710}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{70C8FD32-522B-476E-8072-FB9421B5D710}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{70C8FD32-522B-476E-8072-FB9421B5D710}.Release|Any CPU.Build.0 = Release|Any CPU
 	EndGlobalSection
 EndGlobal

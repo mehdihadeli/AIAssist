@@ -1,15 +1,19 @@
 using System.Net.Http.Json;
-using Clients.Olama.Models;
+using System.Text.Json;
+using Clients.Ollama.Models;
+using Clients.Prompts;
 using Microsoft.Extensions.Logging;
-using Newtonsoft.Json;
 
-namespace Clients.Olama;
+namespace Clients.Ollama;
 
-public class LlamaService(HttpClient client, ILogger<LlamaService> logger) : ILanguageModelService
+public class OllamaService(HttpClient client, ILogger<OllamaService> logger) : ILanguageModelService
 {
     public async Task<string> GetCompletionAsync(string userQuery, string codeContext)
     {
-        var userContent = PromptHelper.GenerateSuggestedCodePrompt(codeContext, userQuery);
+        var codeModificationPrompt = PromptManager.RenderPromptTemplate(
+            PromptConstants.CodeAssistantTemplate,
+            new { codeContext, userQuery }
+        );
 
         var requestBody = new
         {
@@ -21,7 +25,7 @@ public class LlamaService(HttpClient client, ILogger<LlamaService> logger) : ILa
                     role = "system",
                     content = "You are an expert code assistant. Your job is to help users analyze and improve their code.",
                 },
-                new { role = "user", content = userContent },
+                new { role = "user", content = codeModificationPrompt },
             },
             temperature = 0.5,
         };
@@ -48,7 +52,7 @@ public class LlamaService(HttpClient client, ILogger<LlamaService> logger) : ILa
             logger.LogError("Error in LLaMA completion response: {ResponseContent}", responseContent);
         }
 
-        var completionResponse = JsonConvert.DeserializeObject<LlamaCompletionResponse>(responseContent);
+        var completionResponse = JsonSerializer.Deserialize<LlamaCompletionResponse>(responseContent);
 
         return completionResponse?.Choices.FirstOrDefault()?.Text.Trim() ?? string.Empty;
     }
@@ -82,7 +86,7 @@ public class LlamaService(HttpClient client, ILogger<LlamaService> logger) : ILa
             logger.LogError("Error in LLaMA embedding response: {ResponseContent}", responseContent);
         }
 
-        var embeddingResponse = JsonConvert.DeserializeObject<LlamaEmbeddingResponse>(responseContent);
+        var embeddingResponse = JsonSerializer.Deserialize<LlamaEmbeddingResponse>(responseContent);
 
         return string.Join(",", embeddingResponse?.Data.FirstOrDefault()?.Embedding ?? new List<double>());
     }

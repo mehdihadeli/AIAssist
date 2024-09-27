@@ -175,7 +175,7 @@ dotnet_diagnostic.CA1304.severity = error
 # CA1307: Specify StringComparison for clarity
 dotnet_diagnostic.CA1307.severity = error
 # CA1308: Normalize strings to uppercase
-dotnet_diagnostic.CA1308.severity = error
+dotnet_diagnostic.CA1308.severity = none
 # CA1309: Use ordinal StringComparison
 dotnet_diagnostic.CA1309.severity = error
 # CA1724: Type names should not match namespaces
@@ -211,6 +211,7 @@ dotnet_diagnostic.ca1810.severity = Suggestion
 # CA1725: Parameter names should match base declaration
 dotnet_diagnostic.ca1725.severity = Suggestion
 dotnet_diagnostic.ca1822.severity = Suggestion
+
 # https://csharpier.com/docs/IntegratingWithLinters#code-analysis-rules
 
 ##################################################################################

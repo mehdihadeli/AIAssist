@@ -2,7 +2,14 @@
 
   <ItemGroup>
     <PackageReference Include="Microsoft.Extensions.Logging.Abstractions" />
-    <PackageReference Include="Newtonsoft.Json" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <None Remove="Prompts\Templates\code-modification.template" />
+    <None Remove="Prompts\Templates\code-block.template" />
+    <Content Include="Prompts\Templates\code-block.template">
+      <CopyToOutputDirectory>Always</CopyToOutputDirectory>
+    </Content>
   </ItemGroup>
 
 </Project>

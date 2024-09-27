@@ -1,6 +1,6 @@
 using System.Diagnostics;
 
-namespace AIRefactorAssistant.Utils;
+namespace BuildingBlocks.Utils;
 
 public static class Installer
 {

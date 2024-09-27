@@ -1,7 +1,8 @@
 using System.Net.Http.Json;
-using Clients.Olama.Models;
+using Clients.Ollama.Models;
+using Clients.Prompts;
 using Microsoft.Extensions.Logging;
-using Newtonsoft.Json;
+using JsonSerializer = System.Text.Json.JsonSerializer;
 
 namespace Clients.Anthropic;
 
@@ -9,12 +10,14 @@ public class AnthropicService(HttpClient client, ILogger<AnthropicService> logge
 {
     public async Task<string> GetCompletionAsync(string userQuery, string codeContext)
     {
-        var userContent = PromptHelper.GenerateSuggestedCodePrompt(codeContext, userQuery);
-
+        var codeModificationPrompt = PromptManager.RenderPromptTemplate(
+            PromptConstants.CodeAssistantTemplate,
+            new { codeContext, userQuery }
+        );
         var requestBody = new
         {
             model = "claude-2.1",
-            prompt = userContent,
+            prompt = codeModificationPrompt,
             max_tokens_to_sample = 2024,
             temperature = 0.5,
         };
@@ -38,7 +41,7 @@ public class AnthropicService(HttpClient client, ILogger<AnthropicService> logge
             logger.LogError("Error in Anthropic completion response: {ResponseContent}", responseContent);
         }
 
-        var completionResponse = JsonConvert.DeserializeObject<LlamaCompletionResponse>(responseContent);
+        var completionResponse = JsonSerializer.Deserialize<LlamaCompletionResponse>(responseContent);
 
         return completionResponse?.Choices.FirstOrDefault()?.Text.Trim() ?? string.Empty;
     }
@@ -66,7 +69,7 @@ public class AnthropicService(HttpClient client, ILogger<AnthropicService> logge
             logger.LogError("Error in LLaMA embedding response: {ResponseContent}", responseContent);
         }
 
-        var embeddingResponse = JsonConvert.DeserializeObject<LlamaEmbeddingResponse>(responseContent);
+        var embeddingResponse = JsonSerializer.Deserialize<LlamaEmbeddingResponse>(responseContent);
 
         return string.Join(",", embeddingResponse?.Data.FirstOrDefault()?.Embedding ?? new List<double>());
     }

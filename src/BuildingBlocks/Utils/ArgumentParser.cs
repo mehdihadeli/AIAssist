@@ -1,4 +1,4 @@
-namespace AIRefactorAssistant.Utils;
+namespace BuildingBlocks.Utils;
 
 public static class ArgumentParser
 {
