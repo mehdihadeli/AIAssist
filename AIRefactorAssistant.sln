@@ -41,7 +41,27 @@ EndProject
 Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "scripts", "scripts", "{0A4FAEA9-4557-415E-AEDB-94C1832A7ADE}"
 	ProjectSection(SolutionItems) = preProject
 		scripts\install_tree_sitter.sh = scripts\install_tree_sitter.sh
+		scripts\generate_tree_sitter_bindings.sh = scripts\generate_tree_sitter_bindings.sh
 	EndProjectSection
+EndProject
+Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "TreeSitter.Bindings", "TreeSitter.Bindings", "{E295F56D-BF6F-4725-96E5-617DED7E0E21}"
+EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "TreeSitter.Bindings", "src\TreeSitter.Bindings\TreeSitter.Bindings.csproj", "{98525E13-4C8A-483D-A7AE-7323E9BA5CEA}"
+EndProject
+Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "tree-sitter-generators", "tree-sitter-generators", "{BB0678E4-DD42-4A8C-9F31-26EC955967D3}"
+	ProjectSection(SolutionItems) = preProject
+		tree-sitter\TreeSitterGenerator.rsp = tree-sitter\TreeSitterGenerator.rsp
+		tree-sitter\grammars\CsharpTreeSitterGenerator.rsp = tree-sitter\grammars\CsharpTreeSitterGenerator.rsp
+		tree-sitter\grammars\GoTreeSitterGenerator.rsp = tree-sitter\grammars\GoTreeSitterGenerator.rsp
+		tree-sitter\grammars\JavascriptTreeSitterGenerator.rsp = tree-sitter\grammars\JavascriptTreeSitterGenerator.rsp
+		tree-sitter\grammars\JavaTreeSitterGenerator.rsp = tree-sitter\grammars\JavaTreeSitterGenerator.rsp
+		tree-sitter\grammars\PythonTreeSitterGenerator.rsp = tree-sitter\grammars\PythonTreeSitterGenerator.rsp
+		tree-sitter\grammars\TypescriptTreeSitterGenerator.rsp = tree-sitter\grammars\TypescriptTreeSitterGenerator.rsp
+	EndProjectSection
+EndProject
+Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "tests", "tests", "{9D919399-BFF7-4278-A1C4-9E289178068C}"
+EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "TreeSitter.Bindings.UnitTests", "tests\TreeSitter.Bindings.UnitTests\TreeSitter.Bindings.UnitTests.csproj", "{B5F6742E-B37D-4550-BFAD-20D96515D256}"
 EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
@@ -61,6 +81,11 @@ Global
 		{5A9D49CF-CECC-48B4-BE93-CB907CA4455A} = {97D741A1-DEFC-4241-99BC-7123A2D981E4}
 		{70C8FD32-522B-476E-8072-FB9421B5D710} = {5A9D49CF-CECC-48B4-BE93-CB907CA4455A}
 		{0A4FAEA9-4557-415E-AEDB-94C1832A7ADE} = {01301B5F-71C0-476B-BC8F-C25F1B6E2A46}
+		{E295F56D-BF6F-4725-96E5-617DED7E0E21} = {97D741A1-DEFC-4241-99BC-7123A2D981E4}
+		{98525E13-4C8A-483D-A7AE-7323E9BA5CEA} = {E295F56D-BF6F-4725-96E5-617DED7E0E21}
+		{BB0678E4-DD42-4A8C-9F31-26EC955967D3} = {01301B5F-71C0-476B-BC8F-C25F1B6E2A46}
+		{9D919399-BFF7-4278-A1C4-9E289178068C} = {01301B5F-71C0-476B-BC8F-C25F1B6E2A46}
+		{B5F6742E-B37D-4550-BFAD-20D96515D256} = {9D919399-BFF7-4278-A1C4-9E289178068C}
 	EndGlobalSection
 	GlobalSection(ProjectConfigurationPlatforms) = postSolution
 		{D63ADD19-5A64-4121-BD12-B948552EC3D8}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
@@ -79,5 +104,13 @@ Global
 		{70C8FD32-522B-476E-8072-FB9421B5D710}.Debug|Any CPU.Build.0 = Debug|Any CPU
 		{70C8FD32-522B-476E-8072-FB9421B5D710}.Release|Any CPU.ActiveCfg = Release|Any CPU
 		{70C8FD32-522B-476E-8072-FB9421B5D710}.Release|Any CPU.Build.0 = Release|Any CPU
+		{98525E13-4C8A-483D-A7AE-7323E9BA5CEA}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{98525E13-4C8A-483D-A7AE-7323E9BA5CEA}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{98525E13-4C8A-483D-A7AE-7323E9BA5CEA}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{98525E13-4C8A-483D-A7AE-7323E9BA5CEA}.Release|Any CPU.Build.0 = Release|Any CPU
+		{B5F6742E-B37D-4550-BFAD-20D96515D256}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{B5F6742E-B37D-4550-BFAD-20D96515D256}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{B5F6742E-B37D-4550-BFAD-20D96515D256}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{B5F6742E-B37D-4550-BFAD-20D96515D256}.Release|Any CPU.Build.0 = Release|Any CPU
 	EndGlobalSection
 EndGlobal

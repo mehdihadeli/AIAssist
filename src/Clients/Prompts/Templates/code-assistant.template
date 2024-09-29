@@ -43,12 +43,12 @@ Your response should be in **JSON format** with the following structure:
             'fileRelativePath': 'YourRelativePathHere',
             'beforeChange': 'The original code before modification.',
             'afterChange': 'The modified or new code.',
-            'diffs': [
+            'diffs': '
                 ```diff
                 - old line of code
                 + new line of code
                 ```
-            ],
+                ',
             'explanation': 'A clear explanation of why these changes were made, including how they address the user's request and any improvements in functionality or design.'
         },
         ...

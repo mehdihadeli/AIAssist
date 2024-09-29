@@ -27,6 +27,7 @@ x86/
 [Aa][Rr][Mm]64/
 bld/
 [Bb]in/
+[Bb]ins/
 [Oo]bj/
 [Ll]og/
 [Ll]ogs/
@@ -372,3 +373,9 @@ coverage.info
 *.vsix
 
 .env
+
+# Ignore all .dll files
+*.dll
+
+# Ignore all .so files
+*.so
