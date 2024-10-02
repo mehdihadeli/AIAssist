@@ -28,7 +28,6 @@ services:
       "
     networks:
       - ai-network
-
 networks:
   ai-network:
     driver: bridge

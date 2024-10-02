@@ -17,4 +17,7 @@
       <ProjectReference Include="..\Clients\Clients.csproj" />
     </ItemGroup>
 
+    <ItemGroup>
+      <Folder Include="Utilities\" />
+    </ItemGroup>
 </Project>

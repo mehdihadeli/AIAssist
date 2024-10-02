@@ -2,7 +2,7 @@ using Spectre.Console.Cli;
 
 namespace BuildingBlocks.SpectreConsole;
 
-public sealed class TypeRegistrar(IServiceProvider serviceProvider) : ITypeRegistrar
+public sealed class CustomTypeRegistrar(IServiceProvider serviceProvider) : ITypeRegistrar
 {
     public ITypeResolver Build()
     {

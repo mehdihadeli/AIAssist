@@ -1,16 +1,21 @@
 using System.Net.Http.Json;
 using System.Text.Json;
+using BuildingBlocks.LLM;
 using Clients.OpenAI.Models;
 using Clients.Prompts;
 using Microsoft.Extensions.Logging;
+using Microsoft.Extensions.Options;
 
 namespace Clients.OpenAI;
 
-public class OpenAiService(HttpClient client, ILogger<OpenAiService> logger) : ILanguageModelService
+public class OpenAiService(HttpClient client, ILogger<OpenAiService> logger, IOptions<OpenAIOptions> options)
+    : ILanguageModelService
 {
+    private readonly OpenAIOptions _options = options.Value;
+
     public async Task<string> GetCompletionAsync(string userQuery, string codeContext)
     {
-        var codeModificationPrompt = PromptManager.RenderPromptTemplate(
+        var systemCodeAssistPrompt = PromptManager.RenderPromptTemplate(
             PromptConstants.CodeAssistantTemplate,
             new { codeContext, userQuery }
         );
@@ -18,18 +23,18 @@ public class OpenAiService(HttpClient client, ILogger<OpenAiService> logger) : I
         // https://platform.openai.com/docs/api-reference/chat/create
         var requestBody = new
         {
-            model = "gpt-3.5-turbo",
+            model = _options.Model,
             messages = new[]
             {
-                new
-                {
-                    role = "system",
-                    content = "You are an expert code assistant. Your job is to help users analyze and improve their code.",
-                },
-                new { role = "user", content = codeModificationPrompt },
+                new { role = "system", content = systemCodeAssistPrompt },
+                new { role = "user", content = userQuery },
             },
-            temperature = 0.5,
+            temperature = 0.2,
+            max_tokens = _options.MaxTokenSize,
         };
+
+        var count = TokenizerHelper.TokenCount(string.Join(',', requestBody.messages.Select(x => x.content)));
+        logger.LogInformation("Token is {Count}k", count / 1024);
 
         logger.LogInformation("Sending completion request to OpenAI");
 
@@ -53,9 +58,12 @@ public class OpenAiService(HttpClient client, ILogger<OpenAiService> logger) : I
         return completionResponse?.Choices.FirstOrDefault()?.Text.Trim() ?? string.Empty;
     }
 
-    public async Task<string> GetEmbeddingAsync(string input)
+    public async Task<IList<double>> GetEmbeddingAsync(string input)
     {
-        var requestBody = new { input = new[] { input }, model = "text-embedding-ada-002" };
+        var requestBody = new { input = new[] { input }, model = _options.EmbeddingsModel };
+
+        var count = TokenizerHelper.TokenCount(input);
+        logger.LogInformation("Token is {Count}k", count / 1024);
 
         logger.LogInformation("Sending embedding request to OpenAI");
 
@@ -77,6 +85,6 @@ public class OpenAiService(HttpClient client, ILogger<OpenAiService> logger) : I
 
         var embeddingResponse = JsonSerializer.Deserialize<OpenAiEmbeddingResponse>(responseContent);
 
-        return string.Join(",", embeddingResponse?.Data.FirstOrDefault()?.Embedding ?? new List<double>());
+        return embeddingResponse?.Data.FirstOrDefault()?.Embedding ?? new List<double>();
     }
 }

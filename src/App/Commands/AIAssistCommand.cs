@@ -5,9 +5,9 @@ using Spectre.Console.Cli;
 namespace AIRefactorAssistant.Commands;
 
 // commands should be state-less after each run
-public class AIAssistCommand : Command<AIAssistCommand.AIAssistCommandSettings>
+public class AIAssistCommand : Command<AIAssistCommand.Settings>
 {
-    public sealed class AIAssistCommandSettings : CommandSettings
+    public sealed class Settings : CommandSettings
     {
         [CommandOption("-v|--version")]
         [Description("Display the version of application.")]
@@ -18,7 +18,7 @@ public class AIAssistCommand : Command<AIAssistCommand.AIAssistCommandSettings>
         public bool LLMLists { get; set; }
     }
 
-    public override int Execute(CommandContext context, AIAssistCommandSettings settings)
+    public override int Execute(CommandContext context, Settings settings)
     {
         if (settings.LLMLists)
         {

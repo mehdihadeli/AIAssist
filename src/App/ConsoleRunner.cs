@@ -1,7 +1,12 @@
 using AIRefactorAssistant.Commands;
+using AIRefactorAssistant.Options;
+using AIRefactorAssistant.Services;
 using BuildingBlocks.SpectreConsole;
+using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Hosting;
 using Microsoft.Extensions.Logging;
+using Microsoft.Extensions.Options;
+using Spectre.Console;
 using Spectre.Console.Cli;
 using Spectre.Console.Cli.Help;
 
@@ -11,8 +16,8 @@ public class ConsoleRunner(
     string[] args,
     IServiceProvider serviceProvider,
     IHostApplicationLifetime appLifetime,
+    IHostEnvironment hostEnvironment,
     ILogger<ConsoleRunner> logger
-//CodeRAGService llmManager
 )
 {
     public async Task ExecuteAsync()
@@ -25,13 +30,15 @@ public class ConsoleRunner(
 
         logger.LogInformation("Application started");
 
-        var registrar = new TypeRegistrar(serviceProvider);
+        var registrar = new CustomTypeRegistrar(serviceProvider);
         var app = new CommandApp<AIAssistCommand>(registrar).WithDescription(
             "Ai Code assistant to help in writing the code."
         );
 
         app.Configure(config =>
         {
+            // config.PropagateExceptions();
+
             config.SetApplicationName("aiassist");
 
             config.AddCommand<ChatAssistCommand>("chat").WithDescription("Chat command to send a message.");
@@ -89,12 +96,23 @@ public class ConsoleRunner(
         //         break;
         //     }
         // }
-        if (args.Length == 0)
-        {
-            args = ["-h"];
-        }
 
-        // args should be valid for working correctly
-        await app.RunAsync(args);
+
+        try
+        {
+            if (args.Length == 0)
+            {
+                args = ["-h"];
+            }
+            // args should be valid for working correctly
+            await app.RunAsync(args);
+        }
+        catch (Exception ex)
+        {
+            AnsiConsole.WriteException(
+                ex,
+                hostEnvironment.IsDevelopment() ? ExceptionFormats.ShortenEverything : ExceptionFormats.ShortenTypes
+            );
+        }
     }
 }

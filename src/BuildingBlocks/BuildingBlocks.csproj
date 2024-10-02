@@ -2,6 +2,7 @@
 
     <ItemGroup>
         <PackageReference Include="DotNetEnv" />
+        <PackageReference Include="Humanizer.Core" />
         <PackageReference Include="Microsoft.CodeAnalysis.CSharp" />
         <PackageReference Include="Microsoft.Extensions.DependencyInjection"/>
         <PackageReference Include="Microsoft.Extensions.Hosting" />
@@ -13,6 +14,7 @@
         <PackageReference Include="Serilog.Sinks.Seq"/>
         <PackageReference Include="Spectre.Console"/>
         <PackageReference Include="Spectre.Console.Cli" />
+        <PackageReference Include="Microsoft.ML.Tokenizers" />
     </ItemGroup>
     
 </Project>

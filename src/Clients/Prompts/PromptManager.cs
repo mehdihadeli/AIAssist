@@ -4,22 +4,25 @@ namespace Clients.Prompts;
 
 public static class PromptManager
 {
-    public static string RenderPromptTemplate(string promptTemplateName, object replacements)
+    public static string RenderPromptTemplate(string promptTemplateName, object? replacements)
     {
         string templateFilePath = Path.Combine(
             AppDomain.CurrentDomain.BaseDirectory,
-            "Prompts/Templates",
+            PromptConstants.PromptsTemplates,
             $"{promptTemplateName.ToLowerInvariant()}.template"
         );
 
         string templateContent = File.ReadAllText(templateFilePath);
+
+        if (replacements == null)
+            return templateContent;
 
         string processedTemplate = ReplacePlaceholders(templateContent, replacements);
 
         return processedTemplate;
     }
 
-    static string ReplacePlaceholders(string template, object replacements)
+    private static string ReplacePlaceholders(string template, object replacements)
     {
         // Use reflection to get properties of the anonymous type
         var replacementProperties = replacements.GetType().GetProperties();

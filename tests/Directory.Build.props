@@ -1,0 +1,27 @@
+﻿<?xml version="1.0" encoding="utf-8"?>
+<!-- https://docs.microsoft.com/en-us/visualstudio/msbuild/customize-your-build -->
+<Project>
+
+  <PropertyGroup>
+    <LangVersion>latest</LangVersion>
+    <TargetFramework>net8.0</TargetFramework>
+    <ImplicitUsings>enable</ImplicitUsings>
+    <Nullable>enable</Nullable>
+  </PropertyGroup>
+
+  <!-- https://endjin.com/blog/2022/01/raising-coding-standard-dotnet-analyzers -->
+  <PropertyGroup>
+    <AnalysisMode>Recommended</AnalysisMode>
+    <AnalysisModeGlobalization>None</AnalysisModeGlobalization>
+    <AnalysisModeSecurity>All</AnalysisModeSecurity>
+  </PropertyGroup>
+
+
+  <ItemGroup>
+    <PackageReference Include="Meziantou.Analyzer" Condition="$(MSBuildProjectExtension) == '.csproj'" PrivateAssets="all">
+      <PrivateAssets>all</PrivateAssets>
+      <IncludeAssets>runtime; build; native; contentfiles; analyzers; buildtransitive</IncludeAssets>
+    </PackageReference>
+  </ItemGroup>
+
+</Project>

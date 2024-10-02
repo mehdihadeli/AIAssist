@@ -8,7 +8,7 @@ using static TreeSitter.Bindings.TSBindingsParser;
 
 namespace TreeSitter.Bindings.Utilities;
 
-public static unsafe class CodeParser
+public unsafe class TreeSitterParser
 {
     public static string GetRootNodeExpression(ProgrammingLanguage language, string code)
     {

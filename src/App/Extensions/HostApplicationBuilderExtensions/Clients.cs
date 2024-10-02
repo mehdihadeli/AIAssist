@@ -1,5 +1,4 @@
 using System.Net.Http.Headers;
-using AIRefactorAssistant.Options;
 using Clients;
 using Clients.Anthropic;
 using Clients.Ollama;
@@ -20,6 +19,9 @@ public static partial class HostApplicationBuilderExtensions
             {
                 var options = sp.GetRequiredService<IOptions<OpenAIOptions>>().Value;
 
+                ArgumentException.ThrowIfNullOrEmpty(options.BaseAddress);
+                ArgumentException.ThrowIfNullOrEmpty(options.ApiKey);
+
                 client.BaseAddress = new Uri(options.BaseAddress);
                 client.Timeout = TimeSpan.FromMinutes(5);
                 client.DefaultRequestHeaders.Authorization = new AuthenticationHeaderValue("Bearer", options.ApiKey);
@@ -31,6 +33,9 @@ public static partial class HostApplicationBuilderExtensions
             (sp, client) =>
             {
                 var options = sp.GetRequiredService<IOptions<AnthropicOptions>>().Value;
+
+                ArgumentException.ThrowIfNullOrEmpty(options.BaseAddress);
+                ArgumentException.ThrowIfNullOrEmpty(options.ApiKey);
 
                 client.BaseAddress = new Uri(options.BaseAddress);
                 client.Timeout = TimeSpan.FromMinutes(5);
@@ -44,6 +49,8 @@ public static partial class HostApplicationBuilderExtensions
             (sp, client) =>
             {
                 var options = sp.GetRequiredService<IOptions<OllamaOptions>>().Value;
+
+                ArgumentException.ThrowIfNullOrEmpty(options.BaseAddress);
 
                 client.Timeout = TimeSpan.FromMinutes(5);
                 client.BaseAddress = new Uri(options.BaseAddress);

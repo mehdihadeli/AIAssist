@@ -45,14 +45,14 @@ public class CodeAssistCommand(CodeRAGService codeRagService, IOptions<AppOption
 
         var path = string.IsNullOrEmpty(settings.ContextPath) ? _options.RootPath : settings.ContextPath;
 
+        await codeRagService.InitializeNewSession(path);
+
         // Run in a loop until Ctrl+C is pressed
         while (_running)
         {
             var userRequest = AnsiConsole.Prompt(
                 new TextPrompt<string>("Please enter your request to apply on your code base:").PromptStyle("yellow")
             );
-
-            string response = string.Empty;
 
             // Show a spinner while processing the request
             await AnsiConsole
@@ -65,11 +65,10 @@ public class CodeAssistCommand(CodeRAGService codeRagService, IOptions<AppOption
                         ctx.SpinnerStyle(Style.Parse("green"));
 
                         // Initialize embeddings with code from the specified path
-                        response = await codeRagService.ProcessUserRequestAsync(path, userRequest);
+                        var codeChanges = await codeRagService.ProcessUserRequestAsync(userRequest);
+                        codeRagService.ApplyChangesToCodeBase(codeChanges);
                     }
                 );
-
-            // Replacing mechanism!!
 
             // Output result after processing
             AnsiConsole.MarkupLine($"[green]Request '{userRequest}' processed successfully![/]");
