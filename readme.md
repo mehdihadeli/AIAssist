@@ -12,7 +12,7 @@ alias ollama="docker exec -it ollama ollama"
 ``` bash
 dotnet pack -c Release
 # go to release folder
-dotnet tool install --global --add-source ./ AIRefactorAssistant --version 1.0.0
+dotnet tool install --global --add-source ./ AIAssistant --version 1.0.0
 
 # Change directory into a git repo
 cd /to/your/git/repo

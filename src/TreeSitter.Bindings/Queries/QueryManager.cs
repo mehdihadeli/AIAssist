@@ -1,5 +1,7 @@
+using System.Globalization;
+using BuildingBlocks.Types;
+using BuildingBlocks.Utils;
 using Humanizer;
-using TreeSitter.Bindings.Utilities;
 
 namespace TreeSitter.Bindings.Queries;
 
@@ -7,14 +9,13 @@ public static class QueryManager
 {
     public static string GetDefaultLanguageQuery(ProgrammingLanguage language)
     {
-        var languageName = language.Humanize().Transform(To.LowerCase);
-        string scmQueryFilePath = Path.Combine(
-            AppDomain.CurrentDomain.BaseDirectory,
-            QueryConstants.QueriesDefault,
-            $"{languageName}.scm"
-        );
+        var languageName = language.Humanize().Dehumanize().ToLower(CultureInfo.InvariantCulture);
 
-        string scmQueryContent = File.ReadAllText(scmQueryFilePath);
+        string scmQueryContent = FilesUtilities.RenderTemplate(
+            QueryConstants.QueriesDefault,
+            $"{languageName}.scm",
+            null
+        );
 
         return scmQueryContent;
     }

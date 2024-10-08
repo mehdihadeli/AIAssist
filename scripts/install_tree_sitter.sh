@@ -24,7 +24,8 @@ OS=$(uname -s)
 # Define paths for the source files and output binary
 lib_src="tree-sitter/tree-sitter/lib/src/lib.c"
 treesitter_bin_output="tree-sitter/bins"
-test_bin_path="tests/TreeSitter.Bindings.UnitTests/bin/${mode}/$dotnet_version"
+test_bin_path="tests/UnitTests/TreeSitter.Bindings.UnitTests/bin/${mode}/$dotnet_version"
+ai_assist_integration_test_bin_path="tests/IntegrationTests/AIAssistant.IntegrationTests/bin/${mode}/$dotnet_version"
 app_bin_path="src/App/bin/${mode}/$dotnet_version"
     
 # Create the directory if it doesn't exist
@@ -36,7 +37,7 @@ if [[ "$OS" == "Linux" ]]; then
     echo "Detected Linux OS. Compiling for Linux..."
     
     # Array of output files
-    linux_tree_sitter_output_files=("${treesitter_bin_output}/tree-sitter.so" "${app_bin_path}/tree-sitter.so" "${test_bin_path}/tree-sitter.so")
+    linux_tree_sitter_output_files=("${treesitter_bin_output}/tree-sitter.so" "${app_bin_path}/tree-sitter.so" "${test_bin_path}/tree-sitter.so" "${ai_assist_integration_test_bin_path}/tree-sitter.so")
 
     # Iterate over the arrays
     for i in "${!linux_tree_sitter_output_files[@]}"; do
@@ -54,7 +55,7 @@ elif [[ "$OS" == "MINGW"* || "$OS" == "MSYS"* ]]; then
     echo "Detected Windows OS. Compiling for Windows..."
     
     # Array of output files
-    windows_tree_sitter_output_files=("${treesitter_bin_output}/tree-sitter.dll" "${app_bin_path}/tree-sitter.dll" "${test_bin_path}/tree-sitter.dll")
+    windows_tree_sitter_output_files=("${treesitter_bin_output}/tree-sitter.dll" "${app_bin_path}/tree-sitter.dll" "${test_bin_path}/tree-sitter.dll" "${ai_assist_integration_test_bin_path}/tree-sitter.dll")
 
     # Iterate over the arrays
     for i in "${!windows_tree_sitter_output_files[@]}"; do
@@ -143,7 +144,7 @@ for repo in "${repos[@]}"; do
         echo "Detected Linux OS. Compiling for Linux..."
 
         # Array of output files
-        linux_grammar_output_files=("${grammar_bin_output}/${repo_name}.so" "${app_bin_path}/${repo_name}.so" "${test_bin_path}/${repo_name}.so")
+        linux_grammar_output_files=("${grammar_bin_output}/${repo_name}.so" "${app_bin_path}/${repo_name}.so" "${test_bin_path}/${repo_name}.so" "${ai_assist_integration_test_bin_path}/${repo_name}.so")
 
         # Iterate over the arrays
         for i in "${!linux_grammar_output_files[@]}"; do
@@ -160,7 +161,7 @@ for repo in "${repos[@]}"; do
         echo "Detected Windows OS. Compiling for Windows..."
 
         # Array of output files
-        windows_grammar_output_files=("${grammar_bin_output}/${repo_name}.dll" "${app_bin_path}/${repo_name}.dll" "${test_bin_path}/${repo_name}.dll")
+        windows_grammar_output_files=("${grammar_bin_output}/${repo_name}.dll" "${app_bin_path}/${repo_name}.dll" "${test_bin_path}/${repo_name}.dll" "${ai_assist_integration_test_bin_path}/${repo_name}.dll")
 
         # Iterate over the arrays
         for i in "${!windows_grammar_output_files[@]}"; do

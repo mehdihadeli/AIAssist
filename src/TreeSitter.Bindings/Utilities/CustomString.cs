@@ -1,3 +1,4 @@
+using System.Runtime.InteropServices;
 using System.Text;
 
 namespace TreeSitter.Bindings.Utilities;
@@ -27,6 +28,25 @@ public unsafe class GeneratedCString
         }
     }
 
+    public GeneratedCString(sbyte* sbytePointer)
+    {
+        if (sbytePointer == null)
+        {
+            return;
+        }
+
+        // Get the length of the string (assuming it's null-terminated)
+        int length = 0;
+        while (System.Runtime.InteropServices.Marshal.ReadByte((IntPtr)sbytePointer, length) != 0)
+        {
+            length++;
+        }
+
+        // Convert byte array to string using the desired encoding
+        Value = sbytePointer;
+        Length = length;
+    }
+
     // Destructor to free allocated memory
     ~GeneratedCString()
     {
@@ -38,7 +58,9 @@ public unsafe class GeneratedCString
     public static implicit operator sbyte*(in GeneratedCString value) => value.Value;
 
     // Implicit conversion from string to GeneratedCString
-    public static implicit operator GeneratedCString(string value) => new GeneratedCString(value);
+    public static implicit operator string(GeneratedCString value) => value.ToString();
+
+    public static implicit operator GeneratedCString(sbyte* value) => new(value);
 
     // Override ToString to return the internal string representation
     public override string ToString()

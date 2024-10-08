@@ -1,0 +1,51 @@
+<Project Sdk="Microsoft.NET.Sdk">
+
+  <ItemGroup>
+    <PackageReference Include="coverlet.collector"/>
+    <PackageReference Include="FluentAssertions" />
+    <PackageReference Include="Microsoft.NET.Test.Sdk"/>
+    <PackageReference Include="NSubstitute"/>
+    <PackageReference Include="xunit"/>
+    <PackageReference Include="xunit.runner.visualstudio"/>
+  </ItemGroup>
+
+  <ItemGroup>
+    <Using Include="Xunit" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <ProjectReference Include="..\..\..\src\AIAssistant\AIAssistant.csproj" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <Compile Remove="Calculator\Calculator.csproj" />
+    <Content Include="Calculator\Calculator.csproj">
+      <CopyToOutputDirectory>Always</CopyToOutputDirectory>
+    </Content>
+    <Compile Remove="Calculator\Models\Add.cs" />
+    <Content Include="Calculator\Models\Add.cs">
+      <CopyToOutputDirectory>Always</CopyToOutputDirectory>
+    </Content>
+    <Compile Remove="Calculator\Models\Divide.cs" />
+    <Content Include="Calculator\Models\Divide.cs">
+      <CopyToOutputDirectory>Always</CopyToOutputDirectory>
+    </Content>
+    <Compile Remove="Calculator\Models\Multiply.cs" />
+    <Content Include="Calculator\Models\Multiply.cs">
+      <CopyToOutputDirectory>Always</CopyToOutputDirectory>
+    </Content>
+    <Compile Remove="Calculator\Models\Subtract.cs" />
+    <Content Include="Calculator\Models\Subtract.cs">
+      <CopyToOutputDirectory>Always</CopyToOutputDirectory>
+    </Content>
+    <Compile Remove="Calculator\IOperation.cs" />
+    <Content Include="Calculator\IOperation.cs">
+      <CopyToOutputDirectory>Always</CopyToOutputDirectory>
+    </Content>
+    <Compile Remove="Calculator\Program.cs" />
+    <Content Include="Calculator\Program.cs">
+      <CopyToOutputDirectory>Always</CopyToOutputDirectory>
+    </Content>
+  </ItemGroup>
+  
+</Project>

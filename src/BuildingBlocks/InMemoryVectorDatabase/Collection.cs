@@ -26,22 +26,21 @@ public class Collection(string name)
     /// <summary>
     /// Query documents by text similarity with optional metadata filter
     /// </summary>
-    /// <param name="model"></param>
     /// <param name="queryText"></param>
     /// <param name="nResults"></param>
     /// <param name="metadataFilter"></param>
     /// <param name="threshold"></param>
     /// <returns></returns>
     public IList<Document> QueryDocuments(
-        string model,
         string queryText,
-        int nResults = 1,
         IDictionary<string, string>? metadataFilter = null,
+        int nResults = 0,
         double threshold = 0.3
     )
     {
-        var queryEmbedding = TokenizerHelper.CreateVectorTokens(model, queryText);
-        var results = _documents
+        var queryEmbedding = TokenizerHelper.GPT4VectorTokens(queryText);
+
+        var query = _documents
             .Values.Select(doc => new
             {
                 Document = doc,
@@ -49,12 +48,14 @@ public class Collection(string name)
             })
             .Where(doc => metadataFilter == null || MetadataMatches(doc.Document.Metadata, metadataFilter))
             .Where(x => x.SimilarityScore > threshold)
-            .OrderByDescending(result => result.SimilarityScore)
-            .Take(nResults)
-            .Select(result => result.Document)
-            .ToList();
+            .OrderByDescending(result => result.SimilarityScore);
 
-        return results;
+        var result =
+            nResults > 0
+                ? query.Take(nResults).Select(result => result.Document).ToList()
+                : query.Select(result => result.Document).ToList();
+
+        return result;
     }
 
     /// <summary>
@@ -67,12 +68,12 @@ public class Collection(string name)
     /// <returns></returns>
     public IList<Document> QueryDocuments(
         IList<double> queryEmbedding,
-        int nResults = 1,
         IDictionary<string, string>? metadataFilter = null,
+        int nResults = 0,
         double threshold = 0.3
     )
     {
-        var results = _documents
+        var query = _documents
             .Values.Select(doc => new
             {
                 Document = doc,
@@ -80,12 +81,14 @@ public class Collection(string name)
             })
             .Where(doc => metadataFilter == null || MetadataMatches(doc.Document.Metadata, metadataFilter))
             .Where(x => x.SimilarityScore > threshold)
-            .OrderByDescending(result => result.SimilarityScore)
-            .Take(nResults)
-            .Select(result => result.Document)
-            .ToList();
+            .OrderByDescending(result => result.SimilarityScore);
 
-        return results;
+        var result =
+            nResults > 0
+                ? query.Take(nResults).Select(result => result.Document).ToList()
+                : query.Select(result => result.Document).ToList();
+
+        return result;
     }
 
     // Check if the document metadata matches the given filter

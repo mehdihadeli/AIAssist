@@ -211,6 +211,8 @@ dotnet_diagnostic.ca1810.severity = Suggestion
 # CA1725: Parameter names should match base declaration
 dotnet_diagnostic.ca1725.severity = Suggestion
 dotnet_diagnostic.ca1822.severity = Suggestion
+# CA1707: Identifiers should not contain underscores
+dotnet_diagnostic.CA1707.severity = Suggestion
 
 # https://csharpier.com/docs/IntegratingWithLinters#code-analysis-rules
 

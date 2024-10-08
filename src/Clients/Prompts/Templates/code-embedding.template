@@ -1,6 +1,0 @@
-Id: {{id}}
-Classes: {{classesName}}
-Methods: {{methodsName}}
-RelativePathCodePath: {{relativePath}}
-Code: 
-{{code}}

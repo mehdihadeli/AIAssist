@@ -1,0 +1,53 @@
+﻿<Project Sdk="Microsoft.NET.Sdk">
+
+    <!-- For installing package with dotnet tool install-->
+    <!-- dotnet pack -c Release-->
+    <!-- dotnet tool install &#45;&#45;global &#45;&#45;add-source ./ AIRefactorAssistant &#45;&#45;version 1.0.0-->
+    <PropertyGroup>
+        <!--        <PackAsTool>true</PackAsTool>-->
+        <!--        <ToolCommandName>aiassist</ToolCommandName>-->
+        <AssemblyName>aiassist</AssemblyName>
+        <PackageId>AIAssist</PackageId>
+        <Version>1.0.0</Version>
+        <OutputType>Exe</OutputType>
+        <RootNamespace>AIAssistant</RootNamespace>
+    </PropertyGroup>
+
+    <ItemGroup>
+        <ProjectReference Include="..\BuildingBlocks\BuildingBlocks.csproj"/>
+        <ProjectReference Include="..\Clients\Clients.csproj"/>
+        <ProjectReference Include="..\TreeSitter.Bindings\TreeSitter.Bindings.csproj"/>
+    </ItemGroup>
+
+    <ItemGroup>
+        <InternalsVisibleTo Include="AIAssistant.IntegrationTests"/>
+    </ItemGroup>
+
+    <ItemGroup>
+        <None Remove="Prompts\Templates\code-modification.template"/>
+        <None Remove="Prompts\Templates\code-block.template"/>
+        <None Remove="Prompts\Templates\code-assistant.template"/>
+        <None Remove="Prompts\Templates\code-assistant-simple.template"/>
+        <None Remove="Prompts\Templates\code-embedding.template"/>
+    </ItemGroup>
+
+    <ItemGroup>
+        <Content Include="..\..\.gitignore">
+            <Link>.gitignore</Link>
+            <CopyToOutputDirectory>Always</CopyToOutputDirectory>
+        </Content>
+        <Content Include="Prompts\Templates\code-assistant-simple.template">
+            <CopyToOutputDirectory>Always</CopyToOutputDirectory>
+        </Content>
+        <Content Include="Prompts\Templates\code-assistant.template">
+            <CopyToOutputDirectory>Always</CopyToOutputDirectory>
+        </Content>
+        <Content Include="Prompts\Templates\code-block.template">
+            <CopyToOutputDirectory>Always</CopyToOutputDirectory>
+        </Content>
+        <Content Include="Prompts\Templates\code-embedding.template">
+            <CopyToOutputDirectory>Always</CopyToOutputDirectory>
+        </Content>
+    </ItemGroup>
+
+</Project>

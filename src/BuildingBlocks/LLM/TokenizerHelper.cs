@@ -2,25 +2,51 @@ using Microsoft.ML.Tokenizers;
 
 namespace BuildingBlocks.LLM;
 
+// ref: https://learn.microsoft.com/en-us/dotnet/machine-learning/whats-new/overview
+// https://github.com/dotnet/machinelearning/blob/4d5317e8090e158dc7c3bc6c435926ccf1cbd8e2/src/Microsoft.ML.Tokenizers/Model/Tiktoken.cs#L683-L734
+// https://github.com/dotnet/machinelearning/blob/main/docs/code/microsoft-ml-tokenizers-migration-guide.md
 public static class TokenizerHelper
 {
-    public static int TokenCount(string model, string prompt)
+    public static int GPT4TokenCount(string prompt)
     {
         // https://learn.microsoft.com/en-us/dotnet/machine-learning/whats-new/overview
-        Tokenizer tokenizer = TiktokenTokenizer.CreateForModel(model);
+        Tokenizer tokenizer = TiktokenTokenizer.CreateForModel("gpt-4");
+
         return tokenizer.CountTokens(prompt);
     }
 
-    public static double[] CreateVectorTokens(string model, string prompt)
+    public static double[] GPT4VectorTokens(string prompt)
     {
-        var tokens = TiktokenTokenizer
-            .CreateForModel(model)
-            .EncodeToTokens(text: prompt, out string _, considerNormalization: false);
+        // https://learn.microsoft.com/en-us/dotnet/machine-learning/whats-new/overview#additional-tokenizer-support
+        Tokenizer tokenizer = TiktokenTokenizer.CreateForModel("gpt-4");
 
-        // Convert tokens to a double[] vector representation
-        double[] tokenIds = tokens.Select(t => (double)t.Id).ToArray();
+        IReadOnlyList<int> encodedIds = tokenizer.EncodeToIds(prompt);
 
-        return tokenIds;
+        return encodedIds.Select(x => (double)x).ToArray();
+    }
+
+    public static async Task<int> PhiTokenCount(string prompt)
+    {
+        // https://learn.microsoft.com/en-us/dotnet/machine-learning/whats-new/overview#additional-tokenizer-support
+        string modelUrl =
+            "https://huggingface.co/microsoft/Phi-3.5-mini-instruct/resolve/main/tokenizer.model?download=true";
+        await using Stream remoteStream = await DownloadFileAsStreamAsync(modelUrl);
+        Tokenizer llamaTokenizer = LlamaTokenizer.Create(remoteStream);
+
+        return llamaTokenizer.CountTokens(prompt);
+    }
+
+    public static async Task<double[]> PhiVectorTokens(string prompt)
+    {
+        // https://learn.microsoft.com/en-us/dotnet/machine-learning/whats-new/overview#additional-tokenizer-support
+        string modelUrl =
+            "https://huggingface.co/microsoft/Phi-3.5-mini-instruct/resolve/main/tokenizer.model?download=true";
+        await using Stream remoteStream = await DownloadFileAsStreamAsync(modelUrl);
+        Tokenizer llamaTokenizer = LlamaTokenizer.Create(remoteStream);
+
+        IReadOnlyList<int> encodedIds = llamaTokenizer.EncodeToIds(prompt);
+
+        return encodedIds.Select(x => (double)x).ToArray();
     }
 
     public static int TokenCount(string text)
@@ -44,6 +70,23 @@ public static class TokenizerHelper
         {
             // A simple tokenization method based on spaces, but you can replace this with a more complex tokenizer
             return input.Split(new[] { ' ', '\t', '\n', '\r' }, StringSplitOptions.RemoveEmptyEntries).ToList();
+        }
+    }
+
+    private static async Task<Stream> DownloadFileAsStreamAsync(string url)
+    {
+        using HttpClient client = new HttpClient();
+
+        try
+        {
+            // Get the file as a stream
+            Stream stream = await client.GetStreamAsync(url);
+            return stream;
+        }
+        catch (HttpRequestException e)
+        {
+            Console.WriteLine("Error downloading file: " + e.Message);
+            throw;
         }
     }
 }

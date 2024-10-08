@@ -1,12 +1,13 @@
+using Microsoft.Extensions.Hosting;
 using Spectre.Console.Cli;
 
 namespace BuildingBlocks.SpectreConsole;
 
-public sealed class CustomTypeRegistrar(IServiceProvider serviceProvider) : ITypeRegistrar
+public sealed class CustomTypeRegistrar(IHost host) : ITypeRegistrar
 {
     public ITypeResolver Build()
     {
-        return new TypeResolver(serviceProvider);
+        return new TypeResolver(host.Services);
     }
 
     public void Register(Type service, Type implementation) { }

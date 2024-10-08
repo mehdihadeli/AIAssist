@@ -2,26 +2,7 @@
 
   <ItemGroup>
     <PackageReference Include="Microsoft.Extensions.Logging.Abstractions" />
-  </ItemGroup>
-
-  <ItemGroup>
-    <None Remove="Prompts\Templates\code-modification.template" />
-    <None Remove="Prompts\Templates\code-block.template" />
-    <Content Include="Prompts\Templates\code-block.template">
-      <CopyToOutputDirectory>Always</CopyToOutputDirectory>
-    </Content>
-    <None Remove="Prompts\Templates\code-assistant.template" />
-    <Content Include="Prompts\Templates\code-assistant.template">
-      <CopyToOutputDirectory>Always</CopyToOutputDirectory>
-    </Content>
-    <None Remove="Prompts\Templates\code-assistant-simple.template" />
-    <Content Include="Prompts\Templates\code-assistant-simple.template">
-      <CopyToOutputDirectory>Always</CopyToOutputDirectory>
-    </Content>
-    <None Remove="Prompts\Templates\code-embedding.template" />
-    <Content Include="Prompts\Templates\code-embedding.template">
-      <CopyToOutputDirectory>Always</CopyToOutputDirectory>
-    </Content>
+    <PackageReference Include="Polly" />
   </ItemGroup>
 
   <ItemGroup>

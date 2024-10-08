@@ -28,7 +28,13 @@ x86/
 bld/
 [Bb]in/
 [Bb]ins/
+bin/
+Bin/
 [Oo]bj/
+Obj/
+obj/
+log/
+logs/
 [Ll]og/
 [Ll]ogs/
 
@@ -373,9 +379,17 @@ coverage.info
 *.vsix
 
 .env
+env
 
 # Ignore all .dll files
 *.dll
 
 # Ignore all .so files
 *.so
+
+.git/
+
+temp/
+cache/
+
+.vscode/
