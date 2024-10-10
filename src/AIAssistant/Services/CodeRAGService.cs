@@ -28,7 +28,7 @@ public class CodeRAGService(
         var relatedEmbeddings = await embeddingService.GetRelatedEmbeddings(userQuery, chatSession.SessionId);
 
         // Prepare context from relevant code snippets
-        var codeContext = embeddingService.PrepareLLmContextCodeEmbeddings(relatedEmbeddings);
+        var codeContext = embeddingService.CreateLLMContext(relatedEmbeddings);
 
         // // Generate a response from the language model (e.g., OpenAI or Llama)
         // var completion = await illmServiceManager.GetCompletionAsync(chatSession, userQuery, codeContext);

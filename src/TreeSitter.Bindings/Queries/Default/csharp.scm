@@ -1,50 +1,57 @@
-; Class declarations
-(class_declaration name: (identifier) @class.name) @definition.class
-
-; Base class references in class declarations
-(class_declaration (base_list (_) @base_class.name)) @reference.base_class
-
-; Interface declarations
-(interface_declaration name: (identifier) @interface.name) @definition.interface
-
-; Base interface references in interface declarations
-(interface_declaration (base_list (_) @base_interface.name)) @reference.base_interface
-
-; Method declarations
-(method_declaration name: (identifier) @method.name) @definition.method
-
-; AutoProperty declarations
-(property_declaration name: (identifier) @auto_property.name) @definition.auto_property
-
-; Object creation (instantiation)
-(object_creation_expression type: (identifier) @instantiated_class.name) @reference.instantiated_class
-
-; Type parameter constraints clause
-(type_parameter_constraints_clause (identifier) @type_parameter_constraints_clause.name) @reference.type_parameter_constraints_clause
-
-; Type parameter constraints (specific constraint type)
-(type_parameter_constraint (type type: (identifier) @type_parameter_constraint.name)) @reference.type_parameter_constraint
-
-; Variable declarations (referencing a type)
-(variable_declaration type: (identifier) @variable_type.name) @reference.variable_type
-
-; Method invocations (function calls)
-(invocation_expression function: (member_access_expression name: (identifier) @called_method.name)) @reference.called_method
-
-; Namespace declarations
-(namespace_declaration name: (identifier) @namespace.name) @definition.namespace
-
 ; File-scoped Namespace declaration
-(file_scoped_namespace_declaration (identifier) @file_scoped_namespace.name) @definition.file_scoped_namespace
+(file_scoped_namespace_declaration (identifier) @name.file_scope_namespace) @definition.file_scope_namespace
  
+; Namespace declarations
+(namespace_declaration name: (identifier) @name.namespace) @definition.namespace
+
 ; Namespace references
-(namespace_declaration name: (identifier) @module.name) @reference.module
+(namespace_declaration name: (identifier) @name.module) @reference.module
 
 ; Enum declarations
-(enum_declaration name: (identifier) @enum.name) @definition.enum
+(enum_declaration name: (identifier) @name.enum) @definition.enum
+
+; Class declarations
+(class_declaration name: (identifier) @name.class) @definition.class
 
 ; Struct declarations
-(struct_declaration name: (identifier) @struct.name) @definition.struct
+(struct_declaration name: (identifier) @name.struct) @definition.struct
 
 ; Record declarations
-(record_declaration name: (identifier) @record.name) @definition.record
+(record_declaration name: (identifier) @name.record) @definition.record
+
+; Interface declarations
+(interface_declaration name: (identifier) @name.interface) @definition.interface
+
+; Method declaration with return type
+(method_declaration
+  (modifier) @modifier.method 
+  returns: (type) @return.method 
+  name: (identifier) @name.method
+  parameters: (parameter_list
+                (parameter
+                  type: (type) @parameter.type
+                  name: (identifier) @parameter.name))
+) @definition.method
+
+; Method declaration without parameters and with return type
+(method_declaration
+  (modifier) @modifier.method 
+  returns: (type) @return.method  
+  name: (identifier) @name.method
+) @definition.method
+
+; Property declarations
+(property_declaration 
+  (modifier) @modifier.property 
+   type: (predefined_type) @type.property
+   name: (identifier) @name.property
+)  @definition.property
+
+; Field declarations
+(field_declaration
+    (variable_declaration
+      type: (predefined_type) @type.field
+      (variable_declarator
+        name: (identifier) @name.field ))
+) @definition.field
+       

@@ -12,7 +12,20 @@ public static class QueryManager
         var languageName = language.Humanize().Dehumanize().ToLower(CultureInfo.InvariantCulture);
 
         string scmQueryContent = FilesUtilities.RenderTemplate(
-            QueryConstants.QueriesDefault,
+            QueryConstants.DefaultQueries,
+            $"{languageName}.scm",
+            null
+        );
+
+        return scmQueryContent;
+    }
+
+    public static string GetSimpleLanguageQuery(ProgrammingLanguage language)
+    {
+        var languageName = language.Humanize().Dehumanize().ToLower(CultureInfo.InvariantCulture);
+
+        string scmQueryContent = FilesUtilities.RenderTemplate(
+            QueryConstants.SimpleQueries,
             $"{languageName}.scm",
             null
         );

@@ -128,7 +128,7 @@ public static class PathExtensions
     public static ProgrammingLanguage? GetLanguageFromFilePath(this string filePath)
     {
         // Extract the file extension from the provided file path
-        string? extension = Path.GetExtension(filePath).ToLowerInvariant();
+        string extension = Path.GetExtension(filePath).ToLowerInvariant();
 
         // Map file extensions to ProgrammingLanguage enum values
         return extension switch

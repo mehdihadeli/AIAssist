@@ -6,257 +6,247 @@ using Xunit;
 
 public class FilesUtilitiesTests : IAsyncLifetime
 {
-    private string _testDirectory = default!;
-    private string _originalCurrentDirectory = default!;
+    private string _appWorkingDir = default!;
+    private string _originalWorkingDir = default!;
+    private string _binDir = default!;
+    private string _objDir = default!;
 
-    public Task InitializeAsync()
+    public async Task InitializeAsync()
     {
-        // Store the original current directory
-        _originalCurrentDirectory = Environment.CurrentDirectory;
+        _originalWorkingDir = Directory.GetCurrentDirectory();
 
-        // Create a test directory for all tests
-        _testDirectory = Path.Combine(_originalCurrentDirectory, "TestFiles");
+        // Save the original working directory
+        _appWorkingDir = Path.Combine(Directory.GetCurrentDirectory(), "TestData/Calculator");
 
-        File.Copy(Path.Combine(_originalCurrentDirectory, ".gitignore"), $"/{_testDirectory}");
+        // Change the working directory to the new test directory
+        Directory.SetCurrentDirectory(_appWorkingDir);
 
-        Directory.CreateDirectory(_testDirectory);
+        _binDir = Path.Combine(_appWorkingDir, "bin");
+        _objDir = Path.Combine(_appWorkingDir, "obj");
 
-        // Set the test directory as the current directory
-        Environment.CurrentDirectory = _testDirectory;
+        if (!Directory.Exists(_binDir))
+        {
+            Directory.CreateDirectory(_binDir);
+        }
 
-        return Task.CompletedTask;
+        if (!Directory.Exists(_objDir))
+        {
+            Directory.CreateDirectory(_objDir);
+        }
+
+        await Task.CompletedTask;
     }
 
     public Task DisposeAsync()
     {
-        // Reset the current directory
-        Environment.CurrentDirectory = _originalCurrentDirectory;
-
-        // Delete the test directory and its contents
-        if (Directory.Exists(_testDirectory))
-        {
-            Directory.Delete(_testDirectory, true);
-        }
-
+        Directory.SetCurrentDirectory(_originalWorkingDir);
         return Task.CompletedTask;
     }
 
-    [Fact]
-    public void Test_IgnoredBinDirectory()
+    [Theory]
+    [InlineData("bin/test.txt", true)] // Should be ignored
+    [InlineData("bin", true)] // Should be ignored
+    [InlineData("obj/test.txt", true)] // Should be ignored
+    [InlineData("src/main.cs", false)] // Should not be ignored
+    [InlineData("docs/readme.md", false)] // Should not be ignored
+    public void Test_IgnoredDirectoriesAndFiles(string path, bool expected)
     {
-        // Arrange: simulate a file in the bin directory
-        string binFolderPath = Path.Combine("bin", "somefile.txt"); // Use relative path
-        Directory.CreateDirectory(Path.Combine("bin"));
-        File.Create(binFolderPath).Dispose(); // Create the file
-
         // Act
-        bool isIgnored = FilesUtilities.IsIgnored(binFolderPath);
+        bool isIgnored = FilesUtilities.IsIgnored(path);
 
         // Assert
-        isIgnored.Should().BeTrue();
+        isIgnored.Should().Be(expected);
     }
 
-    [Fact]
-    public void Test_IgnoredBinWithDifferentCase()
+    [Theory]
+    [InlineData("bin", true)] // Normal case
+    [InlineData("BIN", true)] // Uppercase
+    [InlineData("Bin", true)] // Mixed case
+    [InlineData("BiN/test.dll", true)] // Mixed case with file
+    [InlineData("bin/test.dll", true)] // Normal case with file
+    [InlineData("src/main.cs", false)] // Source directory, not ignored
+    public void Test_IgnoredBinWithDifferentCase(string path, bool expected)
     {
-        // Arrange: simulate a file in the Bin directory
-        string binFolderPath = Path.Combine("Bin", "somefile.txt"); // Use relative path
-        Directory.CreateDirectory(Path.Combine("Bin"));
-        File.Create(binFolderPath).Dispose(); // Create the file
-
         // Act
-        bool isIgnored = FilesUtilities.IsIgnored(binFolderPath);
+        bool isIgnored = FilesUtilities.IsIgnored(path);
 
         // Assert
-        isIgnored.Should().BeTrue();
+        isIgnored.Should().Be(expected);
     }
 
-    [Fact]
-    public void Test_IgnoredBinPatternFromGitignore()
+    [Theory]
+    [InlineData("obj", true)] // The obj directory itself should be ignored
+    [InlineData("obj/Debug/test.dll", true)] // Files inside obj directory should be ignored
+    [InlineData("obj/Release/test.dll", true)] // Files inside obj directory should be ignored
+    [InlineData("src/main.cs", false)] // Should not be ignored (valid source folder)
+    [InlineData("docs/readme.md", false)] // Should not be ignored (documentation folder)
+    public void Test_IgnoredObjDirectory(string path, bool expected)
     {
-        // Arrange: simulate a file in the bin directory
-        string binFolderPath = Path.Combine("bin", "somefile.txt"); // Use relative path
-        Directory.CreateDirectory(Path.Combine("bin"));
-        File.Create(binFolderPath).Dispose(); // Create the file
-
         // Act
-        bool isIgnored = FilesUtilities.IsIgnored(binFolderPath);
+        bool isIgnored = FilesUtilities.IsIgnored(path);
 
         // Assert
-        isIgnored.Should().BeTrue();
-
-        // Test a file in the Bin directory (different case)
-        string binFolderPathDifferentCase = Path.Combine("Bin", "somefile.txt"); // Use relative path
-        Directory.CreateDirectory(Path.Combine("Bin"));
-        File.Create(binFolderPathDifferentCase).Dispose(); // Create the file
-
-        // Act
-        bool isIgnoredDifferentCase = FilesUtilities.IsIgnored(binFolderPathDifferentCase);
-
-        // Assert
-        isIgnoredDifferentCase.Should().BeTrue();
+        isIgnored.Should().Be(expected);
     }
 
-    [Fact]
-    public void Test_NotIgnoredFileOutsideBinDirectory()
+    [Theory]
+    [InlineData("obj", true)] // Normal case
+    [InlineData("OBJ", true)] // Uppercase
+    [InlineData("Obj", true)] // Mixed case
+    [InlineData("oBj/Debug/test.dll", true)] // Mixed case with a file path inside obj
+    [InlineData("obj/test.dll", true)] // Normal case with a file inside obj
+    [InlineData("src/main.cs", false)] // Source directory, should not be ignored
+    [InlineData("docs/readme.md", false)] // Documentation file, should not be ignored
+    public void Test_IgnoredObjWithDifferentCase(string path, bool expected)
     {
-        // Arrange: simulate a file outside the bin directory
-        string filePath = Path.Combine("src", "somefile.txt"); // Use relative path
-        Directory.CreateDirectory(Path.Combine("src"));
-        File.Create(filePath).Dispose(); // Create the file
-
         // Act
-        bool isIgnored = FilesUtilities.IsIgnored(filePath);
+        bool isIgnored = FilesUtilities.IsIgnored(path);
 
         // Assert
-        isIgnored.Should().BeFalse();
+        isIgnored.Should().Be(expected);
     }
 
-    [Fact]
-    public void Test_IgnoredObjDirectory()
+    [Theory]
+    [InlineData("bin", true)] // Root bin directory
+    [InlineData("bin/", true)] // Explicit directory pattern with a trailing slash
+    [InlineData("bin/test.dll", true)] // File inside the bin directory
+    [InlineData("bin/Debug/test.dll", true)] // File inside a subdirectory of bin
+    [InlineData("src/bin/test.dll", false)] // A bin directory inside another path, should not be ignored
+    [InlineData("binExtra/test.dll", false)] // Similar name but different, should not be ignored
+    public void Test_IgnoredBinPatternFromGitignore(string path, bool expected)
     {
-        // Arrange: simulate a file in the obj directory
-        string objFolderPath = Path.Combine("obj", "somefile.txt"); // Use relative path
-        Directory.CreateDirectory(Path.Combine("obj"));
-        File.Create(objFolderPath).Dispose(); // Create the file
-
         // Act
-        bool isIgnored = FilesUtilities.IsIgnored(objFolderPath);
+        bool isIgnored = FilesUtilities.IsIgnored(path);
 
         // Assert
-        isIgnored.Should().BeTrue();
+        isIgnored.Should().Be(expected);
     }
 
-    [Fact]
-    public void Test_IgnoredObjWithDifferentCase()
+    [Theory]
+    [InlineData("src/main.cs", false)] // Source file outside of bin
+    [InlineData("docs/readme.md", false)] // Documentation file outside of bin
+    [InlineData("assets/image.png", false)] // Image file outside of bin
+    [InlineData("config/settings.json", false)] // Configuration file outside of bin
+    [InlineData("binTest/test.dll", false)] // Directory similar to bin but should not be ignored
+    [InlineData("README.md", false)] // Project root file
+    public void Test_NotIgnoredFileOutsideBinDirectory(string path, bool expected)
     {
-        // Arrange: simulate a file in the Obj directory
-        string objFolderPath = Path.Combine("Obj", "somefile.txt"); // Use relative path
-        Directory.CreateDirectory(Path.Combine("Obj"));
-        File.Create(objFolderPath).Dispose(); // Create the file
-
         // Act
-        bool isIgnored = FilesUtilities.IsIgnored(objFolderPath);
+        bool isIgnored = FilesUtilities.IsIgnored(path);
 
         // Assert
-        isIgnored.Should().BeTrue();
+        isIgnored.Should().Be(expected);
     }
 
-    [Fact]
-    public void Test_IgnoredNodeModulesDirectory()
+    [Theory]
+    [InlineData("node_modules", true)] // The node_modules directory itself should be ignored
+    [InlineData("node_modules/", true)] // Explicit directory pattern with a trailing slash
+    [InlineData("node_modules/package.json", true)] // A file inside the node_modules directory
+    [InlineData("node_modules/react/index.js", true)] // A file in a subdirectory of node_modules
+    [InlineData("src/node_modules/test.js", false)] // A node_modules directory inside another path, should not be ignored
+    [InlineData("README.md", false)] // A file in the root that should not be ignored
+    public void Test_IgnoredNodeModulesDirectory(string path, bool expected)
     {
-        // Arrange: simulate a file in the node_modules directory
-        string nodeModulesPath = Path.Combine("node_modules", "somepackage"); // Use relative path
-        Directory.CreateDirectory(Path.Combine("node_modules"));
-
         // Act
-        bool isIgnored = FilesUtilities.IsIgnored(nodeModulesPath);
+        bool isIgnored = FilesUtilities.IsIgnored(path);
 
         // Assert
-        isIgnored.Should().BeTrue();
+        isIgnored.Should().Be(expected);
     }
 
-    [Fact]
-    public void Test_IgnoredTempDirectory()
+    [Theory]
+    [InlineData("temp", true)] // The temp directory itself should be ignored
+    [InlineData("temp/", true)] // Explicit directory pattern with a trailing slash
+    [InlineData("temp/file.tmp", true)] // A file inside the temp directory
+    [InlineData("temp/session/anotherfile.tmp", true)] // A file in a subdirectory of temp
+    [InlineData("src/temp/test.tmp", false)] // A temp directory inside another path, should not be ignored
+    [InlineData("tempFiles/somefile.txt", false)] // A similar but different directory, should not be ignored
+    [InlineData("README.md", false)] // A file in the root that should not be ignored
+    public void Test_IgnoredTempDirectory(string path, bool expected)
     {
-        // Arrange: simulate a file in the temp directory
-        string tempPath = Path.Combine("temp", "tempfile.txt"); // Use relative path
-        Directory.CreateDirectory(Path.Combine("temp"));
-        File.Create(tempPath).Dispose(); // Create the file
-
         // Act
-        bool isIgnored = FilesUtilities.IsIgnored(tempPath);
+        bool isIgnored = FilesUtilities.IsIgnored(path);
 
         // Assert
-        isIgnored.Should().BeTrue();
+        isIgnored.Should().Be(expected);
     }
 
-    [Fact]
-    public void Test_NotIgnoredFileInValidDirectory()
+    [Theory]
+    [InlineData("Models/Add.cs", false)] // Checking Add.cs file in Models folder
+    [InlineData("Models/Subtract.cs", false)] // Checking Subtract.cs file in Models folder
+    [InlineData("Models/Multiply.cs", false)] // Checking Multiply.cs file in Models folder
+    [InlineData("Models/Divide.cs", false)] // Checking Divide.cs file in Models folder
+    [InlineData("Program.cs", false)] // Checking Program.cs file in the root
+    [InlineData("Calculator.csproj", false)] // Checking Calculator.csproj in the root
+    public void Test_NotIgnoredFileInValidDirectory(string path, bool expected)
     {
-        // Arrange: simulate a file in a valid directory that is not ignored
-        string validFilePath = Path.Combine("src", "notIgnoredFile.txt"); // Use relative path
-        Directory.CreateDirectory(Path.Combine("src"));
-        File.Create(validFilePath).Dispose(); // Create the file
-
         // Act
-        bool isIgnored = FilesUtilities.IsIgnored(validFilePath);
+        bool isIgnored = FilesUtilities.IsIgnored(path);
 
         // Assert
-        isIgnored.Should().BeFalse();
+        isIgnored.Should().Be(expected);
     }
 
-    [Fact]
-    public void Test_IgnoredDotVscodeDirectory()
+    [Theory]
+    [InlineData("logs", true)] // The logs directory itself should be ignored
+    [InlineData("logs/", true)] // Explicit directory pattern with a trailing slash
+    [InlineData("logs/application.log", true)] // A log file inside the logs directory
+    [InlineData("logs/2024-10-09.log", true)] // Another log file with a date pattern
+    [InlineData("src/logs/debug.log", false)] // A logs directory inside another path (should not be ignored)
+    [InlineData("temporaryLogs/test.log", false)] // A different directory that should not be ignored
+    [InlineData("README.md", false)] // A file that should not be ignored
+    public void Test_IgnoredLogsDirectory(string path, bool expected)
     {
-        // Arrange: simulate a file in the .vscode directory
-        string vscodePath = Path.Combine(".vscode", "settings.json"); // Use relative path
-        Directory.CreateDirectory(Path.Combine(".vscode"));
-        File.Create(vscodePath).Dispose(); // Create the file
-
         // Act
-        bool isIgnored = FilesUtilities.IsIgnored(vscodePath);
+        bool isIgnored = FilesUtilities.IsIgnored(path);
 
         // Assert
-        isIgnored.Should().BeTrue();
+        isIgnored.Should().Be(expected);
     }
 
-    [Fact]
-    public void Test_IgnoredLogsDirectory()
+    [Theory]
+    [InlineData(".env", true)] // The root .env file should be ignored
+    [InlineData(".env.example", false)] // An example env file, should not be ignored
+    [InlineData("config/.env", true)] // A .env file inside a config directory should be ignored
+    [InlineData("src/.env", true)] // Another .env file in a source folder
+    [InlineData("data/.env.backup", false)] // A backup file that should not be ignored
+    [InlineData("temp/.env.tmp", true)] // A temporary .env file that should be ignored
+    [InlineData("README.md", false)] // A file that is not a .env file and should not be ignored
+    public void Test_IgnoredDotEnvFile(string path, bool expected)
     {
-        // Arrange: simulate a file in the logs directory
-        string logsPath = Path.Combine("logs", "logfile.log"); // Use relative path
-        Directory.CreateDirectory(Path.Combine("logs"));
-        File.Create(logsPath).Dispose(); // Create the file
-
         // Act
-        bool isIgnored = FilesUtilities.IsIgnored(logsPath);
+        bool isIgnored = FilesUtilities.IsIgnored(path);
 
         // Assert
-        isIgnored.Should().BeTrue();
+        isIgnored.Should().Be(expected);
     }
 
-    [Fact]
-    public void Test_IgnoredDotEnvFile()
+    [Theory]
+    [InlineData(".keep", false)]
+    [InlineData("src/.keep", false)]
+    public void Test_NotIgnoredFileWithAllowedPrefix(string path, bool expected)
     {
-        // Arrange: simulate a file in the env directory
-        string envPath = Path.Combine(".env"); // Use relative path
-        File.Create(envPath).Dispose(); // Create the file
-
         // Act
-        bool isIgnored = FilesUtilities.IsIgnored(envPath);
+        bool isIgnored = FilesUtilities.IsIgnored(path);
 
         // Assert
-        isIgnored.Should().BeTrue();
+        isIgnored.Should().Be(expected);
     }
 
-    [Fact]
-    public void Test_NotIgnoredFileWithAllowedPrefix()
+    [Theory]
+    [InlineData("cache", true)] // The cache directory itself should be ignored
+    [InlineData("cache/", true)] // Explicit directory pattern with a trailing slash
+    [InlineData("cache/temp.txt", true)] // A file inside the cache directory should be ignored
+    [InlineData("cache/images/image1.png", true)] // An image file inside a cache subdirectory should be ignored
+    [InlineData("src/cache/temp.log", false)] // A cache directory inside src should not be ignored
+    [InlineData("temporaryCache/test.txt", false)] // A different directory that should not be ignored
+    [InlineData("README.md", false)] // A file that is not in any cache directory and should not be ignored
+    public void Test_IgnoredCacheDirectory(string path, bool expected)
     {
-        // Arrange: simulate a file with an allowed prefix
-        string allowedPrefixPath = Path.Combine("src", ".keep"); // Use relative path
-        Directory.CreateDirectory(Path.Combine("src"));
-        File.Create(allowedPrefixPath).Dispose(); // Create the file
-
         // Act
-        bool isIgnored = FilesUtilities.IsIgnored(allowedPrefixPath);
+        bool isIgnored = FilesUtilities.IsIgnored(path);
 
         // Assert
-        isIgnored.Should().BeFalse();
-    }
-
-    [Fact]
-    public void Test_IgnoredCacheDirectory()
-    {
-        // Arrange: simulate a file in the cache directory
-        string cachePath = Path.Combine("cache", "cachedfile.cache"); // Use relative path
-        Directory.CreateDirectory(Path.Combine("cache"));
-        File.Create(cachePath).Dispose(); // Create the file
-
-        // Act
-        bool isIgnored = FilesUtilities.IsIgnored(cachePath);
-
-        // Assert
-        isIgnored.Should().BeTrue();
+        isIgnored.Should().Be(expected);
     }
 }

@@ -44,7 +44,7 @@ public class CodeAssistCommand(
 
         [CommandOption("-e|--embedding-model <Embedding-Chat-Model>")]
         [Description("[grey] llm model for embedding purpose. for example llama3.1.[/].")]
-        [DefaultValue(Constants.Ollama.EmbeddingsModels.Nomic_EmbedText)]
+        [DefaultValue(Constants.Ollama.EmbeddingsModels.Mxbai_Embed_Large)]
         public string? EmbeddingModel { get; set; }
 
         [CommandOption("-p|--provider <AI-Provider>")]

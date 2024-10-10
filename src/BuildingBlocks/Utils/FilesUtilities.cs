@@ -29,31 +29,30 @@ public class FilesUtilities
 
     public static bool IsIgnored(string path)
     {
-        var relativePath = Path.GetRelativePath(Directory.GetCurrentDirectory(), path);
+        if (IsDirectory(path))
+        {
+            // Check if the path doesn't end with a directory separator and add it, to detecting directory by regex matcher
+            if (!path.EndsWith(Path.DirectorySeparatorChar.ToString()))
+            {
+                path += Path.DirectorySeparatorChar; // Add the correct separator for the platform
+            }
+        }
+
+        var relativeToRootPath = Path.GetRelativePath(Directory.GetCurrentDirectory(), path);
 
         // Check if the file itself matches any ignore pattern
-        if (MatchPattern(relativePath, _gitignorePatterns))
+        if (MatchPattern(relativeToRootPath, _gitignorePatterns))
         {
             return true;
         }
 
         // Check if it's an executable or a file type that should be ignored
-        if (IsExecutableFile(relativePath))
+        if (IsExecutableFile(relativeToRootPath))
         {
             return true;
         }
 
         return false;
-    }
-
-    public static bool IsDirectory(string path)
-    {
-        return Directory.Exists(path);
-    }
-
-    public static bool IsFile(string path)
-    {
-        return File.Exists(path);
     }
 
     private static bool MatchPattern(string path, IList<string> ignorePatterns)
@@ -68,6 +67,16 @@ public class FilesUtilities
         var match = matcher.Match(new[] { path }).HasMatches;
 
         return match;
+    }
+
+    public static bool IsDirectory(string path)
+    {
+        return Directory.Exists(path);
+    }
+
+    public static bool IsFile(string path)
+    {
+        return File.Exists(path);
     }
 
     private static bool IsExecutableFile(string path)
@@ -113,7 +122,7 @@ public class FilesUtilities
             gitignorePatterns.AddRange(patterns);
         }
 
-        // load git ignore from embedded resource
+        // TODO: load git ignore from embedded resource
 
         return gitignorePatterns.Distinct().ToList();
     }

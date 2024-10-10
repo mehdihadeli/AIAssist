@@ -67,6 +67,7 @@ public class OllamaClientStratgey : ILLMClientStratgey
                 role = x.Role.Humanize(LetterCasing.LowerCase),
                 content = x.Prompt,
             }),
+            // Temperature set to 0 to reduce the randomness of the response. Better for applications that expect consistent responses.
             temperature = 0.2,
             max_tokens = _options.MaxTokenSize,
         };

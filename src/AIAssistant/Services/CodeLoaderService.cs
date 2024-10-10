@@ -7,6 +7,9 @@ public class CodeLoaderService
 {
     public IEnumerable<ApplicationCode> LoadApplicationCodes(string contextWorkingDir)
     {
+        if (string.IsNullOrEmpty(contextWorkingDir))
+            return new List<ApplicationCode>();
+
         var files = Directory.GetFiles(contextWorkingDir, "*", SearchOption.AllDirectories);
         var applicationCodes = new List<ApplicationCode>();
 

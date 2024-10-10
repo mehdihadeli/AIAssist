@@ -29,9 +29,7 @@ bld/
 [Bb]in/
 [Bb]ins/
 bin/
-Bin/
 [Oo]bj/
-Obj/
 obj/
 log/
 logs/
@@ -225,6 +223,7 @@ _pkginfo.txt
 *.[Cc]ache
 # but keep track of directories ending in .cache
 !?*.[Cc]ache/
+cache/
 
 # Others
 ClientBin/
@@ -380,6 +379,7 @@ coverage.info
 
 .env
 env
+*/.env
 
 # Ignore all .dll files
 *.dll
@@ -390,6 +390,3 @@ env
 .git/
 
 temp/
-cache/
-
-.vscode/

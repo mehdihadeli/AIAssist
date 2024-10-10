@@ -6,13 +6,15 @@ public static class Constants
     {
         public static class ChatModels
         {
-            public const string Llama3_1 = "llama3.1:latest";
+            public const string Llama3_1 = "llama3.1";
         }
 
         public static class EmbeddingsModels
         {
-            public const string Llama3_1 = "llama3.1:latest";
+            public const string Llama3_1 = "llama3.1";
             public const string Nomic_EmbedText = "nomic-embed-text";
+            public const string All_Minilm = "all-minilm";
+            public const string Mxbai_Embed_Large = "mxbai-embed-large";
         }
     }
 

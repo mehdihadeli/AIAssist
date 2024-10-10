@@ -36,7 +36,7 @@ public class VectorDatabaseTests
         collection.AddDocuments(document, embedding, Guid.NewGuid(), metadata);
 
         // Assert
-        var results = collection.QueryDocuments(GenerateOllamaFakeEmbedding("Document 1"));
+        var results = collection.QueryDocuments(GenerateOllamaFakeEmbedding("Document 1")).ToList();
         Assert.Single(results);
         Assert.Equal("Document 1", results[0].Text);
     }
@@ -64,10 +64,9 @@ public class VectorDatabaseTests
         }
 
         // Act
-        var results = collection.QueryDocuments(
-            GenerateOllamaFakeEmbedding("What animals are llamas related to?"),
-            nResults: 1
-        );
+        var results = collection
+            .QueryDocuments(GenerateOllamaFakeEmbedding("What animals are llamas related to?"), nResults: 1)
+            .ToList();
 
         // Assert
         Assert.Single(results);
@@ -97,11 +96,13 @@ public class VectorDatabaseTests
         }
 
         // Act
-        var results = collection.QueryDocuments(
-            GenerateOllamaFakeEmbedding("Llamas"),
-            nResults: 2,
-            metadataFilter: new Dictionary<string, string> { { "source", "source1" } }
-        );
+        var results = collection
+            .QueryDocuments(
+                GenerateOllamaFakeEmbedding("Llamas"),
+                nResults: 2,
+                metadataFilter: new Dictionary<string, string> { { "source", "source1" } }
+            )
+            .ToList();
 
         // Assert
         Assert.Equal(2, results.Count);
@@ -133,7 +134,7 @@ public class VectorDatabaseTests
 
         // Act
         var queryEmbedding = GenerateOllamaFakeEmbedding("Llamas are closely related to camelid.");
-        var results = collection.QueryDocuments(queryEmbedding, nResults: 1);
+        var results = collection.QueryDocuments(queryEmbedding, nResults: 1).ToList();
 
         // Assert
         Assert.Single(results);

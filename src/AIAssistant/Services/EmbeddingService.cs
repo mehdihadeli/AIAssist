@@ -17,7 +17,7 @@ public class EmbeddingService(ILLMServiceManager llmServiceManager, EmbeddingsSt
             var codeEmbedding = new CodeEmbedding
             {
                 RelativeFilePath = applicationCode.RelativePath,
-                TreeSitterCode = TreeSitterParser.GetTreeSitterIfAvailable(
+                TreeSitterCode = TreeSitterRepositoryMapGenerator.GenerateFullTreeSitterRepositoryMap(
                     applicationCode.Code,
                     applicationCode.RelativePath
                 ),
@@ -53,7 +53,7 @@ public class EmbeddingService(ILLMServiceManager llmServiceManager, EmbeddingsSt
         return await llmServiceManager.GetEmbeddingAsync(userInput);
     }
 
-    public string PrepareLLmContextCodeEmbeddings(IEnumerable<CodeEmbedding> relevantCode)
+    public string CreateLLMContext(IEnumerable<CodeEmbedding> relevantCode)
     {
         return string.Join(
             Environment.NewLine + Environment.NewLine,

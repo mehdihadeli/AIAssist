@@ -1,4 +1,4 @@
-namespace Calculator.Models;
+namespace BuildingBlocks.UnitTests.TestData.Calculator.Models;
 
 /// <summary>
 /// Divide to values
@@ -9,9 +9,9 @@ public class Divide(double number1, double number2) : IOperation
 {
     public double Calculate()
     {
-       return DivideNumbers();
+        return DivideNumbers();
     }
-    
+
     private double DivideNumbers()
     {
         if (number1 == 0)

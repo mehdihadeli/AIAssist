@@ -31,7 +31,7 @@ public class Collection(string name)
     /// <param name="metadataFilter"></param>
     /// <param name="threshold"></param>
     /// <returns></returns>
-    public IList<Document> QueryDocuments(
+    public IEnumerable<Document> QueryDocuments(
         string queryText,
         IDictionary<string, string>? metadataFilter = null,
         int nResults = 0,
@@ -47,13 +47,16 @@ public class Collection(string name)
                 SimilarityScore = CosineSimilarity(doc.Embeddings, queryEmbedding, doc),
             })
             .Where(doc => metadataFilter == null || MetadataMatches(doc.Document.Metadata, metadataFilter))
-            .Where(x => x.SimilarityScore > threshold)
-            .OrderByDescending(result => result.SimilarityScore);
+            .Where(x => x.SimilarityScore >= threshold)
+            .OrderByDescending(result => result.SimilarityScore)
+            .ToList();
+
+        var averageRank = query.Select(x => x.SimilarityScore).Average();
 
         var result =
             nResults > 0
-                ? query.Take(nResults).Select(result => result.Document).ToList()
-                : query.Select(result => result.Document).ToList();
+                ? query.Where(x => x.SimilarityScore >= averageRank).Take(nResults).Select(result => result.Document)
+                : query.Where(x => x.SimilarityScore >= averageRank).Select(result => result.Document);
 
         return result;
     }
@@ -66,7 +69,7 @@ public class Collection(string name)
     /// <param name="metadataFilter"></param>
     /// <param name="threshold"></param>
     /// <returns></returns>
-    public IList<Document> QueryDocuments(
+    public IEnumerable<Document> QueryDocuments(
         IList<double> queryEmbedding,
         IDictionary<string, string>? metadataFilter = null,
         int nResults = 0,
@@ -80,13 +83,16 @@ public class Collection(string name)
                 SimilarityScore = CosineSimilarity(doc.Embeddings, queryEmbedding, doc),
             })
             .Where(doc => metadataFilter == null || MetadataMatches(doc.Document.Metadata, metadataFilter))
-            .Where(x => x.SimilarityScore > threshold)
-            .OrderByDescending(result => result.SimilarityScore);
+            .Where(x => x.SimilarityScore >= threshold)
+            .OrderByDescending(result => result.SimilarityScore)
+            .ToList();
+
+        var averageRank = query.Select(x => x.SimilarityScore).Average();
 
         var result =
             nResults > 0
-                ? query.Take(nResults).Select(result => result.Document).ToList()
-                : query.Select(result => result.Document).ToList();
+                ? query.Where(x => x.SimilarityScore >= averageRank).Take(nResults).Select(result => result.Document)
+                : query.Where(x => x.SimilarityScore >= averageRank).Select(result => result.Document);
 
         return result;
     }

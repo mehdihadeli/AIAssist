@@ -18,34 +18,50 @@
   </ItemGroup>
 
   <ItemGroup>
-    <Compile Remove="Calculator\Calculator.csproj" />
-    <Content Include="Calculator\Calculator.csproj">
+    <Content Include="..\..\..\.gitignore">
+      <Link>TestData\Calculator\.gitignore</Link>
       <CopyToOutputDirectory>Always</CopyToOutputDirectory>
     </Content>
-    <Compile Remove="Calculator\Models\Add.cs" />
-    <Content Include="Calculator\Models\Add.cs">
+    <Compile Remove="TestData\Calculator\Calculator.csproj" />
+    <Content Include="TestData\Calculator\Calculator.csproj">
       <CopyToOutputDirectory>Always</CopyToOutputDirectory>
     </Content>
-    <Compile Remove="Calculator\Models\Divide.cs" />
-    <Content Include="Calculator\Models\Divide.cs">
+    <Compile Remove="TestData\Calculator\Models\Add.cs" />
+    <Content Include="TestData\Calculator\Models\Add.cs">
       <CopyToOutputDirectory>Always</CopyToOutputDirectory>
     </Content>
-    <Compile Remove="Calculator\Models\Multiply.cs" />
-    <Content Include="Calculator\Models\Multiply.cs">
+    <Compile Remove="TestData\Calculator\Models\Divide.cs" />
+    <Content Include="TestData\Calculator\Models\Divide.cs">
       <CopyToOutputDirectory>Always</CopyToOutputDirectory>
     </Content>
-    <Compile Remove="Calculator\Models\Subtract.cs" />
-    <Content Include="Calculator\Models\Subtract.cs">
+    <Compile Remove="TestData\Calculator\Models\Multiply.cs" />
+    <Content Include="TestData\Calculator\Models\Multiply.cs">
       <CopyToOutputDirectory>Always</CopyToOutputDirectory>
     </Content>
-    <Compile Remove="Calculator\IOperation.cs" />
-    <Content Include="Calculator\IOperation.cs">
+    <Compile Remove="TestData\Calculator\Models\Subtract.cs" />
+    <Content Include="TestData\Calculator\Models\Subtract.cs">
       <CopyToOutputDirectory>Always</CopyToOutputDirectory>
     </Content>
-    <Compile Remove="Calculator\Program.cs" />
-    <Content Include="Calculator\Program.cs">
+    <Compile Remove="TestData\Calculator\IOperation.cs" />
+    <Content Include="TestData\Calculator\IOperation.cs">
       <CopyToOutputDirectory>Always</CopyToOutputDirectory>
     </Content>
+    <Compile Remove="TestData\Calculator\Program.cs" />
+    <Content Include="TestData\Calculator\Program.cs">
+      <CopyToOutputDirectory>Always</CopyToOutputDirectory>
+    </Content>
+    <Compile Remove="TestData\Calculator\bin\Debug\net8.0\bin_test.cs" />
+    <Content Include="TestData\Calculator\bin\Debug\net8.0\bin_test.cs">
+      <CopyToOutputDirectory>Always</CopyToOutputDirectory>
+    </Content>
+    <Compile Remove="TestData\Calculator\obj\obj_test.cs" />
+    <Content Include="TestData\Calculator\obj\obj_test.cs">
+      <CopyToOutputDirectory>Always</CopyToOutputDirectory>
+    </Content>
+  </ItemGroup>
+
+  <ItemGroup>
+    <Folder Include="TestData\" />
   </ItemGroup>
   
 </Project>

@@ -33,6 +33,7 @@
       <Content Include="Queries\Default\typescript.scm">
         <CopyToOutputDirectory>Always</CopyToOutputDirectory>
       </Content>
+      <None Remove="Queries\Simple\csharp.scm" />
     </ItemGroup>
 
     <ItemGroup>

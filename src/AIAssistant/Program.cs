@@ -13,6 +13,11 @@ using Serilog;
 
 bool isDev = false;
 
+AppDomain.CurrentDomain.UnhandledException += (sender, eventArgs) =>
+{
+    Console.WriteLine($"Unhandled exception, {eventArgs.ExceptionObject}");
+};
+
 try
 {
     var builder = Host.CreateApplicationBuilder(args);

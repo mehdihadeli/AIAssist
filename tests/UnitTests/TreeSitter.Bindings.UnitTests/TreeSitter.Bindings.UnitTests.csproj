@@ -18,11 +18,42 @@
   </ItemGroup>
 
   <ItemGroup>
-    <Folder Include="Queryies\" />
+    <Folder Include="TestData\" />
   </ItemGroup>
 
   <ItemGroup>
     <ProjectReference Include="..\..\..\src\TreeSitter.Bindings\TreeSitter.Bindings.csproj" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <Compile Remove="TestData\Calculator\Calculator.csproj" />
+    <Content Include="TestData\Calculator\Calculator.csproj">
+      <CopyToOutputDirectory>Always</CopyToOutputDirectory>
+    </Content>
+    <Compile Remove="TestData\Calculator\Models\Add.cs" />
+    <Content Include="TestData\Calculator\Models\Add.cs">
+      <CopyToOutputDirectory>Always</CopyToOutputDirectory>
+    </Content>
+    <Compile Remove="TestData\Calculator\Models\Divide.cs" />
+    <Content Include="TestData\Calculator\Models\Divide.cs">
+      <CopyToOutputDirectory>Always</CopyToOutputDirectory>
+    </Content>
+    <Compile Remove="TestData\Calculator\Models\Multiply.cs" />
+    <Content Include="TestData\Calculator\Models\Multiply.cs">
+      <CopyToOutputDirectory>Always</CopyToOutputDirectory>
+    </Content>
+    <Compile Remove="TestData\Calculator\Models\Subtract.cs" />
+    <Content Include="TestData\Calculator\Models\Subtract.cs">
+      <CopyToOutputDirectory>Always</CopyToOutputDirectory>
+    </Content>
+    <Compile Remove="TestData\Calculator\IOperation.cs" />
+    <Content Include="TestData\Calculator\IOperation.cs">
+      <CopyToOutputDirectory>Always</CopyToOutputDirectory>
+    </Content>
+    <Compile Remove="TestData\Calculator\Program.cs" />
+    <Content Include="TestData\Calculator\Program.cs">
+      <CopyToOutputDirectory>Always</CopyToOutputDirectory>
+    </Content>
   </ItemGroup>
 
 </Project>

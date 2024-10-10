@@ -1,7 +1,11 @@
+using System.Collections.Generic;
+using System.IO;
+using System.Linq;
 using System.Text;
 using BuildingBlocks.Extensions;
 using BuildingBlocks.Types;
 using TreeSitter.Bindings.Csharp;
+using TreeSitter.Bindings.CustomTypes.TreeParser;
 using TreeSitter.Bindings.Go;
 using TreeSitter.Bindings.Java;
 using TreeSitter.Bindings.Javascript;
@@ -9,6 +13,7 @@ using TreeSitter.Bindings.Python;
 using TreeSitter.Bindings.Queries;
 using TreeSitter.Bindings.Typescript;
 using static TreeSitter.Bindings.TSBindingsParser;
+using FileInfo = TreeSitter.Bindings.CustomTypes.TreeParser.FileInfo;
 
 namespace TreeSitter.Bindings.Utilities;
 
@@ -106,68 +111,27 @@ public unsafe class TreeSitterParser
         return query;
     }
 
-    public static string GetTreeSitterIfAvailable(string code, string path)
+    public static TSQuery* GetSimpleLanguageQuery(ProgrammingLanguage programmingLanguage)
     {
-        var language = path.GetLanguageFromFilePath();
+        var language = GetLanguage(programmingLanguage);
+        var defaultLanguageQuery = QueryManager.GetSimpleLanguageQuery(programmingLanguage);
+
         if (language is null)
-            return code;
-
-        var parser = GetParser(language.Value);
-        var tree = GetCodeTree(parser, code);
-        var defaultQuery = GetLanguageDefaultQuery(language.Value);
-
-        var rootNode = GetRootNode(tree);
-        var queryCursor = query_cursor_new();
-        query_cursor_exec(queryCursor, defaultQuery, rootNode);
-
-        TSQueryMatch match;
-
-        byte[] byteArrayCode = Encoding.UTF8.GetBytes(code);
-
-        Dictionary<string, List<string>> items = new Dictionary<string, List<string>>();
-        while (query_cursor_next_match(queryCursor, &match))
         {
-            for (uint i = 0; i < match.capture_count; i++)
-            {
-                var capture = match.captures[i];
-                var node = capture.node;
-
-                var nodeEndStartByte = node_start_byte(node);
-                var nodeEndByte = node_end_byte(node);
-
-                string codeMatched = System.Text.Encoding.UTF8.GetString(
-                    byteArrayCode,
-                    (int)nodeEndStartByte,
-                    (int)(nodeEndByte - nodeEndStartByte)
-                );
-
-                uint length = 0;
-                // Get the capture name, like @name, @definition.class, etc.
-                sbyte* captureNamePtr = query_capture_name_for_id(defaultQuery, capture.index, &length);
-
-                // Convert the capture name to a string (length is already provided)
-                string captureName = new GeneratedCString(captureNamePtr);
-
-                if (!items.ContainsKey(captureName))
-                {
-                    items[captureName] = new List<string>();
-                }
-
-                items[captureName].Add(codeMatched);
-            }
+            return null;
         }
 
-        // Create a formatted result string by joining the items
-        var result = string.Concat(
-            items.Select(kv =>
-            {
-                var s = new StringBuilder();
-                kv.Value.ForEach(v => s.Append($"\n{kv.Key}: {v}\n"));
+        uint errorOffset;
+        TSQueryError queryError;
 
-                return s;
-            })
+        var query = query_new(
+            language,
+            new GeneratedCString(defaultLanguageQuery),
+            (uint)defaultLanguageQuery.Length,
+            &errorOffset,
+            &queryError
         );
 
-        return result;
+        return query;
     }
 }
