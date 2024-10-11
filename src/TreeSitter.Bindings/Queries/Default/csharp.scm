@@ -1,11 +1,18 @@
-; File-scoped Namespace declaration
-(file_scoped_namespace_declaration (identifier) @name.file_scope_namespace) @definition.file_scope_namespace
- 
-; Namespace declarations
-(namespace_declaration name: (identifier) @name.namespace) @definition.namespace
+; File-scoped Namespace declaration multi part
+(file_scoped_namespace_declaration
+    name: (qualified_name) @name.file_scoped_namespace)  @definition.file_scoped_namespace
 
-; Namespace references
-(namespace_declaration name: (identifier) @name.module) @reference.module
+; File-scoped Namespace declaration single part
+(file_scoped_namespace_declaration
+    name: (identifier) @name.file_scoped_namespace)  @definition.file_scoped_namespace
+
+; File-scoped Namespace declaration multi part
+(namespace_declaration
+    name: (qualified_name) @name.namespace)  @definition.namespace
+
+; Namespace declarations single part
+(namespace_declaration 
+    name: (identifier) @name.namespace) @definition.namespace
 
 ; Enum declarations
 (enum_declaration name: (identifier) @name.enum) @definition.enum

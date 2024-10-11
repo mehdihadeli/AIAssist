@@ -4,8 +4,8 @@ public static class Constants
 {
     public static class FileScopedNamespaceCaptureTags
     {
-        public const string Name = "name.file_scope_namespace";
-        public const string Definition = "definition.file_scope_namespace";
+        public const string Name = "name.file_scoped_namespace";
+        public const string Definition = "definition.file_scoped_namespace";
     }
 
     public static class NamespaceCaptureTags
