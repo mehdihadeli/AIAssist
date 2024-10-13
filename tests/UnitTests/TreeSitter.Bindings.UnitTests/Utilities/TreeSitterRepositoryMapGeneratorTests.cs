@@ -1,37 +1,14 @@
-using BuildingBlocks.Utils;
+using FluentAssertions;
 using TreeSitter.Bindings.CustomTypes.TreeParser;
 using TreeSitter.Bindings.Utilities;
+using static TreeSitter.Bindings.UnitTests.TestData.TestDataConstants;
 
 namespace TreeSitter.Bindings.UnitTests.Utilities;
 
 public class TreeSitterRepositoryMapGeneratorTests : IAsyncLifetime
 {
-    private string _programFile = default!;
-    private string _calculatorCsprojFile = default!;
-    private string _operationFile = default!;
-    private string _addFile = default!;
-    private string _divideFile = default!;
-    private string _multiplyFile = default!;
-    private string _subtractFile = default!;
-
-    private readonly string _addRelativeFilePath = "Models/Add.cs";
-    private readonly string _subtractRelativeFilePath = "Models/Subtract.cs";
-    private readonly string _multiplyRelativeFilePath = "Models/Multiply.cs";
-    private readonly string _divideRelativeFilePath = "Models/Divide.cs";
-    private readonly string _programRelativeFilePath = "Program.cs";
-    private readonly string _operationRelativeFilePath = "IOperation.cs";
-    private readonly string _csprojRelativeFilePath = "Calculator.csproj";
-
     public async Task InitializeAsync()
     {
-        _programFile = FilesUtilities.RenderTemplate("TestData/Calculator", "Program.cs", null);
-        _calculatorCsprojFile = FilesUtilities.RenderTemplate("TestData/Calculator", "Calculator.csproj", null);
-        _operationFile = FilesUtilities.RenderTemplate("TestData/Calculator", "IOperation.cs", null);
-        _addFile = FilesUtilities.RenderTemplate("TestData/Calculator/Models", "Add.cs", null);
-        _divideFile = FilesUtilities.RenderTemplate("TestData/Calculator/Models", "Divide.cs", null);
-        _multiplyFile = FilesUtilities.RenderTemplate("TestData/Calculator/Models", "Multiply.cs", null);
-        _subtractFile = FilesUtilities.RenderTemplate("TestData/Calculator/Models", "Subtract.cs", null);
-
         await Task.CompletedTask;
     }
 
@@ -41,272 +18,726 @@ public class TreeSitterRepositoryMapGeneratorTests : IAsyncLifetime
     }
 
     [Fact]
-    public Task GenerateTreeLevelString_ShouldGenerateCorrectTreeLevelString_ForAddFile()
+    public Task GenerateTreeSitterRepositoryMap_With_WriteFullTree_False_ShouldGenerateCorrectTreeLevelString_ForAddFile()
     {
         // Act
-        var result = TreeSitterRepositoryMapGenerator.GenerateSimpleTreeSitterRepositoryMap(
-            _addFile,
-            _addRelativeFilePath,
-            new RepositoryMap()
+        var result = TreeSitterRepositoryMapGenerator.GenerateTreeSitterRepositoryMap(
+            CalculatorApp.AddContentFile,
+            CalculatorApp.AddRelativeFilePath,
+            new RepositoryMap(),
+            writeFullTree: false
         );
 
-        // Assert for tree structure
-        Assert.Contains("namespace Calculator", result, StringComparison.Ordinal); // Check namespace
-        Assert.Contains("class Add", result, StringComparison.Ordinal); // Check class definition
-        Assert.Contains("double Result { get; set; }", result, StringComparison.Ordinal); // Property
-        Assert.Contains("double Calculate()", result, StringComparison.Ordinal); // Method
-        Assert.Contains("double AddNumbers(double first, double second)", result, StringComparison.Ordinal); // Private method
+        result.Should().Contain("namespace: Calculator");
+        result.Should().Contain("class: Add");
+        result.Should().Contain("property: public double Result { get; set; }");
+        result.Should().Contain("field: public double ResultField");
+        result.Should().Contain("method: public double Calculate()");
+        result.Should().Contain("method: private double AddNumbers(double first, double second)");
 
         return Task.CompletedTask;
     }
 
     [Fact]
-    public Task GenerateTreeLevelString_ShouldGenerateCorrectTreeLevelString_ForSubtractFile()
+    public Task GenerateTreeSitterRepositoryMap_With_WriteFullTree_True_ShouldGenerateCorrectTreeLevelString_ForAddFile()
     {
         // Act
-        var result = TreeSitterRepositoryMapGenerator.GenerateSimpleTreeSitterRepositoryMap(
-            _subtractFile,
-            _subtractRelativeFilePath,
-            new RepositoryMap()
+        var result = TreeSitterRepositoryMapGenerator.GenerateTreeSitterRepositoryMap(
+            CalculatorApp.AddContentFile,
+            CalculatorApp.AddRelativeFilePath,
+            new RepositoryMap(),
+            writeFullTree: true
         );
 
-        // Assert for tree structure
-        Assert.Contains("namespace Calculator", result, StringComparison.Ordinal); // Check namespace
-        Assert.Contains("class Subtract", result, StringComparison.Ordinal); // Check class definition
-        Assert.Contains("double Result { get; set; }", result, StringComparison.Ordinal); // Property
-        Assert.Contains("double Calculate()", result, StringComparison.Ordinal); // Method
+        result.Should().Contain("namespace: Calculator");
+        result.Should().Contain("class: Add");
+        result
+            .Should()
+            .Contain(
+                @"root/
+├── Models/
+│   ├── Add.cs:
+│   │   ├── namespace: Calculator;
+│   │   │   ├── class: Add
+│   │   │   │   public class Add(double number1, double number2) : IOperation
+│   │   │   │   {
+│   │   │   │       public double Result { get; set; }
+│   │   │   │       public double ResultField;
+│   │   │   │   
+│   │   │   │       public double Calculate()
+│   │   │   │       {
+│   │   │   │           Result = AddNumbers(number1, number2);
+│   │   │   │           ResultField = Result;
+│   │   │   │   
+│   │   │   │           return Result;
+│   │   │   │       }
+│   │   │   │   
+│   │   │   │       private double AddNumbers(double first, double second)
+│   │   │   │       {
+│   │   │   │           return first + second;
+│   │   │   │       }
+│   │   │   │   }
+"
+            );
 
         return Task.CompletedTask;
     }
 
     [Fact]
-    public Task GenerateTreeLevelString_ShouldGenerateCorrectTreeLevelString_ForDivideFile()
+    public Task GenerateTreeSitterRepositoryMap_With_WriteFullTree_False_ShouldGenerateCorrectTreeLevelString_ForSubtractFile()
     {
         // Act
-        var result = TreeSitterRepositoryMapGenerator.GenerateSimpleTreeSitterRepositoryMap(
-            _divideFile,
-            _divideRelativeFilePath,
-            new RepositoryMap()
+        var result = TreeSitterRepositoryMapGenerator.GenerateTreeSitterRepositoryMap(
+            CalculatorApp.SubtractContentFile,
+            CalculatorApp.SubtractRelativeFilePath,
+            new RepositoryMap(),
+            writeFullTree: false
         );
 
         // Assert for tree structure
-        Assert.Contains("namespace Calculator", result, StringComparison.Ordinal); // Check namespace
-        Assert.Contains("class Divide", result, StringComparison.Ordinal); // Check class definition
-        Assert.Contains("double Result { get; set; }", result, StringComparison.Ordinal); // Property
-        Assert.Contains("double Calculate()", result, StringComparison.Ordinal); // Method
-        Assert.Contains("double DivideNumbers()", result, StringComparison.Ordinal); // Private method
+        result.Should().Contain("namespace: Calculator");
+        result.Should().Contain("class: Subtract");
+        result.Should().Contain("field: public double ResultField");
+        result.Should().Contain("property: public double Result { get; set; }");
+        result.Should().Contain("method: public double Calculate()");
 
         return Task.CompletedTask;
     }
 
     [Fact]
-    public Task GenerateTreeLevelString_ShouldGenerateCorrectTreeLevelString_ForMultiplyFile()
+    public Task GenerateTreeSitterRepositoryMap_With_WriteFullTree_True_ShouldGenerateCorrectTreeLevelString_ForSubtractFile()
     {
         // Act
-        var result = TreeSitterRepositoryMapGenerator.GenerateSimpleTreeSitterRepositoryMap(
-            _multiplyFile,
-            _multiplyRelativeFilePath,
-            new RepositoryMap()
+        var result = TreeSitterRepositoryMapGenerator.GenerateTreeSitterRepositoryMap(
+            CalculatorApp.SubtractContentFile,
+            CalculatorApp.SubtractRelativeFilePath,
+            new RepositoryMap(),
+            writeFullTree: true
         );
 
         // Assert for tree structure
-        Assert.Contains("namespace Calculator", result, StringComparison.Ordinal); // Check namespace
-        Assert.Contains("class Multiply", result, StringComparison.Ordinal); // Check class definition
-        Assert.Contains("double Result { get; set; }", result, StringComparison.Ordinal); // Property
-        Assert.Contains("double Calculate()", result, StringComparison.Ordinal); // Method
+        result.Should().Contain("namespace: Calculator");
+        result.Should().Contain("class: Subtract");
+        result
+            .Should()
+            .Contain(
+                @"root/
+├── Models/
+│   ├── Subtract.cs:
+│   │   ├── namespace: Calculator;
+│   │   │   ├── class: Subtract
+│   │   │   │   public class Subtract(double number1, double number2) : IOperation
+│   │   │   │   {
+│   │   │   │       public double Result { get; set; }
+│   │   │   │       public double ResultField;
+│   │   │   │   
+│   │   │   │       public double Calculate()
+│   │   │   │       {
+│   │   │   │           Result = number1 - number2;
+│   │   │   │           ResultField = Result;
+│   │   │   │   
+│   │   │   │           return Result;
+│   │   │   │       }
+│   │   │   │   }
+"
+            );
 
         return Task.CompletedTask;
     }
 
     [Fact]
-    public Task GenerateTreeLevelString_ShouldGenerateCorrectTreeLevelString_ForProgramFile()
+    public Task GenerateTreeSitterRepositoryMap_With_WriteFullTree_False_ShouldGenerateCorrectTreeLevelString_ForDivideFile()
     {
         // Act
-        var result = TreeSitterRepositoryMapGenerator.GenerateSimpleTreeSitterRepositoryMap(
-            _programFile,
-            _programRelativeFilePath,
-            new RepositoryMap()
+        var result = TreeSitterRepositoryMapGenerator.GenerateTreeSitterRepositoryMap(
+            CalculatorApp.DivideContentFile,
+            CalculatorApp.DivideRelativeFilePath,
+            new RepositoryMap(),
+            writeFullTree: false
         );
 
         // Assert for tree structure
-        Assert.Contains("namespace Calculator", result, StringComparison.Ordinal); // Check namespace
-        Assert.Contains("class Program", result, StringComparison.Ordinal); // Check main class
-        Assert.Contains("static void Main", result, StringComparison.Ordinal); // Main method
-        Assert.Contains("double num1 =", result, StringComparison.Ordinal); // First number input
-        Assert.Contains("double num2 =", result, StringComparison.Ordinal); // Second number input
+        result.Should().Contain("namespace: Calculator");
+        result.Should().Contain("class: Divide");
+        result.Should().Contain("field: public double ResultField");
+        result.Should().Contain("property: public double Result { get; set; }");
+        result.Should().Contain("method: public double Calculate()");
+        result.Should().Contain("method: private double DivideNumbers()");
 
         return Task.CompletedTask;
     }
 
     [Fact]
-    public Task GenerateTreeLevelString_ShouldReturnEmpty_ForEmptyFile()
+    public Task GenerateTreeSitterRepositoryMap_With_WriteFullTree_True_ShouldGenerateCorrectTreeLevelString_ForDivideFile()
+    {
+        // Act
+        var result = TreeSitterRepositoryMapGenerator.GenerateTreeSitterRepositoryMap(
+            CalculatorApp.DivideContentFile,
+            CalculatorApp.DivideRelativeFilePath,
+            new RepositoryMap(),
+            writeFullTree: true
+        );
+
+        // Assert for tree structure
+        result.Should().Contain("namespace: Calculator");
+        result.Should().Contain("class: Divide");
+        result
+            .Should()
+            .Contain(
+                @"root/
+├── Models/
+│   ├── Divide.cs:
+│   │   ├── namespace: Calculator;
+│   │   │   ├── class: Divide
+│   │   │   │   public class Divide(double number1, double number2) : IOperation
+│   │   │   │   {
+│   │   │   │       public double Result { get; set; }
+│   │   │   │       public double ResultField;
+│   │   │   │   
+│   │   │   │       public double Calculate()
+│   │   │   │       {
+│   │   │   │           Result = DivideNumbers();
+│   │   │   │           ResultField = Result;
+│   │   │   │   
+│   │   │   │           return Result;
+│   │   │   │       }
+│   │   │   │   
+│   │   │   │       private double DivideNumbers()
+│   │   │   │       {
+│   │   │   │           if (number1 == 0)
+│   │   │   │           {
+│   │   │   │               throw new DivideByZeroException(""Cannot divide by zero."");
+│   │   │   │           }
+│   │   │   │           return number1 / number2;
+│   │   │   │       }
+│   │   │   │   }
+"
+            );
+
+        return Task.CompletedTask;
+    }
+
+    [Fact]
+    public Task GenerateTreeSitterRepositoryMap_With_WriteFullTree_False_ShouldGenerateCorrectTreeLevelString_ForMultiplyFile()
+    {
+        // Act
+        var result = TreeSitterRepositoryMapGenerator.GenerateTreeSitterRepositoryMap(
+            CalculatorApp.MultiplyContentFile,
+            CalculatorApp.MultiplyRelativeFilePath,
+            new RepositoryMap(),
+            writeFullTree: false
+        );
+
+        // Assert for tree structure
+        result.Should().Contain("namespace: Calculator");
+        result.Should().Contain("class: Multiply");
+        result.Should().Contain("field: public double ResultField");
+        result.Should().Contain("property: public double Result { get; set; }");
+        result.Should().Contain("method: public double Calculate()");
+
+        return Task.CompletedTask;
+    }
+
+    [Fact]
+    public Task GenerateTreeSitterRepositoryMap_With_WriteFullTree_True_ShouldGenerateCorrectTreeLevelString_ForMultiplyFile()
+    {
+        // Act
+        var result = TreeSitterRepositoryMapGenerator.GenerateTreeSitterRepositoryMap(
+            CalculatorApp.MultiplyContentFile,
+            CalculatorApp.MultiplyRelativeFilePath,
+            new RepositoryMap(),
+            writeFullTree: true
+        );
+
+        // Assert for tree structure
+        result.Should().Contain("namespace: Calculator");
+        result.Should().Contain("class: Multiply");
+        result
+            .Should()
+            .Contain(
+                @"root/
+├── Models/
+│   ├── Multiply.cs:
+│   │   ├── namespace: Calculator;
+│   │   │   ├── class: Multiply
+│   │   │   │   public class Multiply(double number1, double number2) : IOperation
+│   │   │   │   {
+│   │   │   │       public double Result { get; set; }
+│   │   │   │       public double ResultField;
+│   │   │   │   
+│   │   │   │       public double Calculate()
+│   │   │   │       {
+│   │   │   │           Result = number1 * number2;
+│   │   │   │           ResultField = Result;
+│   │   │   │   
+│   │   │   │           return Result;
+│   │   │   │       }
+│   │   │   │   }
+"
+            );
+
+        return Task.CompletedTask;
+    }
+
+    [Fact]
+    public Task GenerateTreeSitterRepositoryMap_With_WriteFullTree_False_ShouldGenerateCorrectTreeLevelString_ForProgramFile()
+    {
+        // Act
+        var result = TreeSitterRepositoryMapGenerator.GenerateTreeSitterRepositoryMap(
+            CalculatorApp.ProgramContentFile,
+            CalculatorApp.ProgramRelativeFilePath,
+            new RepositoryMap(),
+            writeFullTree: false
+        );
+
+        // Assert for tree structure
+        result.Should().Contain("Program.cs");
+        result.Should().Contain("Top-level statement: Console.WriteLine(\"Simple Calculator\\n\");");
+        result
+            .Should()
+            .Contain(
+                @"root/
+├── Program.cs:
+│   ├── Top-level statement: Console.WriteLine(""Simple Calculator\n"");
+"
+            );
+
+        return Task.CompletedTask;
+    }
+
+    [Fact]
+    public Task GenerateTreeSitterRepositoryMap_With_WriteFullTree_True_ShouldGenerateCorrectTreeLevelString_ForProgramFile()
+    {
+        // Act
+        var result = TreeSitterRepositoryMapGenerator.GenerateTreeSitterRepositoryMap(
+            CalculatorApp.ProgramContentFile,
+            CalculatorApp.ProgramRelativeFilePath,
+            new RepositoryMap(),
+            writeFullTree: true
+        );
+
+        // Assert for tree structure
+        result.Should().Contain("Program.cs");
+        result.Should().Contain("Top-level statement:");
+        result
+            .Should()
+            .Contain(
+                @"root/
+├── Program.cs:
+│   ├── Top-level statement: 
+│   │   Console.WriteLine(""Simple Calculator\n"");
+│   │   Console.Write(""Enter the first number: "");
+│   │   double num1 = Convert.ToDouble(Console.ReadLine());
+│   │   Console.Write(""Enter an operation (+, -, *, /): "");
+│   │   char operation = Convert.ToChar(Console.ReadLine());
+│   │   Console.Write(""Enter the second number: "");
+│   │   double num2 = Convert.ToDouble(Console.ReadLine());
+│   │   IOperation calculation = operation switch
+│   │   {
+│   │       '+' => new Add(num1, num2),
+│   │       '-' => new Subtract(num1, num2),
+│   │       '*' => new Multiply(num1, num2),
+│   │       '/' => new Divide(num1, num2),
+│   │       _ => throw new InvalidOperationException(""Invalid operation""),
+│   │   };
+│   │   double result = calculation.Calculate();
+│   │   Console.WriteLine($""Result: {result}"");
+"
+            );
+
+        return Task.CompletedTask;
+    }
+
+    [Fact]
+    public Task GenerateTreeSitterRepositoryMap_With_WriteFullTree_False_ShouldReturnEmpty_ForEmptyFile()
     {
         // Arrange
         string emptyFileContent = string.Empty;
 
         // Act
-        var result = TreeSitterRepositoryMapGenerator.GenerateSimpleTreeSitterRepositoryMap(
+        var result = TreeSitterRepositoryMapGenerator.GenerateTreeSitterRepositoryMap(
             emptyFileContent,
-            _subtractRelativeFilePath,
-            new RepositoryMap()
+            CalculatorApp.SubtractRelativeFilePath,
+            new RepositoryMap(),
+            writeFullTree: false
         );
 
         // Assert
-        Assert.Equal(string.Empty, result);
+        result
+            .Should()
+            .Be(
+                @"root/
+├── Models/
+│   ├── Subtract.cs:
+"
+            );
 
         return Task.CompletedTask;
     }
 
     [Fact]
-    public Task GenerateTreeLevelString_ShouldMatchExpectedOutput_ForProjectStructure()
+    public Task GenerateTreeSitterRepositoryMap_With_WriteFullTree_False_ShouldMatchExpectedOutput_ForProjectStructure()
     {
         // Arrange
-        var expected =
+        var expectedProgram =
             @"root/
-├── Calculator/
-│   ├── Program.cs:
-│   │   ├── namespace Calculator:
-│   │   │   ├── class Program:
-│   │   │   │   ├── void Main(string[] args)
-├── Models/
-│   ├── Add.cs:
-│   │   ├── namespace Calculator:
-│   │   │   ├── class Add:
-│   │   │   │   ├── double Result { get; set; }
-│   │   │   │   ├── double Calculate()
-│   │   │   │   ├── private double AddNumbers(double first, double second)
-│   ├── Subtract.cs:
-│   │   ├── namespace Calculator:
-│   │   │   ├── class Subtract:
-│   │   │   │   ├── double Result { get; set; }
-│   │   │   │   ├── double Calculate()
-│   ├── Divide.cs:
-│   │   ├── namespace Calculator:
-│   │   │   ├── class Divide:
-│   │   │   │   ├── double Result { get; set; }
-│   │   │   │   ├── double Calculate()
-│   │   │   │   ├── private double DivideNumbers()
-│   ├── Multiply.cs:
-│   │   ├── namespace Calculator:
-│   │   │   ├── class Multiply:
-│   │   │   │   ├── double Result { get; set; }
-│   │   │   │   ├── double Calculate()
+├── Program.cs:
+│   ├── Top-level statement: Console.WriteLine(""Simple Calculator\n"");
 ";
 
+        var expectedAdd =
+            @"root/
+├── Models/
+│   ├── Add.cs:
+│   │   ├── namespace: Calculator
+│   │   │   ├── class: Add
+│   │   │   │   ├── property: public double Result { get; set; }
+│   │   │   │   ├── method: public double Calculate();
+│   │   │   │   ├── method: private double AddNumbers(double first, double second);
+│   │   │   │   ├── field: public double ResultField;
+";
+
+        var expectedSubtract =
+            @"root/
+├── Models/
+│   ├── Subtract.cs:
+│   │   ├── namespace: Calculator
+│   │   │   ├── class: Subtract
+│   │   │   │   ├── property: public double Result { get; set; }
+│   │   │   │   ├── method: public double Calculate();
+│   │   │   │   ├── field: public double ResultField;
+";
+
+        var expectedDivide =
+            @"root/
+├── Models/
+│   ├── Divide.cs:
+│   │   ├── namespace: Calculator
+│   │   │   ├── class: Divide
+│   │   │   │   ├── property: public double Result { get; set; }
+│   │   │   │   ├── method: public double Calculate();
+│   │   │   │   ├── method: private double DivideNumbers();
+│   │   │   │   ├── field: public double ResultField;
+";
+
+        var expectedMultiply =
+            @"root/
+├── Models/
+│   ├── Multiply.cs:
+│   │   ├── namespace: Calculator
+│   │   │   ├── class: Multiply
+│   │   │   │   ├── property: public double Result { get; set; }
+│   │   │   │   ├── method: public double Calculate();
+│   │   │   │   ├── field: public double ResultField;
+";
         // Act
-        var result = TreeSitterRepositoryMapGenerator.GenerateSimpleTreeSitterRepositoryMap(
-            _programFile,
-            _programRelativeFilePath,
-            new RepositoryMap()
+        var programResult = TreeSitterRepositoryMapGenerator.GenerateTreeSitterRepositoryMap(
+            CalculatorApp.ProgramContentFile,
+            CalculatorApp.ProgramRelativeFilePath,
+            new RepositoryMap(),
+            writeFullTree: false
         );
-        result += TreeSitterRepositoryMapGenerator.GenerateSimpleTreeSitterRepositoryMap(
-            _addFile,
-            _addRelativeFilePath,
-            new RepositoryMap()
+        // Assert
+        programResult.TrimEnd().Should().Be(expectedProgram.TrimEnd());
+
+        var addResult = TreeSitterRepositoryMapGenerator.GenerateTreeSitterRepositoryMap(
+            CalculatorApp.AddContentFile,
+            CalculatorApp.AddRelativeFilePath,
+            new RepositoryMap(),
+            writeFullTree: false
         );
-        result += TreeSitterRepositoryMapGenerator.GenerateSimpleTreeSitterRepositoryMap(
-            _subtractFile,
-            _subtractRelativeFilePath,
-            new RepositoryMap()
+        // Assert
+        addResult.TrimEnd().Should().Be(expectedAdd.TrimEnd());
+
+        var subtractResult = TreeSitterRepositoryMapGenerator.GenerateTreeSitterRepositoryMap(
+            CalculatorApp.SubtractContentFile,
+            CalculatorApp.SubtractRelativeFilePath,
+            new RepositoryMap(),
+            writeFullTree: false
         );
-        result += TreeSitterRepositoryMapGenerator.GenerateSimpleTreeSitterRepositoryMap(
-            _divideFile,
-            _divideRelativeFilePath,
-            new RepositoryMap()
+        // Assert
+        subtractResult.TrimEnd().Should().Be(expectedSubtract.TrimEnd());
+
+        var divideResult = TreeSitterRepositoryMapGenerator.GenerateTreeSitterRepositoryMap(
+            CalculatorApp.DivideContentFile,
+            CalculatorApp.DivideRelativeFilePath,
+            new RepositoryMap(),
+            writeFullTree: false
         );
-        result += TreeSitterRepositoryMapGenerator.GenerateSimpleTreeSitterRepositoryMap(
-            _multiplyFile,
-            _multiplyRelativeFilePath,
-            new RepositoryMap()
+        // Assert
+        divideResult.TrimEnd().Should().Be(expectedDivide.TrimEnd());
+
+        var multiplyResult = TreeSitterRepositoryMapGenerator.GenerateTreeSitterRepositoryMap(
+            CalculatorApp.MultiplyContentFile,
+            CalculatorApp.MultiplyRelativeFilePath,
+            new RepositoryMap(),
+            writeFullTree: false
+        );
+        // Assert
+        multiplyResult.TrimEnd().Should().Be(expectedMultiply.TrimEnd());
+
+        return Task.CompletedTask;
+    }
+
+    [Fact]
+    public Task GenerateTreeSitterRepositoryMap_With_WriteFullTree_False_ShouldGenerateCorrectTreeLevelString_ForSimpleCalculator()
+    {
+        // Act
+        var result = TreeSitterRepositoryMapGenerator.GenerateTreeSitterRepositoryMap(
+            SimpleCalculatorApp.ProgramContentFile,
+            SimpleCalculatorApp.ProgramRelativeFilePath,
+            new RepositoryMap(),
+            writeFullTree: false
         );
 
-        // Assert
-        Assert.Equal(expected.TrimEnd(), result.TrimEnd()); // Compare trimmed strings
+        result.Should().Contain("namespace: SimpleCalculator");
+
+        // Assert class `Calculator` with its methods
+        result.Should().Contain("class: Calculator");
+        result.Should().Contain("method: public double Calculate(double a, double b, Operation operation);");
+        result.Should().Contain("method: public CalculationResult PerformCalculation(Calculation calc);");
+
+        // Assert class `Program` with its method
+        result.Should().Contain("class: Program");
+        result.Should().Contain("method: static void Main(string[] args);");
+
+        // Assert enum `Operation`
+        result.Should().Contain("enum: public enum Operation { Add, Subtract, Multiply, Divide, }");
+
+        // Assert record `CalculationResult`
+        result.Should().Contain("record: CalculationResult");
+
+        // Assert interface `ICalculator`
+        result.Should().Contain("interface: ICalculator");
+
+        // Assert struct `Calculation` with properties
+        result.Should().Contain("struct: Calculation");
+        result.Should().Contain("property: public double Operand1 { get; }");
+        result.Should().Contain("property: public double Operand2 { get; }");
+
+        return Task.CompletedTask;
+    }
+
+    [Fact]
+    public Task GenerateTreeSitterRepositoryMap_With_WriteFullTree_True_ShouldGenerateCorrectTreeLevelString_ForSimpleCalculator()
+    {
+        // Act
+        var result = TreeSitterRepositoryMapGenerator.GenerateTreeSitterRepositoryMap(
+            SimpleCalculatorApp.ProgramContentFile,
+            SimpleCalculatorApp.ProgramRelativeFilePath,
+            new RepositoryMap(),
+            writeFullTree: true
+        );
+
+        result.Should().Contain("namespace: SimpleCalculator");
+
+        // Assert that the result contains the Calculator class and its methods
+        result.Should().Contain("class: Calculator");
+        result.Should().Contain("public double Calculate(double a, double b, Operation operation)");
+        result.Should().Contain("public CalculationResult PerformCalculation(Calculation calc)");
+
+        // Assert that the result contains the Program class and its Main method
+        result.Should().Contain("class: Program");
+        result.Should().Contain("static void Main(string[] args)");
+
+        // Assert that the result contains the Operation enum and its members
+        result.Should().Contain("enum: Operation");
+        result.Should().Contain("Add");
+        result.Should().Contain("Subtract");
+        result.Should().Contain("Multiply");
+        result.Should().Contain("Divide");
+
+        // Assert that the result contains the CalculationResult record
+        result.Should().Contain("record: CalculationResult");
+        result.Should().Contain("public record CalculationResult(double Result, string Description)");
+
+        // Assert that the result contains the ICalculator interface and its method
+        result.Should().Contain("interface: ICalculator");
+        result.Should().Contain("double Calculate(double a, double b, Operation operation)");
+
+        // Assert that the result contains the Calculation struct and its fields
+        result.Should().Contain("struct: Calculation");
+        result.Should().Contain("public double Operand1 { get; }");
+        result.Should().Contain("public double Operand2 { get; }");
+        result.Should().Contain("public Operation Operation { get; }");
+
+        result
+            .Should()
+            .Contain(
+                @"│   │   ├── class: Calculator
+│   │   │   public class Calculator : ICalculator
+│   │   │       {
+│   │   │           public double Calculate(double a, double b, Operation operation)
+│   │   │           {
+│   │   │               return operation switch
+│   │   │               {
+│   │   │                   Operation.Add => a + b,
+│   │   │                   Operation.Subtract => a - b,
+│   │   │                   Operation.Multiply => a * b,
+│   │   │                   Operation.Divide => b != 0 ? a / b : throw new DivideByZeroException(""Cannot divide by zero.""),
+│   │   │                   _ => throw new ArgumentOutOfRangeException(nameof(operation), operation, null),
+│   │   │               };
+│   │   │           }
+│   │   │   
+│   │   │           public CalculationResult PerformCalculation(Calculation calc)
+│   │   │           {
+│   │   │               double result = Calculate(calc.Operand1, calc.Operand2, calc.Operation);
+│   │   │               string description = $""{calc.Operand1} {calc.Operation} {calc.Operand2} = {result}"";
+│   │   │               return new CalculationResult(result, description);
+│   │   │           }
+│   │   │       }"
+            );
+
+        result
+            .Should()
+            .Contain(
+                @"│   │   ├── class: Program
+│   │   │   class Program
+│   │   │       {
+│   │   │           static void Main(string[] args)
+│   │   │           {
+│   │   │               var calculator = new Calculator();
+│   │   │   
+│   │   │               Console.WriteLine(""Simple Calculator"");
+│   │   │               Console.WriteLine(""Choose an operation: Add, Subtract, Multiply, Divide"");
+│   │   │               string userInput = Console.ReadLine();
+│   │   │               Operation operation;
+│   │   │   
+│   │   │               if (Enum.TryParse(userInput, true, out operation))
+│   │   │               {
+│   │   │                   Console.Write(""Enter first number: "");
+│   │   │                   double operand1 = Convert.ToDouble(Console.ReadLine());
+│   │   │   
+│   │   │                   Console.Write(""Enter second number: "");
+│   │   │                   double operand2 = Convert.ToDouble(Console.ReadLine());
+│   │   │   
+│   │   │                   Calculation calculation = new Calculation(operand1, operand2, operation);
+│   │   │                   CalculationResult result = calculator.PerformCalculation(calculation);
+│   │   │   
+│   │   │                   Console.WriteLine(result.Description);
+│   │   │               }
+│   │   │               else
+│   │   │               {
+│   │   │                   Console.WriteLine(""Invalid operation."");
+│   │   │               }
+│   │   │           }
+│   │   │       }"
+            );
+
+        result
+            .Should()
+            .Contain(
+                @"│   │   ├── interface: ICalculator
+│   │   │   public interface ICalculator
+│   │   │       {
+│   │   │           double Calculate(double a, double b, Operation operation);
+│   │   │       }"
+            );
+
+        return Task.CompletedTask;
+    }
+
+    [Fact]
+    public Task GenerateTreeSitterRepositoryMap_With_WriteFullTree_True_ShouldMatchExpectedOutput_ForSimpleCalculatorProjectStructure()
+    {
+        var result = TreeSitterRepositoryMapGenerator.GenerateTreeSitterRepositoryMap(
+            SimpleCalculatorApp.ProgramContentFile,
+            SimpleCalculatorApp.ProgramRelativeFilePath,
+            new RepositoryMap(),
+            writeFullTree: true
+        );
+
+        result
+            .Should()
+            .Contain(
+                @"root/
+├── Program.cs:
+│   ├── namespace: SimpleCalculator;
+│   │   ├── class: Calculator
+│   │   │   public class Calculator : ICalculator
+│   │   │       {
+│   │   │           public double Calculate(double a, double b, Operation operation)
+│   │   │           {
+│   │   │               return operation switch
+│   │   │               {
+│   │   │                   Operation.Add => a + b,
+│   │   │                   Operation.Subtract => a - b,
+│   │   │                   Operation.Multiply => a * b,
+│   │   │                   Operation.Divide => b != 0 ? a / b : throw new DivideByZeroException(""Cannot divide by zero.""),
+│   │   │                   _ => throw new ArgumentOutOfRangeException(nameof(operation), operation, null),
+│   │   │               };
+│   │   │           }
+│   │   │   
+│   │   │           public CalculationResult PerformCalculation(Calculation calc)
+│   │   │           {
+│   │   │               double result = Calculate(calc.Operand1, calc.Operand2, calc.Operation);
+│   │   │               string description = $""{calc.Operand1} {calc.Operation} {calc.Operand2} = {result}"";
+│   │   │               return new CalculationResult(result, description);
+│   │   │           }
+│   │   │       }
+│   │   ├── class: Program
+│   │   │   class Program
+│   │   │       {
+│   │   │           static void Main(string[] args)
+│   │   │           {
+│   │   │               var calculator = new Calculator();
+│   │   │   
+│   │   │               Console.WriteLine(""Simple Calculator"");
+│   │   │               Console.WriteLine(""Choose an operation: Add, Subtract, Multiply, Divide"");
+│   │   │               string userInput = Console.ReadLine();
+│   │   │               Operation operation;
+│   │   │   
+│   │   │               if (Enum.TryParse(userInput, true, out operation))
+│   │   │               {
+│   │   │                   Console.Write(""Enter first number: "");
+│   │   │                   double operand1 = Convert.ToDouble(Console.ReadLine());
+│   │   │   
+│   │   │                   Console.Write(""Enter second number: "");
+│   │   │                   double operand2 = Convert.ToDouble(Console.ReadLine());
+│   │   │   
+│   │   │                   Calculation calculation = new Calculation(operand1, operand2, operation);
+│   │   │                   CalculationResult result = calculator.PerformCalculation(calculation);
+│   │   │   
+│   │   │                   Console.WriteLine(result.Description);
+│   │   │               }
+│   │   │               else
+│   │   │               {
+│   │   │                   Console.WriteLine(""Invalid operation."");
+│   │   │               }
+│   │   │           }
+│   │   │       }
+│   │   ├── enum: Operation
+│   │   │   public enum Operation
+│   │   │       {
+│   │   │           Add,
+│   │   │           Subtract,
+│   │   │           Multiply,
+│   │   │           Divide,
+│   │   │       }
+│   │   ├── record: CalculationResult
+│   │   │   public record CalculationResult(double Result, string Description);
+│   │   ├── interface: ICalculator
+│   │   │   public interface ICalculator
+│   │   │       {
+│   │   │           double Calculate(double a, double b, Operation operation);
+│   │   │       }
+│   │   ├── struct: Calculation
+│   │   │   public struct Calculation
+│   │   │       {
+│   │   │           public double Operand1 { get; }
+│   │   │           public double Operand2 { get; }
+│   │   │           public Operation Operation { get; }
+│   │   │   
+│   │   │           public Calculation(double operand1, double operand2, Operation operation)
+│   │   │           {
+│   │   │               Operand1 = operand1;
+│   │   │               Operand2 = operand2;
+│   │   │               Operation = operation;
+│   │   │           }
+│   │   │       }
+"
+            );
 
         return Task.CompletedTask;
     }
 }
-
-//     [Fact]
-//     public void GetTreeSitterIfAvailable_ShouldReturnProcessedCode_ForCSharpCode()
-//     {
-//         // Arrange
-//         string path = "Add.cs"; // Simulating a C# file path
-//
-//         // Act
-//         var result = TreeSitterParser.GetFullTreeSitterIfAvaialble(_code, path);
-//
-//         // Assert
-//         result.Should().NotBeNull();
-//         result.Should().Contain("class.name: Add");
-//         result.Should().Contain("base_class.name: IOperation");
-//         result.Should().Contain("method.name: AddNumbers");
-//         result.Should().Contain("method.name: Calculate");
-//         result.Should().Contain("auto_property.name: Result");
-//
-//         result
-//             .Should()
-//             .Contain(
-//                 @"definition.class: public class Add(double number1, double number2) : IOperation
-// {
-//     // Property to hold the result of the calculation
-//     public double Result { get; private set; }
-//
-//     public double Calculate()
-//     {
-//         Result = AddNumbers(); // Assign the result to the property
-//         return Result;
-//     }
-//
-//     private double AddNumbers()
-//     {
-//         return number1 + number2; // Changed to addition from division
-//     }
-// }"
-//             );
-//
-//         result
-//             .Should()
-//             .Contain(
-//                 @"definition.method: private double AddNumbers()
-//     {
-//         return number1 + number2; // Changed to addition from division
-//     }"
-//             );
-//
-//         result
-//             .Should()
-//             .Contain(
-//                 @"definition.method: private double AddNumbers()
-//     {
-//         return number1 + number2; // Changed to addition from division
-//     }"
-//             );
-//     }
-
-// [Fact]
-// public void GetTreeSitterIfAvailable_ShouldReturnOriginalCode_ForUnsupportedLanguage()
-// {
-//     // Arrange
-//     string path = "file.txt"; // Unsupported file extension
-//
-//     // Act
-//     var result = TreeSitterParser.GetFullTreeSitterIfAvaialble(_code, path);
-//
-//     // Assert
-//     result.Should().Be(_code, "because the language is not supported, so it should return the original code");
-// }
-//
-// [Fact]
-// public void GetTreeSitterIfAvailable_ShouldHandleEmptyCodeInput()
-// {
-//     // Arrange
-//     string code = string.Empty;
-//     string path = "Add.cs"; // Simulating a C# file path
-//
-//     // Act
-//     var result = TreeSitterParser.GetFullTreeSitterIfAvaialble(code, path);
-//
-//     // Assert
-//     result.Should().BeEmpty("because there is no code to process");
-// }

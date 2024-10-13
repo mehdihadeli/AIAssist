@@ -31,8 +31,8 @@ public class EmbeddingsStore(VectorDatabase vectorDatabase)
     /// <summary>
     /// Find most similarity items based on embedding inputs and stored embedding data
     /// </summary>
-    /// <param name="userEmbeddingQuery"></param>
-    /// <param name="sessionId"></param>
+    /// <param Name="userEmbeddingQuery"></param>
+    /// <param Name="sessionId"></param>
     /// <returns></returns>
     public IEnumerable<CodeEmbedding> Query(IList<double> userEmbeddingQuery, Guid sessionId)
     {

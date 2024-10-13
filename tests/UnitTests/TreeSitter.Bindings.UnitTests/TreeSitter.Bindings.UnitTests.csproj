@@ -18,10 +18,6 @@
   </ItemGroup>
 
   <ItemGroup>
-    <Folder Include="TestData\" />
-  </ItemGroup>
-
-  <ItemGroup>
     <ProjectReference Include="..\..\..\src\TreeSitter.Bindings\TreeSitter.Bindings.csproj" />
   </ItemGroup>
 
@@ -52,6 +48,10 @@
     </Content>
     <Compile Remove="TestData\Calculator\Program.cs" />
     <Content Include="TestData\Calculator\Program.cs">
+      <CopyToOutputDirectory>Always</CopyToOutputDirectory>
+    </Content>
+    <Compile Remove="TestData\SimpleCalculator\Program.cs" />
+    <Content Include="TestData\SimpleCalculator\Program.cs">
       <CopyToOutputDirectory>Always</CopyToOutputDirectory>
     </Content>
   </ItemGroup>

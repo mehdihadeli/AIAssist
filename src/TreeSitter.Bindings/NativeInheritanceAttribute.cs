@@ -11,12 +11,12 @@ internal sealed partial class NativeInheritanceAttribute : Attribute
     private readonly string _name;
 
     /// <summary>Initializes a new instance of the <see cref="NativeInheritanceAttribute" /> class.</summary>
-    /// <param name="name">The name of the base type that was inherited from in the native signature.</param>
+    /// <param Name="name">The Name of the base type that was inherited from in the native signature.</param>
     public NativeInheritanceAttribute(string name)
     {
         _name = name;
     }
 
-    /// <summary>Gets the name of the base type that was inherited from in the native signature.</summary>
+    /// <summary>Gets the Name of the base type that was inherited from in the native signature.</summary>
     public string Name => _name;
 }

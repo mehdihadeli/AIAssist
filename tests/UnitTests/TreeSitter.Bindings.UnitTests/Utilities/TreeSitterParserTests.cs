@@ -9,12 +9,12 @@ public class TreeSitterParserTests
     private readonly string _code =
         @"
 
-namespace Calculator.Models;
+namespace CalculatorApp.Models;
 /// <summary>
 /// Add two values
 /// </summary>
-/// <param name=""number1""></param>
-/// <param name=""number2""></param>
+/// <param Name=""number1""></param>
+/// <param Name=""number2""></param>
 public class Add(double number1, double number2) : IOperation
 {
     // Property to hold the result of the calculation
@@ -32,14 +32,14 @@ public class Add(double number1, double number2) : IOperation
     }
 }
 
-namespace Calculator;
+namespace CalculatorApp;
 
 class Program
 {
     static void Main(string[] args)
     {
         // Create an instance of the Add class
-        var addition = new Calculator.Models.Add(5.0, 3.0);
+        var addition = new CalculatorApp.Models.Add(5.0, 3.0);
 
         // Calculate the result
         double result = addition.Calculate();

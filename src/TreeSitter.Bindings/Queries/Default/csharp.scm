@@ -14,8 +14,21 @@
 (namespace_declaration 
     name: (identifier) @name.namespace) @definition.namespace
 
+; Top-Level statement
+(global_statement) @definition.top_level_statement 
+
 ; Enum declarations
 (enum_declaration name: (identifier) @name.enum) @definition.enum
+
+; Enum members list
+(enum_declaration
+  name: (identifier) @enum_name.member
+  body: (enum_member_declaration_list
+    (enum_member_declaration
+      name: (identifier) @name.member
+    )
+  )
+)
 
 ; Class declarations
 (class_declaration name: (identifier) @name.class) @definition.class
@@ -29,23 +42,23 @@
 ; Interface declarations
 (interface_declaration name: (identifier) @name.interface) @definition.interface
 
-; Method declaration with return type
+; Method parameters list
 (method_declaration
-  (modifier) @modifier.method 
-  returns: (type) @return.method 
-  name: (identifier) @name.method
+  name: (identifier) @method_name.parameter
   parameters: (parameter_list
                 (parameter
-                  type: (type) @parameter.type
-                  name: (identifier) @parameter.name))
-) @definition.method
+                  type: (type) @type.parameter
+                  name: (identifier) @name.parameter))
+) 
 
-; Method declaration without parameters and with return type
+; Method declaration 
 (method_declaration
   (modifier) @modifier.method 
   returns: (type) @return.method  
   name: (identifier) @name.method
+   parameters: (parameter_list)
 ) @definition.method
+
 
 ; Property declarations
 (property_declaration 

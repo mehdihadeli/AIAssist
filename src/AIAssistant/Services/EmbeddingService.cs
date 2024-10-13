@@ -3,6 +3,7 @@ using AIAssistant.Data;
 using AIAssistant.Models;
 using AIAssistant.Prompts;
 using BuildingBlocks.Extensions;
+using TreeSitter.Bindings.CustomTypes.TreeParser;
 using TreeSitter.Bindings.Utilities;
 
 namespace AIAssistant.Services;
@@ -11,15 +12,18 @@ public class EmbeddingService(ILLMServiceManager llmServiceManager, EmbeddingsSt
 {
     public async Task AddEmbeddingsForFiles(IEnumerable<ApplicationCode> applicationCodes, Guid sessionId)
     {
+        var repositoryMap = new RepositoryMap();
         IList<CodeEmbedding> codeEmbeddings = new List<CodeEmbedding>();
         foreach (var applicationCode in applicationCodes)
         {
             var codeEmbedding = new CodeEmbedding
             {
                 RelativeFilePath = applicationCode.RelativePath,
-                TreeSitterCode = TreeSitterRepositoryMapGenerator.GenerateFullTreeSitterRepositoryMap(
+                TreeSitterCode = TreeSitterRepositoryMapGenerator.GenerateTreeSitterRepositoryMap(
                     applicationCode.Code,
-                    applicationCode.RelativePath
+                    applicationCode.RelativePath,
+                    repositoryMap,
+                    true
                 ),
                 Code = applicationCode.Code,
                 SessionId = sessionId,

@@ -11,7 +11,7 @@ internal sealed partial class VtblIndexAttribute : Attribute
     private readonly uint _index;
 
     /// <summary>Initializes a new instance of the <see cref="VtblIndexAttribute" /> class.</summary>
-    /// <param name="index">The vtbl index of a method as it was in the native signature.</param>
+    /// <param Name="index">The vtbl index of a method as it was in the native signature.</param>
     public VtblIndexAttribute(uint index)
     {
         _index = index;

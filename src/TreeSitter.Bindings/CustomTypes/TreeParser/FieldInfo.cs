@@ -1,6 +1,6 @@
 namespace TreeSitter.Bindings.CustomTypes.TreeParser;
 
-public class FieldInfo
+public class FieldInfo : ICodeElement
 {
     public string Name { get; set; } = default!;
 
