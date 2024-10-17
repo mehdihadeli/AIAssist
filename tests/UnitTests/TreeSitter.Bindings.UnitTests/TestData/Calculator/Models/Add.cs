@@ -9,7 +9,12 @@ public class Add(double number1, double number2) : IOperation
 {
     public double Result { get; set; }
     public double ResultField;
+    public double ResultField2;
 
+    /// <summary>
+    /// Calculates the sum of two numbers and updates the result field.
+    /// </summary>
+    /// <returns>The result of the addition as a double.</returns>
     public double Calculate()
     {
         Result = AddNumbers(number1, number2);

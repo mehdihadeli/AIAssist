@@ -26,11 +26,6 @@ public static class Constants
         public const string Comment = "comment.class";
     }
 
-    public static class ClassCommentCaptureTags
-    {
-        public const string Name = "class_name.comment";
-    }
-
     public static class MethodCaptureTags
     {
         public const string Name = "name.method";
@@ -40,38 +35,25 @@ public static class Constants
         public const string Comment = "comment.method";
     }
 
-    public static class MethodCommentCaptureTags
-    {
-        public const string Name = "method_name.comment";
-    }
-
     public static class MethodParameterCaptureTags
     {
         public const string MethodName = "method_name.parameter";
         public const string ParameterType = "type.parameter";
-        public const string ParameterName = "Name.parameter";
+        public const string ParameterName = "name.parameter";
     }
 
     public static class RecordCaptureTags
     {
         public const string Name = "name.record";
         public const string Definition = "definition.record";
-    }
-
-    public static class RecordCommentCaptureTags
-    {
-        public const string Name = "record_name.comment";
+        public const string Comment = "comment.record";
     }
 
     public static class StructCaptureTags
     {
         public const string Name = "name.struct";
         public const string Definition = "definition.struct";
-    }
-
-    public static class StructCommentCaptureTags
-    {
-        public const string Name = "struct_name.comment";
+        public const string Comment = "comment.struct";
     }
 
     public static class InterfaceCaptureTags
@@ -79,11 +61,6 @@ public static class Constants
         public const string Name = "name.interface";
         public const string Definition = "definition.interface";
         public const string Comment = "comment.interface";
-    }
-
-    public static class InterfaceCommentCaptureTags
-    {
-        public const string Name = "interface_name.comment";
     }
 
     public static class EnumCaptureTags
@@ -99,12 +76,7 @@ public static class Constants
         public const string Name = "name.member";
     }
 
-    public const string CommentDefinitionCaptureTags = "definition.comment";
-
-    public static class EnumCommentCaptureTags
-    {
-        public const string Name = "enum_name.comment";
-    }
+    public const string CommentChildNameTags = "comment.child_name";
 
     public static class FiledCaptureTags
     {
@@ -121,10 +93,5 @@ public static class Constants
         public const string Definition = "definition.property";
         public const string Modifier = "modifier.property";
         public const string Comment = "comment.property";
-    }
-
-    public static class PropertyCommentCaptureTags
-    {
-        public const string Name = "property_name.comment";
     }
 }

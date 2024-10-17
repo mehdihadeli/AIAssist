@@ -48,6 +48,15 @@ namespace SimpleCalculator
     /// </summary>
     public class Calculator : ICalculator
     {
+        /// <summary>
+        /// Calculate the operation
+        /// </summary>
+        /// <param name="a"></param>
+        /// <param name="b"></param>
+        /// <param name="operation"></param>
+        /// <returns></returns>
+        /// <exception cref="DivideByZeroException"></exception>
+        /// <exception cref="ArgumentOutOfRangeException"></exception>
         public double Calculate(double a, double b, Operation operation)
         {
             return operation switch

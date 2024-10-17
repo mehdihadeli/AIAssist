@@ -1,6 +1,6 @@
 namespace TreeSitter.Bindings.CustomTypes.TreeParser;
 
-public class ClassInfo : ICodeElement
+public class ClassInfo : ICodeElement, IMethodElement, IFieldElement, IPropertyElement, ICommentElement
 {
     public string Name { get; set; } = default!;
     public IList<MethodInfo> Methods { get; set; } = new List<MethodInfo>();

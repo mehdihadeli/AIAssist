@@ -1,6 +1,6 @@
 namespace TreeSitter.Bindings.CustomTypes.TreeParser;
 
-public class EnumInfo : ICodeElement
+public class EnumInfo : ICodeElement, ICommentElement
 {
     public string Name { get; set; } = default!;
     public string Comments { get; set; } = default!;

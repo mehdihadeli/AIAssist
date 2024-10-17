@@ -4,7 +4,6 @@ using TreeSitter.Bindings.CustomTypes.TreeParser;
 using static TreeSitter.Bindings.TSBindingsParser;
 using static TreeSitter.Bindings.Utilities.TreeSitterParser;
 using FileInfo = TreeSitter.Bindings.CustomTypes.TreeParser.FileInfo;
-using MethodInfo = TreeSitter.Bindings.CustomTypes.TreeParser.MethodInfo;
 
 namespace TreeSitter.Bindings.Utilities;
 
@@ -15,10 +14,10 @@ public static class TreeSitterRepositoryMapGenerator
     /// <summary>
     /// Generate short tree-sitter map based on supported languages. If language is not supported, it will return the code.
     /// </summary>
-    /// <param Name="code"></param>
-    /// <param Name="path"></param>
-    /// <param Name="repositoryMap"></param>
-    /// <param Name="writeFullTree"></param>
+    /// <param name="code"></param>
+    /// <param name="path"></param>
+    /// <param name="repositoryMap"></param>
+    /// <param name="writeFullTree"></param>
     /// <returns></returns>
     public static string GenerateTreeSitterRepositoryMap(
         string code,
@@ -43,25 +42,18 @@ public static class TreeSitterRepositoryMapGenerator
 
             TSQueryMatch match;
             var fileInfo = new FileInfo { Path = path };
-            NamespaceInfo? currentNamespace = null;
-            ClassInfo? currentClass = null;
-            RecordInfo? currentRecord = null;
-            StructInfo? currentStruct = null;
-            InterfaceInfo? currentInterface = null;
-            EnumInfo? currentEnum = null;
 
             // Convert code to byte array for extracting matched code using byte positions
             byte[] byteArrayCode = Encoding.UTF8.GetBytes(code);
 
-            // https://tree-sitter.github.io/tree-sitter/using-parsers#walking-trees-with-tree-cursors
-            // https://tree-sitter.github.io/tree-sitter/using-parsers#the-query-api
-            // https://tree-sitter.github.io/tree-sitter/using-parsers#query-syntax
-
+            // ReSharper disable once TooWideLocalVariableScope
+            // declaration of namespace should be outside of while loop
+            NamespaceInfo? currentNamespace = null;
 
             while (query_cursor_next_match(queryCursor, &match))
             {
                 // Dictionary to group captures by their names
-                var captureTags = new Dictionary<string, TSNode>();
+                var captureTags = new Dictionary<string, IList<TSNode>>();
 
                 // Populate the dictionary by capture Name
                 for (int i = 0; i < match.capture_count; i++)
@@ -75,476 +67,667 @@ public static class TreeSitterRepositoryMapGenerator
 
                     string captureName = new GeneratedCString(captureNamePtr);
 
-                    captureTags.Add(captureName, node);
-                }
-
-                if (
-                    captureTags.ContainsKey(Constants.NamespaceCaptureTags.Name)
-                    || captureTags.ContainsKey(Constants.FileScopedNamespaceCaptureTags.Name)
-                )
-                {
-                    currentNamespace = new NamespaceInfo();
-
-                    foreach (var captureTag in captureTags)
-                    {
-                        var namespaceNode = captureTag.Value;
-                        var namespaceCaptureValue = GetMatchedCode(byteArrayCode, namespaceNode);
-
-                        switch (captureTag.Key)
-                        {
-                            case Constants.NamespaceCaptureTags.Name:
-                            case Constants.FileScopedNamespaceCaptureTags.Name:
-                                currentNamespace.Name = namespaceCaptureValue;
-                                break;
-                            case Constants.NamespaceCaptureTags.Definition:
-                            case Constants.FileScopedNamespaceCaptureTags.Definition:
-                                currentNamespace.Definition = namespaceCaptureValue;
-                                break;
-                        }
-                    }
-
-                    fileInfo.Namespaces.Add(currentNamespace);
-                }
-
-                if (captureTags.ContainsKey(Constants.TopLevelStatementCaptureTags.Definition))
-                {
-                    foreach (var captureTag in captureTags)
-                    {
-                        var topLevelStatementNode = captureTag.Value;
-
-                        var topLevelStatementCaptureValue = GetMatchedCode(byteArrayCode, topLevelStatementNode);
-
-                        switch (captureTag.Key)
-                        {
-                            case Constants.TopLevelStatementCaptureTags.Definition:
-                                fileInfo.TopLevelStatementsDefinition.Add(topLevelStatementCaptureValue);
-
-                                break;
-                        }
-                    }
-                }
-
-                if (captureTags.ContainsKey(Constants.FiledCaptureTags.Name))
-                {
-                    var filedInfo = new FieldInfo();
-
-                    foreach (var captureTag in captureTags)
-                    {
-                        var fieldNode = captureTag.Value;
-                        var fieldCaptureValue = GetMatchedCode(byteArrayCode, fieldNode);
-
-                        switch (captureTag.Key)
-                        {
-                            case Constants.FiledCaptureTags.Name:
-                                filedInfo.Name = fieldCaptureValue;
-                                break;
-                            case Constants.FiledCaptureTags.Type:
-                                filedInfo.Type = fieldCaptureValue;
-                                break;
-                            case Constants.FiledCaptureTags.Modifier:
-                                filedInfo.AccessModifier = fieldCaptureValue;
-                                break;
-                            case Constants.FiledCaptureTags.Definition:
-                                filedInfo.Definition = fieldCaptureValue;
-                                break;
-                        }
-                    }
-
-                    if (currentClass is not null)
-                    {
-                        currentClass.Fields.Add(filedInfo);
-                    }
-
-                    if (currentRecord is not null)
-                    {
-                        currentRecord.Fields.Add(filedInfo);
-                    }
-
-                    if (currentStruct is not null)
-                    {
-                        currentStruct.Fields.Add(filedInfo);
-                    }
-                }
-
-                if (captureTags.ContainsKey(Constants.PropertyCaptureTags.Name))
-                {
-                    var propertyInfo = new PropertyInfo();
-
-                    foreach (var captureTag in captureTags)
-                    {
-                        var propertyNode = captureTag.Value;
-                        var propertyCaptureValue = GetMatchedCode(byteArrayCode, propertyNode);
-
-                        switch (captureTag.Key)
-                        {
-                            case Constants.PropertyCaptureTags.Name:
-                                propertyInfo.Name = propertyCaptureValue;
-                                break;
-                            case Constants.PropertyCaptureTags.Type:
-                                propertyInfo.Type = propertyCaptureValue;
-                                break;
-                            case Constants.PropertyCaptureTags.Modifier:
-                                propertyInfo.AccessModifier = propertyCaptureValue;
-                                break;
-                            case Constants.PropertyCaptureTags.Definition:
-                                propertyInfo.Definition = propertyCaptureValue;
-                                break;
-                        }
-                    }
-
-                    if (currentClass is not null)
-                    {
-                        currentClass.Properties.Add(propertyInfo);
-                    }
-
-                    if (currentRecord is not null)
-                    {
-                        currentRecord.Properties.Add(propertyInfo);
-                    }
-
-                    if (currentStruct is not null)
-                    {
-                        currentStruct.Properties.Add(propertyInfo);
-                    }
-
-                    if (currentInterface is not null)
-                    {
-                        currentInterface.Properties.Add(propertyInfo);
-                    }
-                }
-
-                if (captureTags.ContainsKey(Constants.ClassCaptureTags.Name))
-                {
-                    // resting `currentRecord` here for the grammar query
-                    currentRecord = null;
-                    // resting `currentStruct` here for the grammar query
-                    currentStruct = null;
-                    // resting currentInterface here for the grammar query
-                    currentInterface = null;
-                    // resting `currentClass` here for the grammar query
-                    currentClass = new ClassInfo();
-
-                    foreach (var captureTag in captureTags)
-                    {
-                        var classNode = captureTag.Value;
-                        var classCaptureValue = GetMatchedCode(byteArrayCode, classNode);
-
-                        switch (captureTag.Key)
-                        {
-                            case Constants.ClassCaptureTags.Name:
-                                currentClass.Name = classCaptureValue;
-                                break;
-                            case Constants.ClassCaptureTags.Definition:
-                                currentClass.Definition = classCaptureValue;
-                                break;
-                        }
-                    }
-
-                    if (currentNamespace != null)
-                    {
-                        currentNamespace.Classes.Add(currentClass);
-                    }
+                    if (!captureTags.ContainsKey(captureName))
+                        captureTags.Add(captureName, [node]);
                     else
                     {
-                        fileInfo.Classes.Add(currentClass);
+                        var captureValues = captureTags.GetValueOrDefault(captureName);
+                        captureValues?.Add(node);
                     }
                 }
 
-                if (captureTags.ContainsKey(Constants.EnumCaptureTags.Name))
-                {
-                    // resting `currentClass` here for the grammar query
-                    currentClass = null;
-                    // resting `currentRecord` here for the grammar query
-                    currentRecord = null;
-                    // resting `currentStruct` here for the grammar query
-                    currentStruct = null;
-                    // resting currentInterface here for the grammar query
-                    currentInterface = null;
-                    // resting currentEnum here for the grammar query
-                    currentEnum = new EnumInfo();
+                AddNamespace(captureTags, byteArrayCode, fileInfo, ref currentNamespace);
 
-                    foreach (var captureTag in captureTags)
-                    {
-                        var enumNode = captureTag.Value;
-                        var enumCaptureValue = GetMatchedCode(byteArrayCode, enumNode);
+                AddTopLevelStatement(captureTags, byteArrayCode, fileInfo);
 
-                        switch (captureTag.Key)
-                        {
-                            case Constants.EnumCaptureTags.Name:
-                                currentEnum.Name = enumCaptureValue;
-                                break;
-                            case Constants.EnumCaptureTags.Definition:
-                                currentEnum.Definition = enumCaptureValue;
-                                break;
-                        }
-                    }
+                // Try to create or update a ClassInfo object and populate its fields based on captured data
+                AddClass(captureTags, byteArrayCode, fileInfo, currentNamespace);
 
-                    if (currentNamespace != null)
-                    {
-                        currentNamespace.Enums.Add(currentEnum);
-                    }
-                    else
-                    {
-                        fileInfo.Enums.Add(currentEnum);
-                    }
-                }
+                // Try to create or update a RecordInfo object and populate its fields based on captured data
+                AddRecord(captureTags, byteArrayCode, fileInfo, currentNamespace);
 
-                if (
-                    captureTags.ContainsKey(Constants.EnumMemberCaptureTags.Name)
-                    && captureTags.ContainsKey(Constants.EnumMemberCaptureTags.EnumName)
-                )
-                {
-                    string enumMemberName = string.Empty;
-                    string enumName = string.Empty;
+                // Try to create or update a StructInfo object and populate its fields based on captured data
+                AddStruct(captureTags, byteArrayCode, fileInfo, currentNamespace);
 
-                    foreach (var captureTag in captureTags)
-                    {
-                        var enumMemberNode = captureTag.Value;
-                        var enumMemberCaptureValue = GetMatchedCode(byteArrayCode, enumMemberNode);
+                // Try to create or update a InterfaceInfo object and populate its fields based on captured data
+                AddInterface(captureTags, byteArrayCode, fileInfo, currentNamespace);
 
-                        switch (captureTag.Key)
-                        {
-                            case Constants.EnumMemberCaptureTags.Name:
-                                enumMemberName = enumMemberCaptureValue;
-                                break;
-                            case Constants.EnumMemberCaptureTags.EnumName:
-                                enumName = enumMemberCaptureValue;
-                                break;
-                        }
-                    }
-
-                    if (currentNamespace != null)
-                    {
-                        var enumInfo = currentNamespace.Enums.SingleOrDefault(x => x.Name == enumName);
-
-                        enumInfo?.Members.Add(enumMemberName);
-                    }
-                    else
-                    {
-                        var enumInfo = fileInfo.Enums.SingleOrDefault(x => x.Name == enumName);
-                        enumInfo?.Members.Add(enumMemberName);
-                    }
-                }
-
-                if (captureTags.ContainsKey(Constants.StructCaptureTags.Name))
-                {
-                    // resting `currentClass` here for the grammar query
-                    currentClass = null;
-                    // resting `currentRecord` here for the grammar query
-                    currentRecord = null;
-                    // resting currentInterface here for the grammar query
-                    currentInterface = null;
-                    // resting `currentStruct` here for the grammar query
-                    currentStruct = new StructInfo();
-
-                    foreach (var captureTag in captureTags)
-                    {
-                        var structNode = captureTag.Value;
-                        var structCaptureValue = GetMatchedCode(byteArrayCode, structNode);
-
-                        switch (captureTag.Key)
-                        {
-                            case Constants.StructCaptureTags.Name:
-                                currentStruct.Name = structCaptureValue;
-                                break;
-                            case Constants.StructCaptureTags.Definition:
-                                currentStruct.Definition = structCaptureValue;
-                                break;
-                        }
-                    }
-
-                    if (currentNamespace != null)
-                    {
-                        currentNamespace.Structs.Add(currentStruct);
-                    }
-                    else
-                    {
-                        fileInfo.Structs.Add(currentStruct);
-                    }
-                }
-
-                if (captureTags.ContainsKey(Constants.RecordCaptureTags.Name))
-                {
-                    // resting `currentClass` here for the grammar query
-                    currentClass = null;
-                    // resting `currentStruct` here for the grammar query
-                    currentStruct = null;
-                    // resting currentInterface here for the grammar query
-                    currentInterface = null;
-                    // resting `currentRecord` here for the grammar query
-                    currentRecord = new RecordInfo();
-
-                    foreach (var captureTag in captureTags)
-                    {
-                        var recordNode = captureTag.Value;
-                        var recordCaptureValue = GetMatchedCode(byteArrayCode, recordNode);
-
-                        switch (captureTag.Key)
-                        {
-                            case Constants.RecordCaptureTags.Name:
-                                currentRecord.Name = recordCaptureValue;
-                                break;
-                            case Constants.RecordCaptureTags.Definition:
-                                currentRecord.Definition = recordCaptureValue;
-                                break;
-                        }
-                    }
-
-                    if (currentNamespace != null)
-                    {
-                        currentNamespace.Records.Add(currentRecord);
-                    }
-                    else
-                    {
-                        fileInfo.Records.Add(currentRecord);
-                    }
-                }
-
-                if (captureTags.ContainsKey(Constants.InterfaceCaptureTags.Name))
-                {
-                    // resting `currentClass` here for the grammar query
-                    currentClass = null;
-                    // resting `currentRecord` here for the grammar query
-                    currentRecord = null;
-                    // resting `currentStruct` here for the grammar query
-                    currentStruct = null;
-                    // resting currentInterface here for the grammar query
-                    currentInterface = new InterfaceInfo();
-
-                    foreach (var captureTag in captureTags)
-                    {
-                        var interfaceNode = captureTag.Value;
-                        var interfaceCaptureValue = GetMatchedCode(byteArrayCode, interfaceNode);
-
-                        switch (captureTag.Key)
-                        {
-                            case Constants.InterfaceCaptureTags.Name:
-                                currentInterface.Name = interfaceCaptureValue;
-                                break;
-                            case Constants.InterfaceCaptureTags.Definition:
-                                currentInterface.Definition = interfaceCaptureValue;
-                                break;
-                        }
-                    }
-
-                    if (currentNamespace != null)
-                    {
-                        currentNamespace.Interfaces.Add(currentInterface);
-                    }
-                    else
-                    {
-                        fileInfo.Interfaces.Add(currentInterface);
-                    }
-                }
-
-                if (captureTags.ContainsKey(Constants.MethodCaptureTags.Name))
-                {
-                    var currentMethod = new MethodInfo();
-
-                    foreach (var captureTag in captureTags)
-                    {
-                        var methodNode = captureTag.Value;
-                        var methodCaptureValue = GetMatchedCode(byteArrayCode, methodNode);
-
-                        switch (captureTag.Key)
-                        {
-                            case Constants.MethodCaptureTags.Name:
-                                currentMethod.Name = methodCaptureValue;
-                                break;
-                            case Constants.MethodCaptureTags.Return:
-                                currentMethod.ReturnType = methodCaptureValue;
-                                break;
-                            case Constants.MethodCaptureTags.Modifier:
-                                currentMethod.AccessModifier = methodCaptureValue;
-                                break;
-                            case Constants.MethodCaptureTags.Definition:
-                                currentMethod.Definition = methodCaptureValue;
-                                break;
-                        }
-                    }
-
-                    if (currentClass is not null)
-                    {
-                        currentClass.Methods.Add(currentMethod);
-                    }
-
-                    if (currentRecord is not null)
-                    {
-                        currentRecord.Methods.Add(currentMethod);
-                    }
-
-                    if (currentStruct is not null)
-                    {
-                        currentStruct.Methods.Add(currentMethod);
-                    }
-
-                    if (currentInterface is not null)
-                    {
-                        currentInterface.Methods.Add(currentMethod);
-                    }
-                }
-
-                if (
-                    captureTags.ContainsKey(Constants.MethodParameterCaptureTags.ParameterType)
-                    && captureTags.ContainsKey(Constants.MethodParameterCaptureTags.ParameterName)
-                )
-                {
-                    var parameter = new ParameterInfo();
-                    string methodName = string.Empty;
-
-                    foreach (var captureTag in captureTags)
-                    {
-                        var parameterNode = captureTag.Value;
-                        var parameterCaptureValue = GetMatchedCode(byteArrayCode, parameterNode);
-
-                        switch (captureTag.Key)
-                        {
-                            case Constants.MethodParameterCaptureTags.MethodName:
-                                methodName = parameterCaptureValue;
-                                break;
-                            case Constants.MethodParameterCaptureTags.ParameterName:
-                                parameter.Name = parameterCaptureValue;
-                                break;
-                            case Constants.MethodParameterCaptureTags.ParameterType:
-                                parameter.Type = parameterCaptureValue;
-                                break;
-                        }
-                    }
-
-                    if (currentClass is not null)
-                    {
-                        var method = currentClass.Methods.SingleOrDefault(x => x.Name == methodName);
-
-                        method?.Parameters.Add(parameter);
-                    }
-
-                    if (currentRecord is not null)
-                    {
-                        var method = currentRecord.Methods.SingleOrDefault(x => x.Name == methodName);
-
-                        method?.Parameters.Add(parameter);
-                    }
-
-                    if (currentStruct is not null)
-                    {
-                        var method = currentStruct.Methods.SingleOrDefault(x => x.Name == methodName);
-
-                        method?.Parameters.Add(parameter);
-                    }
-
-                    if (currentInterface is not null)
-                    {
-                        var method = currentInterface.Methods.SingleOrDefault(x => x.Name == methodName);
-
-                        method?.Parameters.Add(parameter);
-                    }
-                }
+                AddEnum(captureTags, byteArrayCode, fileInfo, currentNamespace);
             }
+
+            // cleanup resources
+            query_cursor_delete(queryCursor);
+            query_delete(defaultQuery);
+            tree_delete(tree);
+            parser_delete(parser);
 
             AddFileToRepositoryMap(repositoryMap, fileInfo);
         }
 
         return GenerateTreeString(repositoryMap, applicationName: "root", writeFullTree: writeFullTree);
+    }
+
+    private static void AddNamespace(
+        Dictionary<string, IList<TSNode>> captureTags,
+        byte[] byteArrayCode,
+        FileInfo fileInfo,
+        ref NamespaceInfo? currentNamespace
+    )
+    {
+        if (
+            captureTags.TryGetValue(Constants.NamespaceCaptureTags.Name, out var namespaceNameNodes)
+            && captureTags.TryGetValue(Constants.NamespaceCaptureTags.Definition, out var namespaceDefinitionNodes)
+        )
+        {
+            var name = GetMatchedCode(byteArrayCode, namespaceNameNodes.First());
+            var definition = GetMatchedCode(byteArrayCode, namespaceDefinitionNodes.First());
+
+            if (!fileInfo.Namespaces.Any(x => x.Name == name && x.Definition == definition))
+            {
+                var ns = new NamespaceInfo { Definition = definition, Name = name };
+                fileInfo.Namespaces.Add(ns);
+
+                currentNamespace = ns;
+            }
+            else
+            {
+                var ns = fileInfo.Namespaces.SingleOrDefault(x => x.Name == name && x.Definition == definition);
+
+                if (ns is not null)
+                {
+                    currentNamespace = ns;
+                }
+            }
+        }
+
+        if (
+            captureTags.TryGetValue(Constants.FileScopedNamespaceCaptureTags.Name, out var namespaceScopedNameNodes)
+            && captureTags.TryGetValue(
+                Constants.FileScopedNamespaceCaptureTags.Definition,
+                out var namespaceScopedDefinitionNodes
+            )
+        )
+        {
+            var name = GetMatchedCode(byteArrayCode, namespaceScopedNameNodes.First());
+            var definition = GetMatchedCode(byteArrayCode, namespaceScopedDefinitionNodes.First());
+
+            if (!fileInfo.Namespaces.Any(x => x.Name == name && x.Definition == definition))
+            {
+                var ns = new NamespaceInfo { Definition = definition, Name = name };
+                fileInfo.Namespaces.Add(ns);
+
+                currentNamespace = ns;
+            }
+            else
+            {
+                var ns = fileInfo.Namespaces.SingleOrDefault(x => x.Name == name && x.Definition == definition);
+
+                if (ns is not null)
+                {
+                    currentNamespace = ns;
+                }
+            }
+        }
+    }
+
+    private static void AddTopLevelStatement(
+        Dictionary<string, IList<TSNode>> captureTags,
+        byte[] byteArrayCode,
+        FileInfo fileInfo
+    )
+    {
+        if (
+            captureTags.TryGetValue(
+                Constants.TopLevelStatementCaptureTags.Definition,
+                out var topLevelStatementDefinitionNodes
+            )
+        )
+        {
+            var definition = GetMatchedCode(byteArrayCode, topLevelStatementDefinitionNodes.First());
+
+            if (fileInfo.TopLevelStatementsDefinition.All(x => x != definition))
+                fileInfo.TopLevelStatementsDefinition.Add(definition);
+        }
+    }
+
+    private static void AddStruct(
+        Dictionary<string, IList<TSNode>> captureTags,
+        byte[] byteArrayCode,
+        FileInfo fileInfo,
+        NamespaceInfo? currentNamespace
+    )
+    {
+        if (
+            captureTags.TryGetValue(Constants.StructCaptureTags.Name, out var structNameNodes)
+            && captureTags.TryGetValue(Constants.StructCaptureTags.Definition, out var structDefinitionNodes)
+        )
+        {
+            StructInfo? currentStruct;
+
+            var name = GetMatchedCode(byteArrayCode, structNameNodes.First());
+            var definition = GetMatchedCode(byteArrayCode, structDefinitionNodes.First());
+
+            if (currentNamespace != null)
+            {
+                var strc = currentNamespace.Structs.SingleOrDefault(x => x.Name == name && x.Definition == definition);
+
+                if (strc is null)
+                {
+                    currentNamespace.Structs.Add(
+                        currentStruct = new StructInfo
+                        {
+                            // we have just one structNameNodes in each iteration
+                            Name = name,
+                            Definition = definition,
+                        }
+                    );
+                }
+                else
+                    currentStruct = strc;
+            }
+            else
+            {
+                var strc = fileInfo.Structs.SingleOrDefault(x => x.Name == name && x.Definition == definition);
+
+                if (strc is null)
+                {
+                    fileInfo.Structs.Add(
+                        currentStruct = new StructInfo
+                        {
+                            // we have just one structNameNodes in each iteration
+                            Name = name,
+                            Definition = definition,
+                        }
+                    );
+                }
+                else
+                {
+                    currentStruct = strc;
+                }
+            }
+
+            // add fields to the record
+            FindOrAddFields(currentStruct, byteArrayCode, captureTags);
+
+            // add comment to the record
+            FindOrAddComment(currentStruct, byteArrayCode, captureTags);
+
+            // Add properties to the record
+            FindOrAddProperties(currentStruct, byteArrayCode, captureTags);
+
+            // Add methods to the record
+            FindOrAddMethod(currentStruct, byteArrayCode, captureTags);
+        }
+    }
+
+    private static void AddInterface(
+        Dictionary<string, IList<TSNode>> captureTags,
+        byte[] byteArrayCode,
+        FileInfo fileInfo,
+        NamespaceInfo? currentNamespace
+    )
+    {
+        if (
+            captureTags.TryGetValue(Constants.InterfaceCaptureTags.Name, out var interfaceNameNodes)
+            && captureTags.TryGetValue(Constants.InterfaceCaptureTags.Definition, out var interfaceDefinitionNodes)
+        )
+        {
+            InterfaceInfo? currentInterface;
+
+            var name = GetMatchedCode(byteArrayCode, interfaceNameNodes.First());
+            var definition = GetMatchedCode(byteArrayCode, interfaceDefinitionNodes.First());
+
+            if (currentNamespace != null)
+            {
+                var interfac = currentNamespace.Interfaces.SingleOrDefault(x =>
+                    x.Name == name && x.Definition == definition
+                );
+
+                if (interfac is null)
+                {
+                    currentNamespace.Interfaces.Add(
+                        currentInterface = new InterfaceInfo
+                        {
+                            // we have just one interfaceNameNodes in each iteration
+                            Name = name,
+                            Definition = definition,
+                        }
+                    );
+                }
+                else
+                    currentInterface = interfac;
+            }
+            else
+            {
+                var interfac = fileInfo.Interfaces.SingleOrDefault(x => x.Name == name && x.Definition == definition);
+
+                if (interfac is null)
+                {
+                    fileInfo.Interfaces.Add(
+                        currentInterface = new InterfaceInfo
+                        {
+                            // we have just one interfaceNameNodes in each iteration
+                            Name = name,
+                            Definition = definition,
+                        }
+                    );
+                }
+                else
+                {
+                    currentInterface = interfac;
+                }
+            }
+
+            // add comment to the record
+            FindOrAddComment(currentInterface, byteArrayCode, captureTags);
+
+            // Add properties to the record
+            FindOrAddProperties(currentInterface, byteArrayCode, captureTags);
+
+            // Add methods to the record
+            FindOrAddMethod(currentInterface, byteArrayCode, captureTags);
+        }
+    }
+
+    private static void AddRecord(
+        Dictionary<string, IList<TSNode>> captureTags,
+        byte[] byteArrayCode,
+        FileInfo fileInfo,
+        NamespaceInfo? currentNamespace
+    )
+    {
+        if (
+            captureTags.TryGetValue(Constants.RecordCaptureTags.Name, out var recordNameNodes)
+            && captureTags.TryGetValue(Constants.RecordCaptureTags.Definition, out var recordDefinitionNodes)
+        )
+        {
+            RecordInfo? currentRecord;
+
+            var name = GetMatchedCode(byteArrayCode, recordNameNodes.First());
+            var definition = GetMatchedCode(byteArrayCode, recordDefinitionNodes.First());
+
+            if (currentNamespace != null)
+            {
+                var rec = currentNamespace.Records.SingleOrDefault(x => x.Name == name && x.Definition == definition);
+
+                if (rec is null)
+                {
+                    currentNamespace.Records.Add(
+                        currentRecord = new RecordInfo
+                        {
+                            // we have just one recordNameNodes in each iteration
+                            Name = name,
+                            Definition = definition,
+                        }
+                    );
+                }
+                else
+                    currentRecord = rec;
+            }
+            else
+            {
+                var rec = fileInfo.Records.SingleOrDefault(x => x.Name == name && x.Definition == definition);
+
+                if (rec is null)
+                {
+                    fileInfo.Records.Add(
+                        currentRecord = new RecordInfo
+                        {
+                            // we have just one recordNameNodes in each iteration
+                            Name = name,
+                            Definition = definition,
+                        }
+                    );
+                }
+                else
+                {
+                    currentRecord = rec;
+                }
+            }
+
+            // add fields to the record
+            FindOrAddFields(currentRecord, byteArrayCode, captureTags);
+
+            // add comment to the record
+            FindOrAddComment(currentRecord, byteArrayCode, captureTags);
+
+            // Add properties to the record
+            FindOrAddProperties(currentRecord, byteArrayCode, captureTags);
+
+            // Add methods to the record
+            FindOrAddMethod(currentRecord, byteArrayCode, captureTags);
+        }
+    }
+
+    private static void AddClass(
+        Dictionary<string, IList<TSNode>> captureTags,
+        byte[] byteArrayCode,
+        FileInfo fileInfo,
+        NamespaceInfo? currentNamespace
+    )
+    {
+        if (
+            captureTags.TryGetValue(Constants.ClassCaptureTags.Name, out var classNameNodes)
+            && captureTags.TryGetValue(Constants.ClassCaptureTags.Definition, out var classDefinitionNodes)
+        )
+        {
+            ClassInfo? currentClass;
+
+            var name = GetMatchedCode(byteArrayCode, classNameNodes.First());
+            var definition = GetMatchedCode(byteArrayCode, classDefinitionNodes.First());
+
+            if (currentNamespace != null)
+            {
+                var cls = currentNamespace.Classes.SingleOrDefault(x => x.Name == name && x.Definition == definition);
+
+                if (cls is null)
+                {
+                    currentNamespace.Classes.Add(
+                        currentClass = new ClassInfo
+                        {
+                            // we have just one classNameNodes in each iteration
+                            Name = name,
+                            Definition = definition,
+                        }
+                    );
+                }
+                else
+                    currentClass = cls;
+            }
+            else
+            {
+                var cls = fileInfo.Classes.SingleOrDefault(x => x.Name == name && x.Definition == definition);
+
+                if (cls is null)
+                {
+                    fileInfo.Classes.Add(
+                        currentClass = new ClassInfo
+                        {
+                            // we have just one classNameNodes in each iteration
+                            Name = name,
+                            Definition = definition,
+                        }
+                    );
+                }
+                else
+                {
+                    currentClass = cls;
+                }
+            }
+
+            // add fields to the class
+            FindOrAddFields(currentClass, byteArrayCode, captureTags);
+
+            // add comment to the class
+            FindOrAddComment(currentClass, byteArrayCode, captureTags);
+
+            // Add properties to the class
+            FindOrAddProperties(currentClass, byteArrayCode, captureTags);
+
+            // Add methods to the class
+            FindOrAddMethod(currentClass, byteArrayCode, captureTags);
+        }
+    }
+
+    private static void AddEnum(
+        Dictionary<string, IList<TSNode>> captureTags,
+        byte[] byteArrayCode,
+        FileInfo fileInfo,
+        NamespaceInfo? currentNamespace
+    )
+    {
+        if (
+            captureTags.TryGetValue("name.enum", out var enumNameNodes)
+            && captureTags.TryGetValue("definition.enum", out var enumDefinitionNodes)
+        )
+        {
+            var name = GetMatchedCode(byteArrayCode, enumNameNodes.First());
+            var definition = GetMatchedCode(byteArrayCode, enumDefinitionNodes.First());
+
+            // resting `currentEnum` here for the grammar query
+            var currentEnum = new EnumInfo
+            {
+                // we have just one enumNameNodes in each iteration
+                Name = name,
+                Definition = definition,
+            };
+
+            if (currentNamespace != null)
+            {
+                if (!currentNamespace.Enums.Any(x => x.Name == name && x.Definition == definition))
+                    currentNamespace.Enums.Add(currentEnum);
+            }
+            else
+            {
+                if (!fileInfo.Enums.Any(x => x.Name == name && x.Definition == definition))
+                    fileInfo.Enums.Add(currentEnum);
+            }
+        }
+
+        if (
+            captureTags.TryGetValue(Constants.EnumMemberCaptureTags.Name, out var enumMemberNameNodes)
+            && captureTags.TryGetValue(Constants.EnumMemberCaptureTags.EnumName, out var enumNameMemberNodes)
+        )
+        {
+            var member = GetMatchedCode(byteArrayCode, enumMemberNameNodes.First());
+            var enumName = GetMatchedCode(byteArrayCode, enumNameMemberNodes.First());
+
+            if (currentNamespace != null)
+            {
+                var en = currentNamespace.Enums.SingleOrDefault(x => x.Name == enumName);
+                en?.Members.Add(member);
+            }
+            else
+            {
+                var en = fileInfo.Enums.SingleOrDefault(x => x.Name == enumName);
+                en?.Members.Add(member);
+            }
+        }
+    }
+
+    static IEnumerable<MethodInfo> FindOrAddMethod(
+        IMethodElement? methodElement,
+        byte[] byteArrayCode,
+        IDictionary<string, IList<TSNode>> captureTags
+    )
+    {
+        if (methodElement is null)
+            return new List<MethodInfo>();
+
+        if (
+            captureTags.TryGetValue(Constants.MethodCaptureTags.Name, out var methodNameNodes)
+            && captureTags.TryGetValue(Constants.MethodCaptureTags.Return, out var methodReturnNodes)
+            && captureTags.TryGetValue(Constants.MethodCaptureTags.Definition, out var methodDefinitionNodes)
+        )
+        {
+            captureTags.TryGetValue(Constants.MethodCaptureTags.Modifier, out var methodModifierNodes);
+
+            var methodName = GetMatchedCode(byteArrayCode, methodNameNodes.First());
+            var methodReturn = GetMatchedCode(byteArrayCode, methodReturnNodes.First());
+            var methodDefinition = GetMatchedCode(byteArrayCode, methodDefinitionNodes.First());
+            var methodModifier =
+                methodModifierNodes == null
+                    ? string.Empty
+                    : GetMatchedCode(byteArrayCode, methodModifierNodes.FirstOrDefault());
+
+            var method = methodElement.Methods.SingleOrDefault(x =>
+                x.Name == methodName
+                && x.ReturnType == methodReturn
+                && x.AccessModifier == methodModifier
+                && x.Definition == methodDefinition
+            );
+
+            if (method is null)
+            {
+                method = new MethodInfo
+                {
+                    Name = methodName,
+                    ReturnType = methodReturn,
+                    AccessModifier = methodModifier,
+                    Definition = methodDefinition,
+                };
+                methodElement.Methods.Add(method);
+            }
+
+            // Capture method parameters if the method is found
+            if (
+                captureTags.TryGetValue(Constants.MethodParameterCaptureTags.ParameterName, out var parameterNameNodes)
+                && captureTags.TryGetValue(
+                    Constants.MethodParameterCaptureTags.ParameterType,
+                    out var parameterTypeNodes
+                )
+            )
+            {
+                var parameterType = GetMatchedCode(byteArrayCode, parameterTypeNodes.First());
+                var parameterName = GetMatchedCode(byteArrayCode, parameterNameNodes.First());
+                method.Parameters.Add(new ParameterInfo { Name = parameterName, Type = parameterType });
+            }
+
+            // add comment to the method
+            if (
+                captureTags.TryGetValue(Constants.MethodCaptureTags.Comment, out var commentNodes)
+                && string.IsNullOrEmpty(method.Comments)
+            )
+            {
+                foreach (var comment in commentNodes)
+                {
+                    method.Comments += GetMatchedCode(byteArrayCode, comment) + Environment.NewLine;
+                }
+            }
+        }
+
+        return methodElement.Methods;
+    }
+
+    static string FindOrAddComment(
+        ICommentElement? commentElement,
+        byte[] byteArrayCode,
+        IDictionary<string, IList<TSNode>> captureTags
+    )
+    {
+        if (commentElement is null)
+            return string.Empty;
+
+        if (
+            captureTags.TryGetValue("comment.class", out var commentNodes)
+            && string.IsNullOrEmpty(commentElement.Comments)
+        )
+        {
+            foreach (var comment in commentNodes)
+            {
+                commentElement.Comments += GetMatchedCode(byteArrayCode, comment) + Environment.NewLine;
+            }
+        }
+
+        return commentElement.Comments;
+    }
+
+    static IEnumerable<FieldInfo> FindOrAddFields(
+        IFieldElement? fieldElement,
+        byte[] byteArrayCode,
+        IDictionary<string, IList<TSNode>> captureTags
+    )
+    {
+        if (fieldElement is null)
+            return new List<FieldInfo>();
+
+        if (
+            captureTags.TryGetValue("name.field", out var fieldNameNodes)
+            && captureTags.TryGetValue("type.field", out var fieldTypeNodes)
+            && captureTags.TryGetValue("definition.field", out var fieldDefinitionNodes)
+        )
+        {
+            for (int i = 0; i < fieldNameNodes.Count; i++)
+            {
+                var filedName = GetMatchedCode(byteArrayCode, fieldNameNodes[i]);
+                var filedType = GetMatchedCode(byteArrayCode, fieldTypeNodes[i]);
+                var filedDefinition = GetMatchedCode(byteArrayCode, fieldDefinitionNodes[i]);
+
+                // Try to find an existing field with the same name, type, and definition
+                var field = fieldElement.Fields.SingleOrDefault(x =>
+                    x.Name == filedName && x.Type == filedType && x.Definition == filedDefinition
+                );
+
+                // If the field doesn't exist, create a new one and add it to the class
+                if (field is null)
+                {
+                    field = new FieldInfo
+                    {
+                        Name = filedName,
+                        Type = filedType,
+                        Definition = filedDefinition,
+                    };
+                    fieldElement.Fields.Add(field);
+                }
+            }
+        }
+
+        return fieldElement.Fields;
+    }
+
+    static IEnumerable<PropertyInfo> FindOrAddProperties(
+        IPropertyElement? propertyElement,
+        byte[] byteArrayCode,
+        IDictionary<string, IList<TSNode>> captureTags
+    )
+    {
+        if (propertyElement is null)
+            return new List<PropertyInfo>();
+
+        if (
+            captureTags.TryGetValue("name.property", out var propertyNameNodes)
+            && captureTags.TryGetValue("type.property", out var propertyTypeNodes)
+            && captureTags.TryGetValue("modifier.property", out var propertyModifierNodes)
+            && captureTags.TryGetValue("definition.property", out var propertyDefinitionNodes)
+        )
+        {
+            for (int i = 0; i < propertyNameNodes.Count; i++)
+            {
+                var name = GetMatchedCode(byteArrayCode, propertyNameNodes[i]);
+                var type = GetMatchedCode(byteArrayCode, propertyTypeNodes[i]);
+                var accessModifier = GetMatchedCode(byteArrayCode, propertyModifierNodes[i]);
+                var definition = GetMatchedCode(byteArrayCode, propertyDefinitionNodes[i]);
+
+                // Try to find an existing property with the same name, type, and definition
+                var propertyInfo = propertyElement.Properties.SingleOrDefault(x =>
+                    x.Name == name && x.Type == type && x.AccessModifier == accessModifier && x.Definition == definition
+                );
+
+                // If the property doesn't exist, create a new one and add it to the class
+                if (propertyInfo is null)
+                {
+                    propertyInfo = new PropertyInfo
+                    {
+                        Name = name,
+                        Type = type,
+                        AccessModifier = accessModifier,
+                        Definition = definition,
+                        // Optionally set other properties here
+                    };
+                    propertyElement.Properties.Add(propertyInfo);
+                }
+            }
+        }
+
+        return propertyElement.Properties;
+    }
+
+    private delegate void CaptureHandler(string captureTagKey, string captureValue);
+
+    private static void ProcessCaptureTags(
+        IDictionary<string, IList<TSNode>> captureTags,
+        byte[] byteArrayCode,
+        CaptureHandler handleCapture
+    )
+    {
+        foreach (var (captureTagKey, captureNodesTagValues) in captureTags)
+        {
+            foreach (var captureNodeTagValue in captureNodesTagValues)
+            {
+                var captureValue = GetMatchedCode(byteArrayCode, captureNodeTagValue);
+                handleCapture(captureTagKey, captureValue);
+            }
+        }
     }
 
     private static string GetMatchedCode(byte[] byteArrayCode, TSNode node)

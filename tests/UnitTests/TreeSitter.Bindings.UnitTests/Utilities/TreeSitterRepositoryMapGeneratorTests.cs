@@ -63,7 +63,12 @@ public class TreeSitterRepositoryMapGeneratorTests : IAsyncLifetime
 │   │   │   │   {
 │   │   │   │       public double Result { get; set; }
 │   │   │   │       public double ResultField;
+│   │   │   │       public double ResultField2;
 │   │   │   │   
+│   │   │   │       /// <summary>
+│   │   │   │       /// Calculates the sum of two numbers and updates the result field.
+│   │   │   │       /// </summary>
+│   │   │   │       /// <returns>The result of the addition as a double.</returns>
 │   │   │   │       public double Calculate()
 │   │   │   │       {
 │   │   │   │           Result = AddNumbers(number1, number2);
@@ -395,6 +400,7 @@ public class TreeSitterRepositoryMapGeneratorTests : IAsyncLifetime
 │   │   │   │   ├── method: public double Calculate();
 │   │   │   │   ├── method: private double AddNumbers(double first, double second);
 │   │   │   │   ├── field: public double ResultField;
+│   │   │   │   ├── field: public double ResultField2;
 ";
 
         var expectedSubtract =
@@ -567,6 +573,15 @@ public class TreeSitterRepositoryMapGeneratorTests : IAsyncLifetime
                 @"│   │   ├── class: Calculator
 │   │   │   public class Calculator : ICalculator
 │   │   │       {
+│   │   │           /// <summary>
+│   │   │           /// Calculate the operation
+│   │   │           /// </summary>
+│   │   │           /// <param name=""a""></param>
+│   │   │           /// <param name=""b""></param>
+│   │   │           /// <param name=""operation""></param>
+│   │   │           /// <returns></returns>
+│   │   │           /// <exception cref=""DivideByZeroException""></exception>
+│   │   │           /// <exception cref=""ArgumentOutOfRangeException""></exception>
 │   │   │           public double Calculate(double a, double b, Operation operation)
 │   │   │           {
 │   │   │               return operation switch
@@ -656,6 +671,15 @@ public class TreeSitterRepositoryMapGeneratorTests : IAsyncLifetime
 │   │   ├── class: Calculator
 │   │   │   public class Calculator : ICalculator
 │   │   │       {
+│   │   │           /// <summary>
+│   │   │           /// Calculate the operation
+│   │   │           /// </summary>
+│   │   │           /// <param name=""a""></param>
+│   │   │           /// <param name=""b""></param>
+│   │   │           /// <param name=""operation""></param>
+│   │   │           /// <returns></returns>
+│   │   │           /// <exception cref=""DivideByZeroException""></exception>
+│   │   │           /// <exception cref=""ArgumentOutOfRangeException""></exception>
 │   │   │           public double Calculate(double a, double b, Operation operation)
 │   │   │           {
 │   │   │               return operation switch
