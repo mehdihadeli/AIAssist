@@ -1,17 +1,18 @@
-using AIAssistant.Models;
 using BuildingBlocks.Utils;
+using TreeSitter.Bindings.CustomTypes.TreeParser;
+using TreeSitter.Bindings.Utilities;
 
 namespace AIAssistant.Services;
 
 public class CodeLoaderService
 {
-    public IEnumerable<ApplicationCode> LoadApplicationCodes(string contextWorkingDir)
+    public IEnumerable<CodeFile> LoadApplicationCodes(string contextWorkingDir)
     {
         if (string.IsNullOrEmpty(contextWorkingDir))
-            return new List<ApplicationCode>();
+            return new List<CodeFile>();
 
         var files = Directory.GetFiles(contextWorkingDir, "*", SearchOption.AllDirectories);
-        var applicationCodes = new List<ApplicationCode>();
+        var applicationCodes = new List<CodeFile>();
 
         foreach (var file in files)
         {
@@ -21,16 +22,12 @@ public class CodeLoaderService
 
             var fileContent = File.ReadAllText(file);
 
-            applicationCodes.Add(CreateApplicationCode(fileContent, relativePath));
+            applicationCodes.Add(new CodeFile(fileContent, relativePath));
         }
 
+        var codeFileMapping = new CodeFileMappings();
+        var mappedCodes = codeFileMapping.CreateTreeSitterMap(applicationCodes);
+
         return applicationCodes;
-    }
-
-    private static ApplicationCode CreateApplicationCode(string code, string relativeFilePath)
-    {
-        var applicationCode = new ApplicationCode(code, relativeFilePath);
-
-        return applicationCode;
     }
 }

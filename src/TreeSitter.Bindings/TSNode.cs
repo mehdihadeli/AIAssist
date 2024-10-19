@@ -1,4 +1,5 @@
 using System.Runtime.CompilerServices;
+using TreeSitter.Bindings.CustomTypes;
 
 namespace TreeSitter.Bindings;
 

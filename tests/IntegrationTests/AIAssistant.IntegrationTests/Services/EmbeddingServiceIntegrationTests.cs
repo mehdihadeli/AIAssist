@@ -5,6 +5,7 @@ using BuildingBlocks.Utils;
 using FluentAssertions;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Hosting;
+using TreeSitter.Bindings.CustomTypes.TreeParser;
 
 namespace AIAssistant.IntegrationTests.Services;
 
@@ -66,7 +67,7 @@ public class EmbeddingServiceIntegrationTests(ApplicationFixture applicationFixt
         var embeddingService = _app.Services.GetRequiredService<EmbeddingService>();
         var sessionId = Guid.NewGuid();
 
-        var applicationCodes = new List<ApplicationCode>
+        var applicationCodes = new List<CodeFile>
         {
             new(Code: _addFile, RelativePath: _addRelativeFilePath),
             new(Code: _subtractFile, RelativePath: _subtractRelativeFilePath),
@@ -104,7 +105,7 @@ public class EmbeddingServiceIntegrationTests(ApplicationFixture applicationFixt
         var embeddingService = _app.Services.GetRequiredService<EmbeddingService>();
         var sessionId = Guid.NewGuid();
 
-        var applicationCodes = new List<ApplicationCode>
+        var applicationCodes = new List<CodeFile>
         {
             new(Code: _addFile, RelativePath: _addRelativeFilePath),
             new(Code: _subtractFile, RelativePath: _subtractRelativeFilePath),

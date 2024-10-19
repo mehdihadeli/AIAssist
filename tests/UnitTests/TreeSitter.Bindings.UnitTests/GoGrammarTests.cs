@@ -1,3 +1,4 @@
+using TreeSitter.Bindings.CustomTypes;
 using TreeSitter.Bindings.Go;
 using TreeSitter.Bindings.Utilities;
 using static TreeSitter.Bindings.TSBindingsParser;
@@ -15,11 +16,13 @@ public class GoGrammarTests
             parser_set_language(parser, TSBindingsGo.tree_sitter_go());
 
             // Sample Go source code
-            GeneratedCString sourceCode = new GeneratedCString("package main\nfunc main() { println(\"Hello, world!\") }");
-            TSTree* goTree = parser_parse_string(parser, null, sourceCode, (uint) sourceCode.Length);
+            GeneratedCString sourceCode = new GeneratedCString(
+                "package main\nfunc main() { println(\"Hello, world!\") }"
+            );
+            TSTree* goTree = parser_parse_string(parser, null, sourceCode, (uint)sourceCode.Length);
             Assert.False(goTree is null);
             TSNode goRootNode = tree_root_node(goTree);
-            
+
             string goExpression = new string(node_string(goRootNode));
 
             Assert.NotEmpty(goExpression);

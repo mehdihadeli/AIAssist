@@ -10,7 +10,7 @@ namespace AIAssistant.Services;
 
 public class EmbeddingService(ILLMServiceManager llmServiceManager, EmbeddingsStore embeddingsStore)
 {
-    public async Task AddEmbeddingsForFiles(IEnumerable<ApplicationCode> applicationCodes, Guid sessionId)
+    public async Task AddEmbeddingsForFiles(IEnumerable<CodeFile> applicationCodes, Guid sessionId)
     {
         var repositoryMap = new RepositoryMap();
         IList<CodeEmbedding> codeEmbeddings = new List<CodeEmbedding>();
@@ -19,12 +19,12 @@ public class EmbeddingService(ILLMServiceManager llmServiceManager, EmbeddingsSt
             var codeEmbedding = new CodeEmbedding
             {
                 RelativeFilePath = applicationCode.RelativePath,
-                TreeSitterCode = TreeSitterRepositoryMapGenerator.GenerateTreeSitterRepositoryMap(
-                    applicationCode.Code,
-                    applicationCode.RelativePath,
-                    repositoryMap,
-                    true
-                ),
+                // TreeSitterCode = TreeSitterRepositoryMapGenerator.GenerateTreeSitterRepositoryMap(
+                //     applicationCode.Code,
+                //     applicationCode.RelativePath,
+                //     repositoryMap,
+                //     true
+                // ),
                 Code = applicationCode.Code,
                 SessionId = sessionId,
             };

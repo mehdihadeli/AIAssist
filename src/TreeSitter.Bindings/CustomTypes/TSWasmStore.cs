@@ -1,3 +1,3 @@
-namespace TreeSitter.Bindings;
+namespace TreeSitter.Bindings.CustomTypes;
 
 public partial struct TSWasmStore;

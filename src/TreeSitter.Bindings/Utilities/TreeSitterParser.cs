@@ -1,11 +1,6 @@
-using System.Collections.Generic;
-using System.IO;
-using System.Linq;
-using System.Text;
-using BuildingBlocks.Extensions;
 using BuildingBlocks.Types;
 using TreeSitter.Bindings.Csharp;
-using TreeSitter.Bindings.CustomTypes.TreeParser;
+using TreeSitter.Bindings.CustomTypes;
 using TreeSitter.Bindings.Go;
 using TreeSitter.Bindings.Java;
 using TreeSitter.Bindings.Javascript;
@@ -13,7 +8,6 @@ using TreeSitter.Bindings.Python;
 using TreeSitter.Bindings.Queries;
 using TreeSitter.Bindings.Typescript;
 using static TreeSitter.Bindings.TSBindingsParser;
-using FileInfo = TreeSitter.Bindings.CustomTypes.TreeParser.FileInfo;
 
 namespace TreeSitter.Bindings.Utilities;
 

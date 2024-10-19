@@ -1,4 +1,5 @@
 using TreeSitter.Bindings.Csharp;
+using TreeSitter.Bindings.CustomTypes;
 using TreeSitter.Bindings.Utilities;
 using static TreeSitter.Bindings.TSBindingsParser;
 
@@ -15,9 +16,11 @@ public class CSharpGrammarTests
             parser_set_language(parser, TSBindingsCsharp.tree_sitter_c_sharp());
 
             // Sample C# source code
-            GeneratedCString sourceCode = new GeneratedCString("using System;\nclass Program\n{\n    static void Main()\n    {\n        Console.WriteLine(\"Hello, world!\");\n    }\n}");
+            GeneratedCString sourceCode = new GeneratedCString(
+                "using System;\nclass Program\n{\n    static void Main()\n    {\n        Console.WriteLine(\"Hello, world!\");\n    }\n}"
+            );
             TSTree* csharpTree = parser_parse_string(parser, null, sourceCode, (uint)sourceCode.Length);
-                
+
             // Ensure the tree is not null
             Assert.False(csharpTree is null);
 

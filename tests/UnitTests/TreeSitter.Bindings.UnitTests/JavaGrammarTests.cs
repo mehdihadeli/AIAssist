@@ -1,3 +1,4 @@
+using TreeSitter.Bindings.CustomTypes;
 using TreeSitter.Bindings.Java;
 using TreeSitter.Bindings.Utilities;
 using static TreeSitter.Bindings.TSBindingsParser;
@@ -16,13 +17,10 @@ public class JavaGrammarTests
 
             // Sample Java source code
             GeneratedCString sourceCode = new GeneratedCString(
-                "public class HelloWorld {\n    public static void main(String[] args) {\n        System.out.println(\"Hello, world!\");\n    }\n}");
+                "public class HelloWorld {\n    public static void main(String[] args) {\n        System.out.println(\"Hello, world!\");\n    }\n}"
+            );
 
-            TSTree* javaTree = parser_parse_string(
-                parser,
-                null,
-                sourceCode,
-                (uint)sourceCode.Length);
+            TSTree* javaTree = parser_parse_string(parser, null, sourceCode, (uint)sourceCode.Length);
 
             Assert.False(javaTree is null);
             TSNode javaRootNode = tree_root_node(javaTree);
