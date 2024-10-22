@@ -31,17 +31,26 @@ public class EmbeddingsStore(VectorDatabase vectorDatabase)
     /// <summary>
     /// Find most similarity items based on embedding inputs and stored embedding data
     /// </summary>
-    /// <param Name="userEmbeddingQuery"></param>
-    /// <param Name="sessionId"></param>
+    /// <param name="userEmbeddingQuery"></param>
+    /// <param name="sessionId"></param>
+    /// <param name="threshold"></param>
+    /// <param name="nResults"></param>
     /// <returns></returns>
-    public IEnumerable<CodeEmbedding> Query(IList<double> userEmbeddingQuery, Guid sessionId)
+    public IEnumerable<CodeEmbedding> Query(
+        IList<double> userEmbeddingQuery,
+        Guid sessionId,
+        double threshold,
+        int nResults = 0
+    )
     {
         // https://ollama.com/blog/embedding-models
         // https://github.com/chroma-core/chroma
         var res = _collection
             .QueryDocuments(
                 userEmbeddingQuery,
-                new Dictionary<string, string> { { nameof(sessionId), sessionId.ToString() } }
+                new Dictionary<string, string> { { nameof(sessionId), sessionId.ToString() } },
+                nResults: nResults,
+                threshold: threshold
             )
             .Select(x => new CodeEmbedding
             {

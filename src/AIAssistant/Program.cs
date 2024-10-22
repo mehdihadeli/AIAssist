@@ -1,6 +1,8 @@
-﻿using AIAssistant.Extensions;
-using AIAssistant.Options;
+﻿using AIAssistant.Contracts;
+using AIAssistant.Extensions;
+using AIAssistant.Models.Options;
 using AIAssistant.Services;
+using Clients.Chat.Models;
 using Clients.Models;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Hosting;
@@ -32,8 +34,8 @@ try
     codeOptions.Value.ContextWorkingDirectory = Directory.GetCurrentDirectory();
 
     var session = new ChatSession();
-    var codeRagService = app.Services.GetRequiredService<CodeRAGService>();
-    await codeRagService.Initialize(session);
+    var codeStrategy = app.Services.GetRequiredService<ICodeStrategy>();
+    await codeStrategy.LoadCodeFiles(session, Directory.GetCurrentDirectory());
 
     // var e = app.Services.GetRequiredService<EmbeddingService>();
     //
@@ -66,9 +68,10 @@ try
         // var userRequest = Console.ReadLine();
         //
         var userRequest = "can you remove all comments in the classes";
-        var codeChanges = await codeRagService.ModifyOrAddCodeAsync(session, userRequest);
-
-        Console.WriteLine("Wait for next iteration.");
+        await foreach (var response in codeStrategy.QueryAsync(userRequest))
+        {
+            Console.WriteLine(response);
+        }
         Console.ReadKey();
         // // Output result after processing
         // AnsiConsole.MarkupLine($"[green]Request '{userRequest}' processed successfully![/]");

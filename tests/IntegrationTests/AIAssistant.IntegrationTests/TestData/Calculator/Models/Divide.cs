@@ -1,4 +1,4 @@
-namespace Calculator.Models;
+namespace Calculator;
 
 /// <summary>
 /// Divide to values
@@ -7,9 +7,15 @@ namespace Calculator.Models;
 /// <param name="number2"></param>
 public class Divide(double number1, double number2) : IOperation
 {
+    public double Result { get; set; }
+    public double ResultField;
+
     public double Calculate()
     {
-        return DivideNumbers();
+        Result = DivideNumbers();
+        ResultField = Result;
+
+        return Result;
     }
 
     private double DivideNumbers()

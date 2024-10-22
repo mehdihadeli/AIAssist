@@ -10,29 +10,17 @@
 
     <ItemGroup>
       <None Remove="Queries\Defaults\csharp.scm" />
-      <Content Include="Queries\Default\csharp.scm">
-        <CopyToOutputDirectory>Always</CopyToOutputDirectory>
-      </Content>
+      <EmbeddedResource Include="Queries\Default\csharp.scm" />
       <None Remove="Queries\Defaults\go.scm" />
-      <Content Include="Queries\Default\go.scm">
-        <CopyToOutputDirectory>Always</CopyToOutputDirectory>
-      </Content>
+      <EmbeddedResource Include="Queries\Default\go.scm" />
       <None Remove="Queries\Defaults\java.scm" />
-      <Content Include="Queries\Default\java.scm">
-        <CopyToOutputDirectory>Always</CopyToOutputDirectory>
-      </Content>
+      <EmbeddedResource Include="Queries\Default\java.scm" />
       <None Remove="Queries\Defaults\javascript.scm" />
-      <Content Include="Queries\Default\javascript.scm">
-        <CopyToOutputDirectory>Always</CopyToOutputDirectory>
-      </Content>
+      <EmbeddedResource Include="Queries\Default\javascript.scm" />
       <None Remove="Queries\Defaults\python.scm" />
-      <Content Include="Queries\Default\python.scm">
-        <CopyToOutputDirectory>Always</CopyToOutputDirectory>
-      </Content>
+      <EmbeddedResource Include="Queries\Default\python.scm" />
       <None Remove="Queries\Defaults\typescript.scm" />
-      <Content Include="Queries\Default\typescript.scm">
-        <CopyToOutputDirectory>Always</CopyToOutputDirectory>
-      </Content>
+      <EmbeddedResource Include="Queries\Default\typescript.scm" />
       <None Remove="Queries\Simple\csharp.scm" />
     </ItemGroup>
 

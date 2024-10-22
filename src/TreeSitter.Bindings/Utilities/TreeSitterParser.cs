@@ -104,28 +104,4 @@ public unsafe class TreeSitterParser
 
         return query;
     }
-
-    public static TSQuery* GetSimpleLanguageQuery(ProgrammingLanguage programmingLanguage)
-    {
-        var language = GetLanguage(programmingLanguage);
-        var defaultLanguageQuery = QueryManager.GetSimpleLanguageQuery(programmingLanguage);
-
-        if (language is null)
-        {
-            return null;
-        }
-
-        uint errorOffset;
-        TSQueryError queryError;
-
-        var query = query_new(
-            language,
-            new GeneratedCString(defaultLanguageQuery),
-            (uint)defaultLanguageQuery.Length,
-            &errorOffset,
-            &queryError
-        );
-
-        return query;
-    }
 }

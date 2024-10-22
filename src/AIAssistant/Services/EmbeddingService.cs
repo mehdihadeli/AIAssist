@@ -2,39 +2,30 @@ using AIAssistant.Contracts;
 using AIAssistant.Data;
 using AIAssistant.Models;
 using AIAssistant.Prompts;
-using BuildingBlocks.Extensions;
 using TreeSitter.Bindings.CustomTypes.TreeParser;
-using TreeSitter.Bindings.Utilities;
 
 namespace AIAssistant.Services;
 
-public class EmbeddingService(ILLMServiceManager llmServiceManager, EmbeddingsStore embeddingsStore)
+public class EmbeddingService(ILLMClientManager llmClientManager, EmbeddingsStore embeddingsStore)
 {
-    public async Task AddEmbeddingsForFiles(IEnumerable<CodeFile> applicationCodes, Guid sessionId)
+    public async Task AddEmbeddingsForFiles(IEnumerable<CodeFileMap> codeFilesMap, Guid sessionId)
     {
-        var repositoryMap = new RepositoryMap();
         IList<CodeEmbedding> codeEmbeddings = new List<CodeEmbedding>();
-        foreach (var applicationCode in applicationCodes)
+        foreach (var codeFileMap in codeFilesMap)
         {
-            var codeEmbedding = new CodeEmbedding
-            {
-                RelativeFilePath = applicationCode.RelativePath,
-                // TreeSitterCode = TreeSitterRepositoryMapGenerator.GenerateTreeSitterRepositoryMap(
-                //     applicationCode.Code,
-                //     applicationCode.RelativePath,
-                //     repositoryMap,
-                //     true
-                // ),
-                Code = applicationCode.Code,
-                SessionId = sessionId,
-            };
+            var input = GenerateEmbeddingInputString(codeFileMap.TreeSitterFullCode);
+            var embeddingData = await llmClientManager.GetEmbeddingAsync(input);
 
-            var input = GenerateEmbeddingInputString(codeEmbedding);
-
-            var embeddingData = await llmServiceManager.GetEmbeddingAsync(input);
-            codeEmbedding.Embeddings = embeddingData;
-
-            codeEmbeddings.Add(codeEmbedding);
+            codeEmbeddings.Add(
+                new CodeEmbedding
+                {
+                    RelativeFilePath = codeFileMap.RelativePath,
+                    TreeSitterCode = codeFileMap.TreeSitterFullCode,
+                    Code = codeFileMap.OriginalCode,
+                    SessionId = sessionId,
+                    Embeddings = embeddingData,
+                }
+            );
         }
 
         // we can replace it with an embedded database like `chromadb`, it can give us n of most similarity items
@@ -47,14 +38,14 @@ public class EmbeddingService(ILLMServiceManager llmServiceManager, EmbeddingsSt
         var userEmbedding = await GenerateEmbeddingForUserInput(userQuery);
 
         // Find relevant code based on the user query
-        var relevantCodes = embeddingsStore.Query(userEmbedding, sessionId);
+        var relevantCodes = embeddingsStore.Query(userEmbedding, sessionId, llmClientManager.EmbeddingThreshold);
 
         return relevantCodes;
     }
 
     public async Task<IList<double>> GenerateEmbeddingForUserInput(string userInput)
     {
-        return await llmServiceManager.GetEmbeddingAsync(userInput);
+        return await llmClientManager.GetEmbeddingAsync(userInput);
     }
 
     public string CreateLLMContext(IEnumerable<CodeEmbedding> relevantCode)
@@ -62,29 +53,19 @@ public class EmbeddingService(ILLMServiceManager llmServiceManager, EmbeddingsSt
         return string.Join(
             Environment.NewLine + Environment.NewLine,
             relevantCode.Select(rc =>
-            {
-                var mdLanguage = rc.RelativeFilePath.GetMdLanguageFromFilePath();
-                string fileName = Path.GetFileName(rc.RelativeFilePath);
-
-                return PromptManager.RenderPromptTemplate(
+                PromptManager.RenderPromptTemplate(
                     PromptConstants.CodeBlockTemplate,
-                    new
-                    {
-                        relativeFilePath = rc.RelativeFilePath,
-                        code = rc.Code,
-                        fileName,
-                        mdLanguage,
-                    }
-                );
-            })
+                    new { treeSitterCode = rc.TreeSitterCode }
+                )
+            )
         );
     }
 
-    private static string GenerateEmbeddingInputString(CodeEmbedding codeEmbedding)
+    private static string GenerateEmbeddingInputString(string treeSitterCode)
     {
         return PromptManager.RenderPromptTemplate(
             PromptConstants.CodeEmbeddingTemplate,
-            new { relativePath = codeEmbedding.RelativeFilePath, treeSitterCode = codeEmbedding.TreeSitterCode }
+            new { treeSitterCode = treeSitterCode }
         );
     }
 }

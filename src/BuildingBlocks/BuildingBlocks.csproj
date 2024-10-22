@@ -17,6 +17,13 @@
         <PackageReference Include="Microsoft.ML.Tokenizers" />
         <PackageReference Include="System.CommandLine" />
         <PackageReference Include="System.CommandLine.NamingConventionBinder" />
+        <PackageReference Include="System.Linq.Async" />
+    </ItemGroup>
+
+    <ItemGroup>
+      <EmbeddedResource Include="..\..\.gitignore">
+        <Link>.gitignore</Link>
+      </EmbeddedResource>
     </ItemGroup>
     
 </Project>

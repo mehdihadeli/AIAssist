@@ -4,7 +4,7 @@ namespace BuildingBlocks.Serialization;
 
 public class JsonObjectSerializer : IJsonSerializer
 {
-    public JsonSerializerOptions Options =>
+    public static JsonSerializerOptions Options =>
         new() { WriteIndented = true, PropertyNamingPolicy = JsonNamingPolicy.SnakeCaseLower };
 
     public string Serialize<T>(T value)

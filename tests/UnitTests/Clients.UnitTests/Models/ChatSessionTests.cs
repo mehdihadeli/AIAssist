@@ -1,3 +1,4 @@
+using Clients.Chat.Models;
 using Clients.Models;
 
 namespace Clients.UnitTests.Models;

@@ -50,6 +50,9 @@
     <Content Include="TestData\Calculator\Program.cs">
       <CopyToOutputDirectory>Always</CopyToOutputDirectory>
     </Content>
+  </ItemGroup>
+  
+  <ItemGroup>
     <Compile Remove="TestData\SimpleCalculator\Program.cs" />
     <Content Include="TestData\SimpleCalculator\Program.cs">
       <CopyToOutputDirectory>Always</CopyToOutputDirectory>

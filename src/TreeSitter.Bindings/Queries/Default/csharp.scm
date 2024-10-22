@@ -1,13 +1,13 @@
 ; File-scoped Namespace 
 (file_scoped_namespace_declaration
-    name: (identifier)? @name.file_scoped_namespace name: (qualified_name)? @name.file_scoped_namespace)  @definition.file_scoped_namespace
+    name: (identifier)? @name.file_scoped_namespace name: (qualified_name)? @name.file_scoped_namespace) @definition.file_scoped_namespace
 
 ; Namespace declaration 
 (namespace_declaration
-    name: (qualified_name)? @name.namespace  name: (identifier)? @name.namespace)  @definition.namespace
+    name: (qualified_name)? @name.namespace @definition.namespace  name: (identifier)? @name.namespace @definition.namespace) 
 
 ; Top-Level statement
-(global_statement) @name.top_level_statement @definition.top_level_statement 
+(compilation_unit (global_statement)) @name.top_level_statement  @definition.top_level_statement 
 
 ; Enum declarations
 (enum_declaration name: (identifier) @name.enum) @definition.enum

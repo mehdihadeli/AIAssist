@@ -51,10 +51,9 @@ public static class TokenizerHelper
 
     public static int TokenCount(string text)
     {
-        // If the input is long, we estimate using a sample of the input
         string[] lines = text.Split(["\r\n", "\r", "\n"], StringSplitOptions.None);
         int numLines = lines.Length;
-        int step = Math.Max(numLines / 100, 1); // Ensure step is at least 1
+        int step = Math.Max(numLines / 100, 1);
         var sampledLines = lines.Where((_, index) => index % step == 0).ToArray();
 
         string sampleText = string.Join(Environment.NewLine, sampledLines);

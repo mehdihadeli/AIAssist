@@ -1,12 +1,15 @@
+using BuildingBlocks.LLM;
+
 namespace Clients.Models;
 
-public class Token
+public class Token(string value)
 {
-    public TokenItem SystemMessagesToken { get; set; } = default!;
-    public TokenItem UserMessagesToken { get; set; } = default!;
-    public TokenItem HistoryToken { get; set; } = default!;
+    public string Value { get; } = value;
+    public int Count { get; } = TokenizerHelper.GPT4TokenCount(value);
+    public DateTime CreatedAt { get; private set; } = DateTime.Now;
 
-    public int TotalToken => SystemMessagesToken.Count + UserMessagesToken.Count + HistoryToken.Count;
+    public static Token operator +(Token left, Token right)
+    {
+        return new Token(left.Value + right.Value);
+    }
 }
-
-public record TokenItem(string Value, int Count = 1);

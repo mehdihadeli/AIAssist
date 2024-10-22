@@ -32,22 +32,9 @@
     </ItemGroup>
 
     <ItemGroup>
-        <Content Include="..\..\.gitignore">
-            <Link>.gitignore</Link>
-            <CopyToOutputDirectory>Always</CopyToOutputDirectory>
-        </Content>
-        <Content Include="Prompts\Templates\code-assistant-simple.template">
-            <CopyToOutputDirectory>Always</CopyToOutputDirectory>
-        </Content>
-        <Content Include="Prompts\Templates\code-assistant.template">
-            <CopyToOutputDirectory>Always</CopyToOutputDirectory>
-        </Content>
-        <Content Include="Prompts\Templates\code-block.template">
-            <CopyToOutputDirectory>Always</CopyToOutputDirectory>
-        </Content>
-        <Content Include="Prompts\Templates\code-embedding.template">
-            <CopyToOutputDirectory>Always</CopyToOutputDirectory>
-        </Content>
+        <EmbeddedResource Include="Prompts\Templates\code-assistant.template" />
+        <EmbeddedResource Include="Prompts\Templates\code-block.template" />
+        <EmbeddedResource Include="Prompts\Templates\code-embedding.template" />
     </ItemGroup>
 
 </Project>

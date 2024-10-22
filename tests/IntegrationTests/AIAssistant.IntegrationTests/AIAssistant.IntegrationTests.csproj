@@ -18,10 +18,6 @@
   </ItemGroup>
 
   <ItemGroup>
-    <Content Include="..\..\..\.gitignore">
-      <Link>TestData\Calculator\.gitignore</Link>
-      <CopyToOutputDirectory>Always</CopyToOutputDirectory>
-    </Content>
     <Compile Remove="TestData\Calculator\Calculator.csproj" />
     <Content Include="TestData\Calculator\Calculator.csproj">
       <CopyToOutputDirectory>Always</CopyToOutputDirectory>
@@ -50,18 +46,20 @@
     <Content Include="TestData\Calculator\Program.cs">
       <CopyToOutputDirectory>Always</CopyToOutputDirectory>
     </Content>
-    <Compile Remove="TestData\Calculator\bin\Debug\net8.0\bin_test.cs" />
-    <Content Include="TestData\Calculator\bin\Debug\net8.0\bin_test.cs">
-      <CopyToOutputDirectory>Always</CopyToOutputDirectory>
-    </Content>
-    <Compile Remove="TestData\Calculator\obj\obj_test.cs" />
-    <Content Include="TestData\Calculator\obj\obj_test.cs">
+  </ItemGroup>
+  
+  <ItemGroup>
+    <Compile Remove="TestData\SimpleCalculator\Program.cs" />
+    <Content Include="TestData\SimpleCalculator\Program.cs">
       <CopyToOutputDirectory>Always</CopyToOutputDirectory>
     </Content>
   </ItemGroup>
-
+  
   <ItemGroup>
-    <Folder Include="TestData\" />
+    <None Remove="xunit.runner.json" />
+    <Content Include="xunit.runner.json">
+      <CopyToOutputDirectory>Always</CopyToOutputDirectory>
+    </Content>
   </ItemGroup>
   
 </Project>

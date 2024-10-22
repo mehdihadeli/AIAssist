@@ -1,8 +1,10 @@
 using System.ComponentModel;
+using AIAssistant.Contracts;
 using AIAssistant.Models;
-using AIAssistant.Options;
+using AIAssistant.Models.Options;
 using AIAssistant.Services;
 using Clients;
+using Clients.Chat.Models;
 using Clients.Models;
 using Clients.Options;
 using Microsoft.Extensions.Options;
@@ -13,20 +15,20 @@ namespace AIAssistant.Commands;
 
 [Description("Provide code assistance or enhance existing code or add some new features to our application context.")]
 public class CodeAssistCommand(
-    CodeRAGService codeRagService,
+    ICodeAssistantManager codeAssistantManager,
     IOptions<CodeAssistOptions> options,
     IOptions<LLMOptions> llmOptions
 ) : AsyncCommand<CodeAssistCommand.Settings>
 {
     private readonly CodeAssistOptions _options = options.Value;
     private readonly LLMOptions _llmOptions = llmOptions.Value;
-    private static bool _running = true;
+    private static readonly bool _running = true;
 
     public sealed class Settings : CommandSettings
     {
         [CommandOption("-c|--context-path")]
-        [Description("[grey] code context, and the working directory relative for the assistant.[/].")]
-        public string? ContextPath { get; set; }
+        [Description("[grey] code context, and the working directory relative to executing command root path.[/].")]
+        public string? ContextWorkingDirectory { get; set; }
 
         [CommandOption("--disable-auto-context")]
         [Description("[grey] disable auto adding all files to the context.[/].")]
@@ -34,7 +36,7 @@ public class CodeAssistCommand(
 
         [CommandOption("-m|--chat-model <Chat-Model>")]
         [Description("[grey] llm model for chatting with ai. for example llama3.1.[/].")]
-        [DefaultValue(Constants.Ollama.ChatModels.Llama3_1)]
+        [DefaultValue(Constants.Ollama.ChatModels.Deepseek_Coder_V2)]
         public string? ChatModel { get; set; }
 
         [CommandOption("-d|--diff-tool <DiffTool>")]
@@ -42,15 +44,15 @@ public class CodeAssistCommand(
         [DefaultValue(DiffType.CodeDiff)]
         public DiffType Diff { get; set; }
 
+        [CommandOption("-t|--code-assist-type <DiffTool>")]
+        [Description("[grey] the type of code assist. it can be `embedding` or `summary`.[/].")]
+        [DefaultValue(CodeAssistStrategyType.Embedding)]
+        public CodeAssistStrategyType CodeAssistType { get; set; }
+
         [CommandOption("-e|--embedding-model <Embedding-Chat-Model>")]
         [Description("[grey] llm model for embedding purpose. for example llama3.1.[/].")]
         [DefaultValue(Constants.Ollama.EmbeddingsModels.Mxbai_Embed_Large)]
         public string? EmbeddingModel { get; set; }
-
-        [CommandOption("-p|--provider <AI-Provider>")]
-        [Description("[grey] ai provider to use. for example openai, ollama or anthropic.[/].")]
-        [DefaultValue(AIProvider.Ollama)]
-        public AIProvider AIProvider { get; set; }
 
         [CommandOption("-f|--files <Files>")]
         [Description("[grey] the list of files to add the context.[/].")]
@@ -75,22 +77,6 @@ public class CodeAssistCommand(
         //
         try
         {
-            switch (settings.AIProvider)
-            {
-                case AIProvider.Ollama:
-                    _llmOptions.ProviderType = AIProvider.Ollama;
-                    break;
-                case AIProvider.OpenAI:
-                    _llmOptions.ProviderType = AIProvider.OpenAI;
-                    break;
-                case AIProvider.Anthropic:
-                    _llmOptions.ProviderType = AIProvider.Anthropic;
-                    break;
-                default:
-                    _llmOptions.ProviderType = AIProvider.Ollama;
-                    break;
-            }
-
             if (!string.IsNullOrEmpty(settings.ChatModel))
             {
                 _llmOptions.ChatModel = settings.ChatModel;
@@ -101,8 +87,8 @@ public class CodeAssistCommand(
                 _llmOptions.EmbeddingsModel = settings.EmbeddingModel;
             }
 
-            _options.ContextWorkingDirectory = !string.IsNullOrEmpty(settings.ContextPath)
-                ? Path.Combine(Directory.GetCurrentDirectory(), settings.ContextPath)
+            _options.ContextWorkingDirectory = !string.IsNullOrEmpty(settings.ContextWorkingDirectory)
+                ? Path.Combine(Directory.GetCurrentDirectory(), settings.ContextWorkingDirectory)
                 : Directory.GetCurrentDirectory(); // set to current working directory
 
             if (settings.Files is not null && settings.Files.Any())
@@ -128,11 +114,20 @@ public class CodeAssistCommand(
                     break;
             }
 
-            var session = new ChatSession();
-            codeRagService.Initialize(session).GetAwaiter().GetResult();
+            switch (settings.CodeAssistType)
+            {
+                case CodeAssistStrategyType.Embedding:
+                    _options.CodeAssistType = CodeAssistStrategyType.Embedding;
+                    break;
+                case CodeAssistStrategyType.Summary:
+                    _options.CodeAssistType = CodeAssistStrategyType.Summary;
+                    break;
+            }
 
-            Console.WriteLine("Please enter your request to apply on your code base:");
-            var userRequest = Console.ReadLine();
+            var session = new ChatSession();
+            await codeAssistantManager.LoadCodeFiles(session, _options.ContextWorkingDirectory);
+
+            var userRequest = ReadInput("Please enter your request to apply on your code base:");
 
             // Run in a loop until Ctrl+C is pressed
             while (_running)
@@ -151,7 +146,7 @@ public class CodeAssistCommand(
                             ctx.SpinnerStyle(Style.Parse("green"));
 
                             // Initialize embeddings with code from the specified path
-                            var codeChanges = await codeRagService.ModifyOrAddCodeAsync(session, userRequest);
+                            var codeChanges = codeAssistantManager.QueryAsync(userRequest);
                         }
                     );
 
@@ -170,5 +165,23 @@ public class CodeAssistCommand(
         }
 
         return 0;
+    }
+
+    static string ReadInput(string prompt)
+    {
+        string input;
+        while (true)
+        {
+            Console.Write(prompt);
+            input = Console.ReadLine()!;
+
+            // Check if the input is not null or empty
+            if (!string.IsNullOrWhiteSpace(input))
+            {
+                break; // Exit the loop when a valid input is given
+            }
+            Console.WriteLine("Invalid input, please try again.");
+        }
+        return input;
     }
 }

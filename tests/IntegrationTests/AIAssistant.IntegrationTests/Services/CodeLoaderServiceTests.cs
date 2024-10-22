@@ -34,7 +34,7 @@ public class CodeLoaderServiceTests : IAsyncLifetime
         var service = new CodeLoaderService();
 
         // Act
-        var result = service.LoadApplicationCodes(_appWorkingDir).ToList();
+        var result = service.LoadTreeSitterCodeCaptures(_appWorkingDir).ToList();
 
         // Assert
         result.Should().HaveCount(8);
@@ -54,7 +54,7 @@ public class CodeLoaderServiceTests : IAsyncLifetime
         var service = new CodeLoaderService();
 
         // Act
-        var result = service.LoadApplicationCodes(_appWorkingDir).ToList();
+        var result = service.LoadTreeSitterCodeCaptures(_appWorkingDir).ToList();
 
         // Assert
         result.Should().HaveCount(8);
@@ -69,7 +69,7 @@ public class CodeLoaderServiceTests : IAsyncLifetime
         var service = new CodeLoaderService();
 
         // Act
-        var result = service.LoadApplicationCodes(string.Empty).ToList();
+        var result = service.LoadTreeSitterCodeCaptures(string.Empty).ToList();
 
         // Assert
         result.Should().BeEmpty();

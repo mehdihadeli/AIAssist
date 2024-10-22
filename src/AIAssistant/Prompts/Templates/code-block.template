@@ -1,4 +1,3 @@
-// {{relativeFilePath}}
-```{{mdLanguage}} {{fileName}}                        
-{{code}}
+```                      
+{{treeSitterCode}}
 ```

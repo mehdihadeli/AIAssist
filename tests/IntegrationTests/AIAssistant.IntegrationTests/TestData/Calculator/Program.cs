@@ -1,7 +1,4 @@
-﻿using Calculator;
-using Calculator.Models;
-
-Console.WriteLine("Simple Calculator\n");
+﻿Console.WriteLine("Simple Calculator\n");
 
 // Input first number
 Console.Write("Enter the first number: ");
@@ -21,7 +18,7 @@ IOperation calculation = operation switch
     '-' => new Subtract(num1, num2),
     '*' => new Multiply(num1, num2),
     '/' => new Divide(num1, num2),
-    _ => throw new InvalidOperationException("Invalid operation")
+    _ => throw new InvalidOperationException("Invalid operation"),
 };
 
 double result = calculation.Calculate();

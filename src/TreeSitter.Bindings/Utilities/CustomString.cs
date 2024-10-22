@@ -6,20 +6,19 @@ namespace TreeSitter.Bindings.Utilities;
 public unsafe class GeneratedCString
 {
     // Pointer to the internal sbyte value
-    public sbyte* Value { get; private set; }
+    public sbyte* Value { get; }
 
     // Length of the string
-    public int Length { get; private set; }
+    public int Length { get; }
 
-    // Constructor
+    // Constructor - takes ownership of the allocated memory
     public GeneratedCString(string value)
     {
-        // Convert the string to a byte array (UTF-8 encoding)
         byte[] byteArray = Encoding.UTF8.GetBytes(value);
         Length = byteArray.Length;
 
         // Allocate memory for sbyte array
-        Value = (sbyte*)System.Runtime.InteropServices.Marshal.AllocHGlobal(Length);
+        Value = (sbyte*)Marshal.AllocHGlobal(Length);
 
         // Copy bytes to sbyte pointer
         for (int i = 0; i < Length; i++)
@@ -28,30 +27,23 @@ public unsafe class GeneratedCString
         }
     }
 
+    // Constructor - assumes ownership of sbyte pointer
     public GeneratedCString(sbyte* sbytePointer)
     {
         if (sbytePointer == null)
         {
-            return;
+            throw new ArgumentNullException(nameof(sbytePointer));
         }
 
-        // Get the length of the string (assuming it's null-terminated)
         int length = 0;
-        while (System.Runtime.InteropServices.Marshal.ReadByte((IntPtr)sbytePointer, length) != 0)
+        while (Marshal.ReadByte((IntPtr)sbytePointer, length) != 0)
         {
             length++;
         }
 
-        // Convert byte array to string using the desired encoding
+        // Take ownership of the pointer
         Value = sbytePointer;
         Length = length;
-    }
-
-    // Destructor to free allocated memory
-    ~GeneratedCString()
-    {
-        // Free allocated memory
-        System.Runtime.InteropServices.Marshal.FreeHGlobal((IntPtr)Value);
     }
 
     // Implicit conversion to sbyte*
@@ -60,6 +52,7 @@ public unsafe class GeneratedCString
     // Implicit conversion from string to GeneratedCString
     public static implicit operator string(GeneratedCString value) => value.ToString();
 
+    // Implicit conversion from sbyte* to GeneratedCString
     public static implicit operator GeneratedCString(sbyte* value) => new(value);
 
     // Override ToString to return the internal string representation
@@ -71,11 +64,5 @@ public unsafe class GeneratedCString
             byteArray[i] = (byte)Value[i];
         }
         return Encoding.UTF8.GetString(byteArray);
-    }
-
-    // Example method to get the length of the GeneratedCString
-    public int GetLength()
-    {
-        return Length;
     }
 }

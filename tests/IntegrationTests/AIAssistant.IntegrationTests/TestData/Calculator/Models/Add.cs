@@ -1,4 +1,5 @@
-namespace Calculator.Models;
+namespace Calculator;
+
 /// <summary>
 /// Add two value
 /// </summary>
@@ -6,13 +7,24 @@ namespace Calculator.Models;
 /// <param name="number2"></param>
 public class Add(double number1, double number2) : IOperation
 {
+    public double Result { get; set; }
+    public double ResultField;
+    public double ResultField2;
+
+    /// <summary>
+    /// Calculates the sum of two numbers and updates the result field.
+    /// </summary>
+    /// <returns>The result of the addition as a double.</returns>
     public double Calculate()
     {
-        return AddNumbers();
+        Result = AddNumbers(number1, number2);
+        ResultField = Result;
+
+        return Result;
     }
-    
-    private double AddNumbers()
+
+    private double AddNumbers(double first, double second)
     {
-        return number1 / number2;
+        return first + second;
     }
 }

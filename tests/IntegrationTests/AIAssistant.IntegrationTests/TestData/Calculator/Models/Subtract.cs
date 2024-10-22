@@ -1,4 +1,4 @@
-namespace Calculator.Models;
+namespace Calculator;
 
 /// <summary>
 /// Subtract two values
@@ -7,8 +7,14 @@ namespace Calculator.Models;
 /// <param name="number2"></param>
 public class Subtract(double number1, double number2) : IOperation
 {
+    public double Result { get; set; }
+    public double ResultField;
+
     public double Calculate()
     {
-        return number1 - number2;
+        Result = number1 - number2;
+        ResultField = Result;
+
+        return Result;
     }
 }

@@ -6,27 +6,48 @@ namespace AIAssistant.Services;
 
 public class CodeLoaderService
 {
-    public IEnumerable<CodeFile> LoadApplicationCodes(string contextWorkingDir)
+    public IReadOnlyList<DefinitionCaptureItem> LoadTreeSitterCodeCaptures(
+        string? contextWorkingDir,
+        IEnumerable<string>? extraFiles = null
+    )
     {
-        if (string.IsNullOrEmpty(contextWorkingDir))
-            return new List<CodeFile>();
+        if (string.IsNullOrEmpty(contextWorkingDir) && extraFiles is null)
+            return new List<DefinitionCaptureItem>();
 
-        var files = Directory.GetFiles(contextWorkingDir, "*", SearchOption.AllDirectories);
+        var applicationCodes = ReadCodeFiles(contextWorkingDir, extraFiles);
+
+        var codeFileMapping = new TreeSitterCodeCaptures();
+        var treeSitterCodeCaptures = codeFileMapping.CreateTreeSitterMap(applicationCodes);
+
+        return treeSitterCodeCaptures;
+    }
+
+    private IList<CodeFile> ReadCodeFiles(string? contextWorkingDir, IEnumerable<string>? extraFiles)
+    {
+        List<string> allFiles = new List<string>();
+
+        if (!string.IsNullOrEmpty(contextWorkingDir))
+        {
+            allFiles.AddRange(Directory.GetFiles(contextWorkingDir, "*", SearchOption.AllDirectories));
+        }
+
+        if (extraFiles is not null)
+        {
+            allFiles.AddRange(extraFiles);
+        }
+
         var applicationCodes = new List<CodeFile>();
 
-        foreach (var file in files)
+        foreach (var file in allFiles)
         {
             if (FilesUtilities.IsIgnored(file))
                 continue;
-            var relativePath = Path.GetRelativePath(contextWorkingDir, file);
+            var relativePath = Path.GetRelativePath(Directory.GetCurrentDirectory(), file);
 
             var fileContent = File.ReadAllText(file);
 
             applicationCodes.Add(new CodeFile(fileContent, relativePath));
         }
-
-        var codeFileMapping = new CodeFileMappings();
-        var mappedCodes = codeFileMapping.CreateTreeSitterMap(applicationCodes);
 
         return applicationCodes;
     }
