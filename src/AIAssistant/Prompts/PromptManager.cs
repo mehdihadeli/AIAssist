@@ -15,7 +15,7 @@ public static class PromptManager
     {
         var assembly = Assembly.GetExecutingAssembly();
         var templateName = $"{promptTemplateName.ToLowerInvariant()}.template";
-        var fullResourceName = $"{nameof(AIAssistant)}.{PromptConstants.PromptsTemplates}.{templateName}";
+        var fullResourceName = $"{nameof(AIAssistant)}.{AIAssistantConstants.PromptsTemplatesNamespace}.{templateName}";
 
         // Render the embedded template
         string processedTemplate = FilesUtilities.RenderEmbeddedTemplate(assembly, fullResourceName, replacements);

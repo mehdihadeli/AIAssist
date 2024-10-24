@@ -54,7 +54,7 @@ public class EmbeddingService(ILLMClientManager llmClientManager, EmbeddingsStor
             Environment.NewLine + Environment.NewLine,
             relevantCode.Select(rc =>
                 PromptManager.RenderPromptTemplate(
-                    PromptConstants.CodeBlockTemplate,
+                    AIAssistantConstants.Prompts.CodeBlockTemplate,
                     new { treeSitterCode = rc.TreeSitterCode }
                 )
             )
@@ -64,7 +64,7 @@ public class EmbeddingService(ILLMClientManager llmClientManager, EmbeddingsStor
     private static string GenerateEmbeddingInputString(string treeSitterCode)
     {
         return PromptManager.RenderPromptTemplate(
-            PromptConstants.CodeEmbeddingTemplate,
+            AIAssistantConstants.Prompts.CodeEmbeddingTemplate,
             new { treeSitterCode = treeSitterCode }
         );
     }

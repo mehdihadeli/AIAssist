@@ -1,7 +1,8 @@
 using AIAssistant.Contracts;
+using AIAssistant.Models;
+using AIAssistant.Models.Options;
 using Clients.Chat.Models;
-using Clients.Models;
-using TreeSitter.Bindings.CustomTypes.TreeParser;
+using Microsoft.Extensions.Options;
 
 namespace AIAssistant.Services.CodeAssistStrategies;
 
@@ -9,7 +10,9 @@ public class EmbeddingCodeAssistStrategy(
     CodeLoaderService codeLoaderService,
     EmbeddingService embeddingService,
     CodeFileMapService codeFileMapService,
-    ILLMClientManager llmClientManager
+    ILLMClientManager llmClientManager,
+    IPromptStorage promptStorage,
+    IOptions<CodeAssistOptions> options
 ) : ICodeStrategy
 {
     private ChatSession _chatSession = default!;
@@ -17,15 +20,12 @@ public class EmbeddingCodeAssistStrategy(
     public async Task LoadCodeFiles(
         ChatSession chatSession,
         string? contextWorkingDirectory,
-        IEnumerable<string>? extraCodeFiles = null
+        IEnumerable<string>? codeFiles
     )
     {
         _chatSession = chatSession;
 
-        var treeSitterCodeCaptures = codeLoaderService.LoadTreeSitterCodeCaptures(
-            contextWorkingDirectory,
-            extraCodeFiles
-        );
+        var treeSitterCodeCaptures = codeLoaderService.LoadTreeSitterCodeCaptures(contextWorkingDirectory, codeFiles);
 
         if (!treeSitterCodeCaptures.Any())
             throw new Exception("Not found any files to load.");
@@ -46,8 +46,18 @@ public class EmbeddingCodeAssistStrategy(
         // Prepare context from relevant code snippets
         var codeContext = embeddingService.CreateLLMContext(relatedEmbeddings);
 
+        var systemCodeAssistPrompt = promptStorage.GetPrompt(
+            CommandType.Code,
+            options.Value.DiffType,
+            new { codeContext = codeContext }
+        );
+
         // Generate a response from the language model (e.g., OpenAI or Llama)
-        var completionStreams = llmClientManager.GetCompletionStreamAsync(_chatSession, userQuery, codeContext);
+        var completionStreams = llmClientManager.GetCompletionStreamAsync(
+            _chatSession,
+            userQuery: userQuery,
+            systemContext: systemCodeAssistPrompt
+        );
 
         await foreach (var streamItem in completionStreams)
         {

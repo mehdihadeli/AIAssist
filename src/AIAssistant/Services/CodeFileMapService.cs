@@ -10,13 +10,13 @@ public class CodeFileMapService
         // Group the linked definitions by RelativePath to create a CodeFileMap for each file
         var groupedByFile = definitions
             .GroupBy(definition => definition.RelativePath)
-            .Select(group => new CodeFileMap
+            .Select(fileCapturesGroup => new CodeFileMap
             {
-                RelativePath = group.Key,
-                TreeSitterFullCode = TreeGenerator.GenerateFullCode(group.ToList()),
-                OriginalCode = GetOriginalCode(group.ToList()),
-                TreeSitterSummarizeCode = TreeGenerator.GenerateSummarizeCode(group.ToList()),
-                ReferencedCodesMap = GenerateRelatedCodeFilesMap(group.ToList()),
+                RelativePath = fileCapturesGroup.Key,
+                TreeSitterFullCode = TreeGenerator.GenerateTreeSitter(fileCapturesGroup.ToList(), true),
+                OriginalCode = GetOriginalCode(fileCapturesGroup.ToList()),
+                TreeSitterSummarizeCode = TreeGenerator.GenerateTreeSitter(fileCapturesGroup.ToList(), false),
+                ReferencedCodesMap = GenerateRelatedCodeFilesMap(fileCapturesGroup.ToList()),
             })
             .ToList();
 

@@ -4,6 +4,7 @@ using AIAssistant.Contracts;
 using AIAssistant.Data;
 using AIAssistant.Models;
 using AIAssistant.Models.Options;
+using AIAssistant.Prompts;
 using AIAssistant.Services;
 using AIAssistant.Services.CodeAssistStrategies;
 using BuildingBlocks.Extensions;
@@ -175,47 +176,87 @@ public static class DependencyInjectionExtensions
         builder.Services.AddSingleton<EmbeddingService>();
         builder.Services.AddSingleton<EmbeddingsStore>();
         builder.Services.AddSingleton<VectorDatabase>();
-        builder.Services.AddSingleton<ModifyService>();
         builder.Services.AddSingleton<ICodeAssistantManager, CodeAssistantManager>();
+        builder.Services.AddSingleton<IPromptStorage, PromptStorage>(_ =>
+        {
+            var promptStorage = new PromptStorage();
+
+            promptStorage.AddPrompt(
+                AIAssistantConstants.Prompts.CodeAssistantUnifiedDiffTemplate,
+                CommandType.Code,
+                DiffType.UnifiedDiff
+            );
+
+            promptStorage.AddPrompt(
+                AIAssistantConstants.Prompts.CodeAssistantFileSnippedDiffTemplate,
+                CommandType.Code,
+                DiffType.FileSnippedDiff
+            );
+
+            return promptStorage;
+        });
+
         builder.Services.AddSingleton<IModelsStorageService, ModelsStorageService>(_ =>
         {
             var modelStorage = new ModelsStorageService();
 
-            modelStorage.AddChatModel(new ChatModelStorage(Constants.Ollama.ChatModels.Llama3_1, AIProvider.Ollama));
             modelStorage.AddChatModel(
-                new ChatModelStorage(Constants.Ollama.ChatModels.Deepseek_Coder_V2, AIProvider.Ollama)
+                new ChatModelStorage(ClientsConstants.Ollama.ChatModels.Llama3_1, AIProvider.Ollama)
             );
-
-            modelStorage.AddEmbeddingModel(
-                new EmbeddingModelStorage(Constants.Ollama.EmbeddingsModels.Mxbai_Embed_Large, AIProvider.Ollama, 0.6)
-            );
-
-            modelStorage.AddEmbeddingModel(
-                new EmbeddingModelStorage(Constants.Ollama.EmbeddingsModels.Nomic_EmbedText, AIProvider.Ollama, 0.5)
-            );
-
-            modelStorage.AddChatModel(new ChatModelStorage(Constants.OpenAI.ChatModels.GPT3_5Turbo, AIProvider.OpenAI));
-
-            modelStorage.AddChatModel(new ChatModelStorage(Constants.OpenAI.ChatModels.GPT4Mini, AIProvider.OpenAI));
-
-            modelStorage.AddEmbeddingModel(
-                new EmbeddingModelStorage(Constants.OpenAI.EmbeddingsModels.TextEmbedding3Large, AIProvider.OpenAI, 0.3)
-            );
-
-            modelStorage.AddEmbeddingModel(
-                new EmbeddingModelStorage(Constants.OpenAI.EmbeddingsModels.TextEmbedding3Small, AIProvider.OpenAI, 0.2)
+            modelStorage.AddChatModel(
+                new ChatModelStorage(ClientsConstants.Ollama.ChatModels.Deepseek_Coder_V2, AIProvider.Ollama)
             );
 
             modelStorage.AddEmbeddingModel(
                 new EmbeddingModelStorage(
-                    Constants.OpenAI.EmbeddingsModels.TextEmbeddingAda_002,
+                    ClientsConstants.Ollama.EmbeddingsModels.Mxbai_Embed_Large,
+                    AIProvider.Ollama,
+                    0.5
+                )
+            );
+
+            modelStorage.AddEmbeddingModel(
+                new EmbeddingModelStorage(
+                    ClientsConstants.Ollama.EmbeddingsModels.Nomic_EmbedText,
+                    AIProvider.Ollama,
+                    0.4
+                )
+            );
+
+            modelStorage.AddChatModel(
+                new ChatModelStorage(ClientsConstants.OpenAI.ChatModels.GPT3_5Turbo, AIProvider.OpenAI)
+            );
+
+            modelStorage.AddChatModel(
+                new ChatModelStorage(ClientsConstants.OpenAI.ChatModels.GPT4Mini, AIProvider.OpenAI)
+            );
+
+            modelStorage.AddEmbeddingModel(
+                new EmbeddingModelStorage(
+                    ClientsConstants.OpenAI.EmbeddingsModels.TextEmbedding3Large,
+                    AIProvider.OpenAI,
+                    0.3
+                )
+            );
+
+            modelStorage.AddEmbeddingModel(
+                new EmbeddingModelStorage(
+                    ClientsConstants.OpenAI.EmbeddingsModels.TextEmbedding3Small,
+                    AIProvider.OpenAI,
+                    0.2
+                )
+            );
+
+            modelStorage.AddEmbeddingModel(
+                new EmbeddingModelStorage(
+                    ClientsConstants.OpenAI.EmbeddingsModels.TextEmbeddingAda_002,
                     AIProvider.OpenAI,
                     0.3
                 )
             );
 
             modelStorage.AddChatModel(
-                new ChatModelStorage(Constants.Anthropic.ChatModels.Claude_3_5_Sonnet, AIProvider.Anthropic)
+                new ChatModelStorage(ClientsConstants.Anthropic.ChatModels.Claude_3_5_Sonnet, AIProvider.Anthropic)
             );
 
             return modelStorage;
@@ -223,7 +264,7 @@ public static class DependencyInjectionExtensions
 
         // Commands
         builder.Services.AddSingleton<CodeAssistCommand>();
-        builder.Services.AddSingleton<CodeInterpreterCommand>();
+        builder.Services.AddSingleton<CodeExplanationCommand>();
         builder.Services.AddSingleton<ChatAssistCommand>();
         builder.Services.AddSingleton<TreeStructureCommand>();
         builder.Services.AddSingleton<AIAssistCommand>();

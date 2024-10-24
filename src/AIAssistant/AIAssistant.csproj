@@ -24,15 +24,15 @@
     </ItemGroup>
 
     <ItemGroup>
-        <None Remove="Prompts\Templates\code-modification.template"/>
         <None Remove="Prompts\Templates\code-block.template"/>
-        <None Remove="Prompts\Templates\code-assistant.template"/>
-        <None Remove="Prompts\Templates\code-assistant-simple.template"/>
+        <None Remove="Prompts\Templates\code-assistant-unified-diff.template"/>
+        <None Remove="Prompts\Templates\code-assistant-file-snipped-diff.template" />
         <None Remove="Prompts\Templates\code-embedding.template"/>
     </ItemGroup>
 
     <ItemGroup>
-        <EmbeddedResource Include="Prompts\Templates\code-assistant.template" />
+        <EmbeddedResource Include="Prompts\Templates\code-assistant-unified-diff.template" />
+        <EmbeddedResource Include="Prompts\Templates\code-assistant-file-snipped-diff.template" />
         <EmbeddedResource Include="Prompts\Templates\code-block.template" />
         <EmbeddedResource Include="Prompts\Templates\code-embedding.template" />
     </ItemGroup>

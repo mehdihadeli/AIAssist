@@ -1,9 +1,10 @@
 using AIAssistant.Contracts;
 using AIAssistant.Models;
 using Clients.Chat.Models;
-using Clients.Models;
+using FluentAssertions;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Hosting;
+using TreeSitter.Bindings.UnitTests.TestData;
 
 namespace AIAssistant.IntegrationTests.Services.CodeAssistStrategies;
 
@@ -19,27 +20,46 @@ public class EmbeddingCodeAssistStrategyIntegrationTests(ApplicationFixture appl
     public async Task QueryAsync_With_A_ContextWorkingDirectory_ShouldReturnResponsesFromLLM()
     {
         // Arrange
-        var userQuery = "can you give me all method names in Add.cs file?";
-        await _codeStrategy.LoadCodeFiles(new ChatSession(), contextWorkingDirectory: _appWorkingDir);
+        var userQuery = "can you remove all comments in Add.cs and Add class?";
+        await _codeStrategy.LoadCodeFiles(new ChatSession(), contextWorkingDirectory: _appWorkingDir, codeFiles: null);
 
         // Act
         IAsyncEnumerable<string?> responseStream = _codeStrategy.QueryAsync(userQuery);
-
-        // Collect responses from the stream
-        var responses = new List<string?>();
-        await foreach (var response in responseStream)
-        {
-            responses.Add(response);
-        }
+        var response = await responseStream.ToListAsync();
 
         // Assert
-        Assert.NotNull(responses);
-        Assert.NotEmpty(responses);
-        Assert.All(responses, response => Assert.False(string.IsNullOrWhiteSpace(response)));
+        response.Should().NotBeNull();
+        response.Should().NotBeEmpty();
+        response.Any(s => !string.IsNullOrEmpty(s)).Should().BeTrue();
+    }
+
+    [Fact]
+    public async Task QueryAsync_With_Some_Files_ShouldReturnResponsesFromLLM()
+    {
+        // Arrange
+        var userQuery = "can you remove all comments in Add.cs and Add class?";
+        string[] files =
+        [
+            TestDataConstants.CalculatorApp.AddRelativeFilePath,
+            TestDataConstants.CalculatorApp.SubtractRelativeFilePath,
+            TestDataConstants.CalculatorApp.DivideRelativeFilePath,
+            TestDataConstants.CalculatorApp.MultiplyRelativeFilePath,
+        ];
+        await _codeStrategy.LoadCodeFiles(new ChatSession(), contextWorkingDirectory: null, codeFiles: files);
+
+        // Act
+        IAsyncEnumerable<string?> responseStream = _codeStrategy.QueryAsync(userQuery);
+        var response = await responseStream.ToListAsync();
+
+        // Assert
+        response.Should().NotBeNull();
+        response.Should().NotBeEmpty();
+        response.Any(s => !string.IsNullOrEmpty(s)).Should().BeTrue();
     }
 
     public Task InitializeAsync()
     {
+        _app = applicationFixture.App;
         _originalWorkingDir = Directory.GetCurrentDirectory();
 
         // Save the original working directory
@@ -47,8 +67,6 @@ public class EmbeddingCodeAssistStrategyIntegrationTests(ApplicationFixture appl
 
         // Change the working directory to the new test directory
         Directory.SetCurrentDirectory(_appWorkingDir);
-
-        _app = applicationFixture.App;
 
         var codeAssistStrategyFactory = _app.Services.GetRequiredService<ICodeAssistStrategyFactory>();
         _codeStrategy = codeAssistStrategyFactory.Create(CodeAssistStrategyType.Embedding);
@@ -59,6 +77,7 @@ public class EmbeddingCodeAssistStrategyIntegrationTests(ApplicationFixture appl
     public Task DisposeAsync()
     {
         Directory.SetCurrentDirectory(_originalWorkingDir);
+
         return Task.CompletedTask;
     }
 }

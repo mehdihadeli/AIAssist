@@ -1,6 +1,6 @@
 namespace Clients;
 
-public static class Constants
+public static class ClientsConstants
 {
     public static class Ollama
     {

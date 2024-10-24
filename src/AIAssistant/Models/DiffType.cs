@@ -2,6 +2,6 @@ namespace AIAssistant.Models;
 
 public enum DiffType
 {
-    GitDiff = 0,
-    CodeDiff = 1,
+    UnifiedDiff = 0,
+    FileSnippedDiff = 1,
 }

@@ -19,8 +19,8 @@ public class AnthropicClientStrategyIntegrationTests(ApplicationFixture applicat
     {
         _app = applicationFixture.App;
         var llmOptions = _app.Services.GetRequiredService<IOptions<LLMOptions>>();
-        llmOptions.Value.BaseAddress = Constants.Anthropic.BaseAddress;
-        llmOptions.Value.ChatModel = Constants.Anthropic.ChatModels.Claude_3_5_Sonnet;
+        llmOptions.Value.BaseAddress = ClientsConstants.Anthropic.BaseAddress;
+        llmOptions.Value.ChatModel = ClientsConstants.Anthropic.ChatModels.Claude_3_5_Sonnet;
         llmOptions.Value.EmbeddingsModel = "";
 
         var clientFactory = _app.Services.GetRequiredService<ILLMClientFactory>();

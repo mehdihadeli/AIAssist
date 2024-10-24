@@ -24,12 +24,24 @@ public class TreeSitterCodeCaptures
                 capturesResult.DefinitionCaptureItems.Add(
                     new DefinitionCaptureItem
                     {
-                        CaptureKey = "code definition",
+                        CaptureKey = "definition.code",
+                        RelativePath = codeFile.RelativePath,
+                        CaptureValue = codeFile.Code,
+                        CodeChunk = null,
+                        OriginalCode = codeFile.Code,
+                        Definition = codeFile.Code,
+                    }
+                );
+
+                capturesResult.DefinitionCaptureItems.Add(
+                    new DefinitionCaptureItem
+                    {
+                        CaptureKey = "name.code",
                         RelativePath = codeFile.RelativePath,
                         CaptureValue = CodeHelper.GetLinesOfInterest(codeFile.Code, 1),
                         CodeChunk = CodeHelper.GetLinesOfInterest(codeFile.Code, 1),
                         OriginalCode = codeFile.Code,
-                        Definition = codeFile.Code,
+                        Definition = null,
                     }
                 );
 
@@ -77,14 +89,8 @@ public class TreeSitterCodeCaptures
                 // Convert code to byte array for extracting matched code using byte positions
                 byte[] byteArrayCode = Encoding.UTF8.GetBytes(codeFile.Code);
 
-                foreach (
-                    var (captureKey, captureValues) in captureTags
-                        // exclude definitions from both reference and name tags, we capture them directly with name tags
-                        .Where(x => !x.CaptureKey.StartsWith("reference.") || !x.CaptureKey.StartsWith("definition."))
-                        .ToDictionary(x => x.CaptureKey, v => v.Values)
-                )
+                foreach (var (captureKey, captureValues) in captureTags.ToDictionary(x => x.CaptureKey, v => v.Values))
                 {
-                    int referenceIndex = 0;
                     foreach (var tagValue in captureValues)
                     {
                         // getting start and end line number for current AST node value
@@ -97,25 +103,6 @@ public class TreeSitterCodeCaptures
                         {
                             // We exclude references because most of the references can be found in our definitions like functions
                             case { } key when key.StartsWith("reference_name."):
-                                var referenceKey = key.Replace(
-                                    "reference_name.",
-                                    "reference.",
-                                    StringComparison.InvariantCultureIgnoreCase
-                                );
-
-                                var referenceNodeValues = captureTags
-                                    .SingleOrDefault(x => x.CaptureKey == referenceKey)
-                                    ?.Values;
-
-                                string referenceDefinition = string.Empty;
-                                if (referenceNodeValues is not null && referenceNodeValues.Any())
-                                {
-                                    referenceDefinition = GetValueFromNode(
-                                        byteArrayCode,
-                                        referenceNodeValues[referenceIndex]
-                                    );
-                                }
-
                                 capturesResult.ReferenceCaptureItems.Add(
                                     new ReferenceCaptureItem
                                     {
@@ -123,36 +110,28 @@ public class TreeSitterCodeCaptures
                                         RelativePath = codeFile.RelativePath,
                                         CaptureValue = captureValue,
                                         CodeChunk = CodeHelper.GetLinesOfInterest(codeFile.Code, startLine),
-                                        Definition = referenceDefinition,
+                                        Definition = null,
                                         OriginalCode = codeFile.Code,
                                     }
                                 );
 
                                 break;
-                            // just names will use for creating output
+                            case { } key when key.StartsWith("reference."):
+                                string referenceChunk = CodeHelper.GetChunkOfLines(codeFile.Code, startLine, endLine);
+                                capturesResult.ReferenceCaptureItems.Add(
+                                    new ReferenceCaptureItem
+                                    {
+                                        CaptureKey = captureKey,
+                                        RelativePath = codeFile.RelativePath,
+                                        CaptureValue = captureValue,
+                                        CodeChunk = null,
+                                        Definition = captureValue,
+                                        OriginalCode = codeFile.Code,
+                                    }
+                                );
+                                break;
                             case { } key when key.StartsWith("name."):
                                 string codeChunk = CodeHelper.GetLinesOfInterest(codeFile.Code, startLine);
-
-                                var definitionKey = key.Replace(
-                                    "name.",
-                                    "definition.",
-                                    StringComparison.InvariantCultureIgnoreCase
-                                );
-
-                                var definitionNodeValues = captureTags
-                                    .SingleOrDefault(x => x.CaptureKey == definitionKey)
-                                    ?.Values;
-
-                                string definition = string.Empty;
-                                if (definitionNodeValues is not null && definitionNodeValues.Any())
-                                {
-                                    foreach (var definitionNodeValue in definitionNodeValues)
-                                    {
-                                        definition +=
-                                            GetValueFromNode(byteArrayCode, definitionNodeValue) + Environment.NewLine;
-                                    }
-                                }
-
                                 if (language == ProgrammingLanguage.Csharp && key == "name.method")
                                 {
                                     codeChunk = CodeHelper.GetLinesOfInterest(
@@ -170,17 +149,29 @@ public class TreeSitterCodeCaptures
                                         RelativePath = codeFile.RelativePath,
                                         CaptureValue = captureValue,
                                         CodeChunk = codeChunk,
-                                        Definition = definition,
+                                        Definition = null,
                                         OriginalCode = codeFile.Code,
                                     }
                                 );
 
                                 break;
+                            case { } key when key.StartsWith("definition."):
+                                string definitionChunk = CodeHelper.GetChunkOfLines(codeFile.Code, startLine, endLine);
+                                capturesResult.DefinitionCaptureItems.Add(
+                                    new DefinitionCaptureItem
+                                    {
+                                        CaptureKey = captureKey,
+                                        RelativePath = codeFile.RelativePath,
+                                        CaptureValue = captureValue,
+                                        CodeChunk = null,
+                                        Definition = captureValue,
+                                        OriginalCode = codeFile.Code,
+                                    }
+                                );
+                                break;
                             default:
                                 break;
                         }
-
-                        referenceIndex++;
                     }
                 }
 

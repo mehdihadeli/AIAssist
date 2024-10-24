@@ -114,14 +114,20 @@ public class OpenAIClientStratgey(
         {
             var line = await streamReader.ReadLineAsync(cancellationToken);
 
-            // when we reached to the end of the streams
-            if (string.IsNullOrWhiteSpace(line) || line.StartsWith("data: [DONE]"))
+            if (string.IsNullOrEmpty(line) || string.IsNullOrWhiteSpace(line))
                 continue;
+
+            // when we reached to the end of the streams
+            if (line.StartsWith("data: [DONE]"))
+                break;
 
             // Parse the streaming data (assume JSON format)
             if (line.StartsWith("data: "))
             {
                 var jsonData = line.Substring("data: ".Length);
+                if (string.IsNullOrEmpty(jsonData))
+                    continue;
+
                 var streamResponse = JsonSerializer.Deserialize<OpenAICompletionStreamResponse>(
                     jsonData,
                     options: JsonObjectSerializer.Options

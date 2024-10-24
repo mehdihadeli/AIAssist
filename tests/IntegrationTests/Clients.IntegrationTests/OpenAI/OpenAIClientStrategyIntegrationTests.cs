@@ -19,9 +19,9 @@ public class OpenAIClientStrategyIntegrationTests(ApplicationFixture application
     {
         _app = applicationFixture.App;
         var llmOptions = _app.Services.GetRequiredService<IOptions<LLMOptions>>();
-        llmOptions.Value.BaseAddress = Constants.OpenAI.BaseAddress;
-        llmOptions.Value.ChatModel = Constants.OpenAI.ChatModels.GPT3_5Turbo;
-        llmOptions.Value.EmbeddingsModel = Constants.OpenAI.EmbeddingsModels.TextEmbedding3Small;
+        llmOptions.Value.BaseAddress = ClientsConstants.OpenAI.BaseAddress;
+        llmOptions.Value.ChatModel = ClientsConstants.OpenAI.ChatModels.GPT3_5Turbo;
+        llmOptions.Value.EmbeddingsModel = ClientsConstants.OpenAI.EmbeddingsModels.TextEmbedding3Small;
 
         var clientFactory = _app.Services.GetRequiredService<ILLMClientFactory>();
         _llmClientStratgey = clientFactory.CreateClient(AIProvider.OpenAI);

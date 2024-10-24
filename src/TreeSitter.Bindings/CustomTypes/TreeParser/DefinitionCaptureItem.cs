@@ -7,8 +7,8 @@ public class DefinitionCaptureItem
     public IList<DefinitionCaptureReference> DefinitionCaptureReferences { get; } =
         new List<DefinitionCaptureReference>();
     public string RelativePath { get; set; } = default!;
-    public string CodeChunk { get; set; } = default!;
-    public string Definition { get; set; } = default!;
+    public string? CodeChunk { get; set; }
+    public string? Definition { get; set; }
     public string OriginalCode { get; set; } = default!;
 }
 

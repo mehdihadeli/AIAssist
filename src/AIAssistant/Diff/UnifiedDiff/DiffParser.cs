@@ -15,9 +15,27 @@ public class DiffParser
         int currentLineNumberOriginal = 0;
         int currentLineNumberNew = 0;
 
+        bool insideCodeBlock = false;
+
         for (int i = 0; i < lines.Length; i++)
         {
             var line = lines[i].Trim();
+
+            // Detect start and end of the code block
+            if (line.StartsWith("```diff"))
+            {
+                insideCodeBlock = true;
+                continue;
+            }
+            else if (line.StartsWith("```"))
+            {
+                insideCodeBlock = false;
+                continue;
+            }
+
+            // If not inside a code block, ignore the line
+            if (!insideCodeBlock)
+                continue;
 
             // Match the file header
             if (line.StartsWith("--- "))

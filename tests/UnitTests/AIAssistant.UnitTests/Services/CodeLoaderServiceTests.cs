@@ -1,7 +1,7 @@
 using AIAssistant.Services;
 using FluentAssertions;
 
-namespace AIAssistant.IntegrationTests.Services;
+namespace AIAssistant.UnitTests.Services;
 
 public class CodeLoaderServiceTests : IAsyncLifetime
 {

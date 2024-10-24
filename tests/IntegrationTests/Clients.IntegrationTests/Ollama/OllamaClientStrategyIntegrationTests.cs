@@ -19,9 +19,9 @@ public class OllamaClientStrategyIntegrationTests(ApplicationFixture application
     {
         _app = applicationFixture.App;
         var llmOptions = _app.Services.GetRequiredService<IOptions<LLMOptions>>();
-        llmOptions.Value.BaseAddress = Constants.Ollama.BaseAddress;
-        llmOptions.Value.ChatModel = Constants.Ollama.ChatModels.Llama3_1;
-        llmOptions.Value.EmbeddingsModel = Constants.Ollama.EmbeddingsModels.Mxbai_Embed_Large;
+        llmOptions.Value.BaseAddress = ClientsConstants.Ollama.BaseAddress;
+        llmOptions.Value.ChatModel = ClientsConstants.Ollama.ChatModels.Llama3_1;
+        llmOptions.Value.EmbeddingsModel = ClientsConstants.Ollama.EmbeddingsModels.Mxbai_Embed_Large;
 
         var clientFactory = _app.Services.GetRequiredService<ILLMClientFactory>();
         _llmClientStratgey = clientFactory.CreateClient(AIProvider.Ollama);

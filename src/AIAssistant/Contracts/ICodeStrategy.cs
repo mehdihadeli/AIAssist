@@ -5,10 +5,6 @@ namespace AIAssistant.Contracts;
 
 public interface ICodeStrategy
 {
-    Task LoadCodeFiles(
-        ChatSession chatSession,
-        string? contextWorkingDirectory,
-        IEnumerable<string>? extraCodeFiles = null
-    );
+    Task LoadCodeFiles(ChatSession chatSession, string? contextWorkingDirectory, IEnumerable<string>? codeFiles);
     IAsyncEnumerable<string?> QueryAsync(string userQuery);
 }

@@ -1,6 +1,5 @@
 using AIAssistant.Contracts;
 using AIAssistant.Models;
-using AIAssistant.Prompts;
 using Clients.Chat.Models;
 using Clients.Contracts;
 using Clients.Models;
@@ -32,42 +31,12 @@ public class LLMClientManager : ILLMClientManager
     public double EmbeddingThreshold { get; }
     public AIProvider AIProvider { get; }
 
-    public Task<string?> GetCompletionAsync(
-        ChatSession chatSession,
-        string userQuery,
-        string context,
-        CancellationToken cancellationToken = default
-    )
-    {
-        var chatItems = PrepareChatItemsCompletion(chatSession, userQuery, context);
-
-        var llmClientStratgey = _clientFactory.CreateClient(AIProvider);
-
-        return llmClientStratgey.GetCompletionAsync(chatItems, cancellationToken);
-    }
-
     public IAsyncEnumerable<string?> GetCompletionStreamAsync(
         ChatSession chatSession,
         string userQuery,
-        string context,
+        string systemContext,
         CancellationToken cancellationToken = default
     )
-    {
-        var chatItems = PrepareChatItemsCompletion(chatSession, userQuery, context);
-
-        var llmClientStratgey = _clientFactory.CreateClient(AIProvider);
-
-        return llmClientStratgey.GetCompletionStreamAsync(chatItems, cancellationToken);
-    }
-
-    public Task<IList<double>> GetEmbeddingAsync(string input, CancellationToken cancellationToken = default)
-    {
-        var llmClientStratgey = _clientFactory.CreateClient(AIProvider);
-
-        return llmClientStratgey.GetEmbeddingAsync(input, cancellationToken);
-    }
-
-    private static List<ChatItem> PrepareChatItemsCompletion(ChatSession chatSession, string userQuery, string context)
     {
         var chatItems = new List<ChatItem>();
 
@@ -82,16 +51,22 @@ public class LLMClientManager : ILLMClientManager
         // if we don't have a `system` prompt in our chat history we should send it for llm otherwise we will read it from history
         if (chatSession.ChatHistory.HistoryItems.All(x => x.Role != RoleType.System))
         {
-            var systemCodeAssistPrompt = PromptManager.RenderPromptTemplate(
-                PromptConstants.CodeAssistantTemplate,
-                new { codeContext = context }
-            );
-            var systemChatItem = chatSession.CreateSystemChatItem(systemCodeAssistPrompt);
+            var systemChatItem = chatSession.CreateSystemChatItem(systemContext);
             chatItems.Add(systemChatItem);
         }
 
         var userChatItem = chatSession.CreateUserChatItem(userQuery);
         chatItems.Add(userChatItem);
-        return chatItems;
+
+        var llmClientStratgey = _clientFactory.CreateClient(AIProvider);
+
+        return llmClientStratgey.GetCompletionStreamAsync(chatItems, cancellationToken);
+    }
+
+    public Task<IList<double>> GetEmbeddingAsync(string input, CancellationToken cancellationToken = default)
+    {
+        var llmClientStratgey = _clientFactory.CreateClient(AIProvider);
+
+        return llmClientStratgey.GetEmbeddingAsync(input, cancellationToken);
     }
 }

@@ -82,10 +82,16 @@ public class Collection(string name)
                 Document = doc,
                 SimilarityScore = CosineSimilarity(doc.Embeddings, queryEmbedding, doc),
             })
-            .Where(doc => metadataFilter == null || MetadataMatches(doc.Document.Metadata, metadataFilter))
-            .Where(x => x.SimilarityScore >= threshold)
-            .OrderByDescending(result => result.SimilarityScore)
-            .ToList();
+            .Where(doc => metadataFilter == null || MetadataMatches(doc.Document.Metadata, metadataFilter));
+
+        query = query.OrderByDescending(result => result.SimilarityScore).ToList();
+
+        if (!query.Any())
+        {
+            throw new Exception(
+                $"The current threshold for your embedding model config is {threshold}, you can try with lower threshold."
+            );
+        }
 
         var averageRank = query.Select(x => x.SimilarityScore).Average();
 

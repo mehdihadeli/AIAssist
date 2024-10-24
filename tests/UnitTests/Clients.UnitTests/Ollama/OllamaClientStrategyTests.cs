@@ -176,12 +176,17 @@ public class OllamaClientStrategyTests : IAsyncLifetime
         var chatItems = new List<ChatItem> { new(Role: RoleType.User, Prompt: "Hello, how are you?") };
 
         var streamingResponse = new StringBuilder();
+        streamingResponse.AppendLine();
         streamingResponse.AppendLine(
             "data: {\"choices\":[{\"delta\":{\"role\":\"assistant\",\"content\":\"Hello\"}}]}"
         );
+        streamingResponse.AppendLine();
         streamingResponse.AppendLine(
             "data: {\"choices\":[{\"delta\":{\"role\":\"assistant\",\"content\":\" world\"}}]}"
         );
+        streamingResponse.AppendLine();
+        streamingResponse.AppendLine("data: ");
+        streamingResponse.AppendLine();
         streamingResponse.AppendLine("data: [DONE]");
 
         _mockHttp
