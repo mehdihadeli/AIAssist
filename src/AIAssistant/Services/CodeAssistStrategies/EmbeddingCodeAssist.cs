@@ -1,4 +1,5 @@
 using AIAssistant.Contracts;
+using AIAssistant.Contracts.CodeAssist;
 using AIAssistant.Models;
 using AIAssistant.Models.Options;
 using Clients.Chat.Models;
@@ -6,22 +7,18 @@ using Microsoft.Extensions.Options;
 
 namespace AIAssistant.Services.CodeAssistStrategies;
 
-public class EmbeddingCodeAssistStrategy(
+public class EmbeddingCodeAssist(
     CodeLoaderService codeLoaderService,
     EmbeddingService embeddingService,
-    CodeFileMapService codeFileMapService,
+    ICodeFileMapService codeFileMapService,
     ILLMClientManager llmClientManager,
     IPromptStorage promptStorage,
     IOptions<CodeAssistOptions> options
-) : ICodeStrategy
+) : ICodeAssist
 {
     private ChatSession _chatSession = default!;
 
-    public async Task LoadCodeFiles(
-        ChatSession chatSession,
-        string? contextWorkingDirectory,
-        IEnumerable<string>? codeFiles
-    )
+    public async Task LoadCodeFiles(ChatSession chatSession, string? contextWorkingDirectory, IList<string>? codeFiles)
     {
         _chatSession = chatSession;
 
@@ -48,7 +45,7 @@ public class EmbeddingCodeAssistStrategy(
 
         var systemCodeAssistPrompt = promptStorage.GetPrompt(
             CommandType.Code,
-            options.Value.DiffType,
+            options.Value.CodeDiffType,
             new { codeContext = codeContext }
         );
 

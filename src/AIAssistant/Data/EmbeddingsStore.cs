@@ -14,13 +14,14 @@ public class EmbeddingsStore(VectorDatabase vectorDatabase)
     {
         foreach (var codeEmbedding in codeEmbeddings)
         {
-            IDictionary<string, string> metadata = new
+            IDictionary<string, string> metadata = new Dictionary<string, string>
             {
-                sessionId = codeEmbedding.SessionId,
-                relativeFilePath = codeEmbedding.RelativeFilePath,
-                id = codeEmbedding.Id,
-                treeSitterCode = codeEmbedding.TreeSitterCode,
-            }.AnonymouseTypeToDictionary();
+                { nameof(CodeEmbedding.SessionId).Camelize(), codeEmbedding.SessionId.ToString() },
+                { nameof(CodeEmbedding.RelativeFilePath).Camelize(), codeEmbedding.RelativeFilePath },
+                { nameof(CodeEmbedding.Id).Camelize(), codeEmbedding.Id.ToString() },
+                { nameof(CodeEmbedding.TreeSitterFullCode).Camelize(), codeEmbedding.TreeSitterFullCode },
+                { nameof(CodeEmbedding.TreeOriginalCode).Camelize(), codeEmbedding.TreeOriginalCode },
+            };
 
             _collection.AddDocuments(codeEmbedding.Code, codeEmbedding.Embeddings, codeEmbedding.Id, metadata);
         }
@@ -59,7 +60,8 @@ public class EmbeddingsStore(VectorDatabase vectorDatabase)
                 Code = x.Text,
                 SessionId = Guid.Parse(x.Metadata[nameof(CodeEmbedding.SessionId).Camelize()]),
                 Id = Guid.Parse(x.Metadata[nameof(CodeEmbedding.Id).Camelize()]),
-                TreeSitterCode = x.Metadata[nameof(CodeEmbedding.TreeSitterCode).Camelize()],
+                TreeSitterFullCode = x.Metadata[nameof(CodeEmbedding.TreeSitterFullCode).Camelize()],
+                TreeOriginalCode = x.Metadata[nameof(CodeEmbedding.TreeOriginalCode).Camelize()],
             });
 
         return res.ToList().AsReadOnly();

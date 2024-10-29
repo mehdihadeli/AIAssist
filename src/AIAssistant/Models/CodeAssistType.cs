@@ -1,6 +1,6 @@
 namespace AIAssistant.Models;
 
-public enum CodeAssistStrategyType
+public enum CodeAssistType
 {
     /// <summary>
     /// Tree-Sitter definition information with using rag and embedding

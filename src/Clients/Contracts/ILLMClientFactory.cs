@@ -4,5 +4,5 @@ namespace Clients.Contracts;
 
 public interface ILLMClientFactory
 {
-    ILLMClientStratgey CreateClient(AIProvider aiProvider);
+    ILLMClient CreateClient(AIProvider aiProvider);
 }

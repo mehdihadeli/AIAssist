@@ -1,4 +1,5 @@
 using AIAssistant.Contracts;
+using AIAssistant.Contracts.CodeAssist;
 using AIAssistant.Models;
 using Clients.Chat.Models;
 using FluentAssertions;
@@ -12,7 +13,7 @@ namespace AIAssistant.IntegrationTests.Services.CodeAssistStrategies;
 public class EmbeddingCodeAssistStrategyIntegrationTests(ApplicationFixture applicationFixture) : IAsyncLifetime
 {
     private IHost _app = default!;
-    private ICodeStrategy _codeStrategy = default!;
+    private ICodeAssist _codeAssist = default!;
     private string _appWorkingDir = default!;
     private string _originalWorkingDir = default!;
 
@@ -20,11 +21,11 @@ public class EmbeddingCodeAssistStrategyIntegrationTests(ApplicationFixture appl
     public async Task QueryAsync_With_A_ContextWorkingDirectory_ShouldReturnResponsesFromLLM()
     {
         // Arrange
-        var userQuery = "can you remove all comments in Add.cs and Add class?";
-        await _codeStrategy.LoadCodeFiles(new ChatSession(), contextWorkingDirectory: _appWorkingDir, codeFiles: null);
+        var userQuery = "can you remove all comments in Add.cs file?";
+        await _codeAssist.LoadCodeFiles(new ChatSession(), contextWorkingDirectory: _appWorkingDir, codeFiles: null);
 
         // Act
-        IAsyncEnumerable<string?> responseStream = _codeStrategy.QueryAsync(userQuery);
+        IAsyncEnumerable<string?> responseStream = _codeAssist.QueryAsync(userQuery);
         var response = await responseStream.ToListAsync();
 
         // Assert
@@ -37,7 +38,7 @@ public class EmbeddingCodeAssistStrategyIntegrationTests(ApplicationFixture appl
     public async Task QueryAsync_With_Some_Files_ShouldReturnResponsesFromLLM()
     {
         // Arrange
-        var userQuery = "can you remove all comments in Add.cs and Add class?";
+        var userQuery = "can you remove all comments in Add.cs file?";
         string[] files =
         [
             TestDataConstants.CalculatorApp.AddRelativeFilePath,
@@ -45,10 +46,10 @@ public class EmbeddingCodeAssistStrategyIntegrationTests(ApplicationFixture appl
             TestDataConstants.CalculatorApp.DivideRelativeFilePath,
             TestDataConstants.CalculatorApp.MultiplyRelativeFilePath,
         ];
-        await _codeStrategy.LoadCodeFiles(new ChatSession(), contextWorkingDirectory: null, codeFiles: files);
+        await _codeAssist.LoadCodeFiles(new ChatSession(), contextWorkingDirectory: null, codeFiles: files);
 
         // Act
-        IAsyncEnumerable<string?> responseStream = _codeStrategy.QueryAsync(userQuery);
+        IAsyncEnumerable<string?> responseStream = _codeAssist.QueryAsync(userQuery);
         var response = await responseStream.ToListAsync();
 
         // Assert
@@ -68,8 +69,8 @@ public class EmbeddingCodeAssistStrategyIntegrationTests(ApplicationFixture appl
         // Change the working directory to the new test directory
         Directory.SetCurrentDirectory(_appWorkingDir);
 
-        var codeAssistStrategyFactory = _app.Services.GetRequiredService<ICodeAssistStrategyFactory>();
-        _codeStrategy = codeAssistStrategyFactory.Create(CodeAssistStrategyType.Embedding);
+        var codeAssistStrategyFactory = _app.Services.GetRequiredService<ICodeAssistFactory>();
+        _codeAssist = codeAssistStrategyFactory.Create(CodeAssistType.Embedding);
 
         return Task.CompletedTask;
     }

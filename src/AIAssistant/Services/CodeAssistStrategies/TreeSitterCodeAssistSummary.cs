@@ -1,14 +1,13 @@
 using AIAssistant.Contracts;
+using AIAssistant.Contracts.CodeAssist;
 using Clients.Chat.Models;
 
 namespace AIAssistant.Services.CodeAssistStrategies;
 
-public class TreeSitterCodeAssistSummaryStrategy(
-    CodeLoaderService codeLoaderService,
-    CodeFileMapService codeFileMapService
-) : ICodeStrategy
+public class TreeSitterCodeAssistSummary(CodeLoaderService codeLoaderService, ICodeFileMapService codeFileMapService)
+    : ICodeAssist
 {
-    public Task LoadCodeFiles(ChatSession chatSession, string? contextWorkingDirectory, IEnumerable<string>? codeFiles)
+    public Task LoadCodeFiles(ChatSession chatSession, string? contextWorkingDirectory, IList<string>? codeFiles)
     {
         var codeCaptures = codeLoaderService.LoadTreeSitterCodeCaptures(contextWorkingDirectory);
 

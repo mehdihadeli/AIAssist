@@ -1,7 +1,10 @@
 using System.Net.Http.Headers;
 using AIAssistant.Commands;
 using AIAssistant.Contracts;
+using AIAssistant.Contracts.CodeAssist;
+using AIAssistant.Contracts.Diff;
 using AIAssistant.Data;
+using AIAssistant.Diff;
 using AIAssistant.Models;
 using AIAssistant.Models.Options;
 using AIAssistant.Prompts;
@@ -33,15 +36,35 @@ public static class DependencyInjectionExtensions
     public static HostApplicationBuilder AddDependencies(this HostApplicationBuilder builder)
     {
         builder.Services.AddSingleton(AnsiConsole.Console);
-        builder.Services.AddSingleton<IJsonSerializer, JsonObjectSerializer>();
 
-        // will set json options for httpclient AsJson and FromJson
-        builder.Services.ConfigureHttpJsonOptions(options =>
-        {
-            options.SerializerOptions.PropertyNamingPolicy = JsonObjectSerializer.Options.PropertyNamingPolicy;
-            options.SerializerOptions.WriteIndented = JsonObjectSerializer.Options.WriteIndented;
-        });
+        builder.Services.AddSingleton<ICodeFileMapService, CodeFileMapService>();
+        builder.Services.AddSingleton<CodeLoaderService>();
 
+        AddResiliencyDependencies(builder);
+
+        AddJsonSerializerDependencies(builder);
+
+        AddOptionsDependencies(builder);
+
+        AddClientDependencies(builder);
+
+        AddCodeAssistDependencies(builder);
+
+        AddEmbeddingDependencies(builder);
+
+        AddCodeDiffDependency(builder);
+
+        AddPromptDependencies(builder);
+
+        AddModelStorageDependencies(builder);
+
+        AddCommandsDependencies(builder);
+
+        return builder;
+    }
+
+    private static void AddResiliencyDependencies(HostApplicationBuilder builder)
+    {
         builder.Services.AddSingleton<AsyncPolicyWrap<HttpResponseMessage>>(sp =>
         {
             var policyOptions = sp.GetRequiredService<IOptions<PolicyOptions>>();
@@ -70,132 +93,22 @@ public static class DependencyInjectionExtensions
 
             return combinedPolicy.WrapAsync(timeoutPolicy);
         });
+    }
 
-        // Options
-        builder.AddConfigurationOptions<CodeAssistOptions>(nameof(CodeAssistOptions));
-        builder.AddConfigurationOptions<LogOptions>(nameof(LogOptions));
-        builder.AddConfigurationOptions<LLMOptions>(nameof(LLMOptions));
-        builder.AddConfigurationOptions<PolicyOptions>(nameof(PolicyOptions));
-
-        // Clients
-        builder.Services.AddKeyedSingleton<ILLMClientStratgey, OllamaClientStratgey>(AIProvider.Ollama);
-        builder.Services.AddKeyedSingleton<ILLMClientStratgey, OpenAIClientStratgey>(AIProvider.OpenAI);
-        builder.Services.AddKeyedSingleton<ILLMClientStratgey, AnthropicClientStratgey>(AIProvider.Anthropic);
-        builder.Services.AddSingleton<ILLMClientManager, LLMClientManager>();
-
-        builder.Services.AddSingleton<ILLMClientFactory, LLMClientFactory>(sp =>
+    private static void AddJsonSerializerDependencies(HostApplicationBuilder builder)
+    {
+        // will set json options for httpclient AsJson and FromJson
+        builder.Services.ConfigureHttpJsonOptions(options =>
         {
-            var ollamaClient = sp.GetRequiredKeyedService<ILLMClientStratgey>(AIProvider.Ollama);
-            var openAIClient = sp.GetRequiredKeyedService<ILLMClientStratgey>(AIProvider.OpenAI);
-            var anthropicClient = sp.GetRequiredKeyedService<ILLMClientStratgey>(AIProvider.Anthropic);
-
-            IDictionary<AIProvider, ILLMClientStratgey> clientStrategies = new Dictionary<
-                AIProvider,
-                ILLMClientStratgey
-            >
-            {
-                { AIProvider.Ollama, ollamaClient },
-                { AIProvider.OpenAI, openAIClient },
-                { AIProvider.Anthropic, anthropicClient },
-            };
-
-            return new LLMClientFactory(clientStrategies);
+            options.SerializerOptions.PropertyNamingPolicy = JsonObjectSerializer.Options.PropertyNamingPolicy;
+            options.SerializerOptions.WriteIndented = JsonObjectSerializer.Options.WriteIndented;
         });
 
-        // https://learn.microsoft.com/en-us/dotnet/architecture/microservices/implement-resilient-applications/use-httpclientfactory-to-implement-resilient-http-requests
-        // https://learn.microsoft.com/en-us/aspnet/core/fundamentals/http-requests
-        builder.Services.AddHttpClient(
-            "llm_client",
-            (sp, client) =>
-            {
-                var options = sp.GetRequiredService<IOptions<LLMOptions>>().Value;
-                var policyOptions = sp.GetRequiredService<IOptions<PolicyOptions>>().Value;
-                var modelStorage = sp.GetRequiredService<IModelsStorageService>();
+        builder.Services.AddSingleton<IJsonSerializer, JsonObjectSerializer>();
+    }
 
-                ArgumentException.ThrowIfNullOrEmpty(options.BaseAddress);
-                ArgumentException.ThrowIfNullOrEmpty(options.ChatModel);
-
-                client.BaseAddress = new Uri(options.BaseAddress);
-                client.Timeout = TimeSpan.FromSeconds(policyOptions.TimeoutSeconds);
-
-                var providerType = modelStorage.GetAIProviderFromModel(options.ChatModel, ModelType.ChatModel);
-
-                switch (providerType)
-                {
-                    case AIProvider.Anthropic:
-                        ArgumentException.ThrowIfNullOrEmpty(options.ApiKey);
-                        client.DefaultRequestHeaders.Add("x-api-key", options.ApiKey);
-                        // client.DefaultRequestHeaders.Add("anthropic-version", options.Version);
-                        break;
-                    case AIProvider.OpenAI:
-                        ArgumentException.ThrowIfNullOrEmpty(options.ApiKey);
-                        client.DefaultRequestHeaders.Authorization = new AuthenticationHeaderValue(
-                            "Bearer",
-                            options.ApiKey
-                        );
-                        break;
-                    case AIProvider.Ollama:
-                        client.DefaultRequestHeaders.Accept.Add(
-                            new MediaTypeWithQualityHeaderValue("application/json")
-                        );
-                        break;
-                }
-            }
-        );
-
-        // Code Strategies
-        builder.Services.TryAddKeyedSingleton<ICodeStrategy, EmbeddingCodeAssistStrategy>(
-            CodeAssistStrategyType.Embedding
-        );
-        builder.Services.TryAddKeyedSingleton<ICodeStrategy, TreeSitterCodeAssistSummaryStrategy>(
-            CodeAssistStrategyType.Summary
-        );
-
-        builder.Services.AddSingleton<ICodeAssistStrategyFactory>(sp =>
-        {
-            var embeddingCodeStrategy = sp.GetRequiredKeyedService<ICodeStrategy>(CodeAssistStrategyType.Embedding);
-            var treeSitterSummaryCodeStrategy = sp.GetRequiredKeyedService<ICodeStrategy>(
-                CodeAssistStrategyType.Summary
-            );
-
-            IDictionary<CodeAssistStrategyType, ICodeStrategy> codeStrategies = new Dictionary<
-                CodeAssistStrategyType,
-                ICodeStrategy
-            >
-            {
-                { CodeAssistStrategyType.Embedding, embeddingCodeStrategy },
-                { CodeAssistStrategyType.Summary, treeSitterSummaryCodeStrategy },
-            };
-
-            return new CodeAssistStrategyFactory(codeStrategies);
-        });
-
-        // Services
-        builder.Services.AddSingleton<CodeFileMapService>();
-        builder.Services.AddSingleton<CodeLoaderService>();
-        builder.Services.AddSingleton<EmbeddingService>();
-        builder.Services.AddSingleton<EmbeddingsStore>();
-        builder.Services.AddSingleton<VectorDatabase>();
-        builder.Services.AddSingleton<ICodeAssistantManager, CodeAssistantManager>();
-        builder.Services.AddSingleton<IPromptStorage, PromptStorage>(_ =>
-        {
-            var promptStorage = new PromptStorage();
-
-            promptStorage.AddPrompt(
-                AIAssistantConstants.Prompts.CodeAssistantUnifiedDiffTemplate,
-                CommandType.Code,
-                DiffType.UnifiedDiff
-            );
-
-            promptStorage.AddPrompt(
-                AIAssistantConstants.Prompts.CodeAssistantFileSnippedDiffTemplate,
-                CommandType.Code,
-                DiffType.FileSnippedDiff
-            );
-
-            return promptStorage;
-        });
-
+    private static void AddModelStorageDependencies(HostApplicationBuilder builder)
+    {
         builder.Services.AddSingleton<IModelsStorageService, ModelsStorageService>(_ =>
         {
             var modelStorage = new ModelsStorageService();
@@ -261,14 +174,195 @@ public static class DependencyInjectionExtensions
 
             return modelStorage;
         });
+    }
 
+    private static void AddOptionsDependencies(HostApplicationBuilder builder)
+    {
+        builder.AddConfigurationOptions<CodeAssistOptions>(nameof(CodeAssistOptions));
+        builder.AddConfigurationOptions<LogOptions>(nameof(LogOptions));
+        builder.AddConfigurationOptions<PolicyOptions>(nameof(PolicyOptions));
+    }
+
+    private static void AddEmbeddingDependencies(HostApplicationBuilder builder)
+    {
+        builder.Services.AddSingleton<EmbeddingService>();
+        builder.Services.AddSingleton<EmbeddingsStore>();
+        builder.Services.AddSingleton<VectorDatabase>();
+    }
+
+    private static void AddCodeAssistDependencies(HostApplicationBuilder builder)
+    {
+        builder.Services.TryAddKeyedSingleton<ICodeAssist, EmbeddingCodeAssist>(CodeAssistType.Embedding);
+        builder.Services.TryAddKeyedSingleton<ICodeAssist, TreeSitterCodeAssistSummary>(CodeAssistType.Summary);
+
+        builder.Services.AddSingleton<ICodeAssistFactory>(sp =>
+        {
+            var embeddingCodeStrategy = sp.GetRequiredKeyedService<ICodeAssist>(CodeAssistType.Embedding);
+            var treeSitterSummaryCodeStrategy = sp.GetRequiredKeyedService<ICodeAssist>(CodeAssistType.Summary);
+
+            IDictionary<CodeAssistType, ICodeAssist> codeStrategies = new Dictionary<CodeAssistType, ICodeAssist>
+            {
+                { CodeAssistType.Embedding, embeddingCodeStrategy },
+                { CodeAssistType.Summary, treeSitterSummaryCodeStrategy },
+            };
+
+            return new CodeAssistFactory(codeStrategies);
+        });
+
+        builder.Services.AddSingleton<ICodeAssistantManager, CodeAssistantManager>(sp =>
+        {
+            var factory = sp.GetRequiredService<ICodeAssistFactory>();
+            var options = sp.GetRequiredService<IOptions<CodeAssistOptions>>();
+            var codeDiffManager = sp.GetRequiredService<ICodeDiffManager>();
+
+            ICodeAssist codeAssist = factory.Create(options.Value.CodeAssistType);
+
+            return new CodeAssistantManager(codeAssist, codeDiffManager);
+        });
+    }
+
+    private static void AddPromptDependencies(HostApplicationBuilder builder)
+    {
+        builder.Services.AddSingleton<IPromptStorage, PromptStorage>(_ =>
+        {
+            var promptStorage = new PromptStorage();
+
+            promptStorage.AddPrompt(
+                AIAssistantConstants.Prompts.CodeAssistantUnifiedDiffTemplate,
+                CommandType.Code,
+                CodeDiffType.UnifiedDiff
+            );
+
+            promptStorage.AddPrompt(
+                AIAssistantConstants.Prompts.CodeAssistantCodeBlockdDiffTemplate,
+                CommandType.Code,
+                CodeDiffType.CodeBlockDiff
+            );
+
+            promptStorage.AddPrompt(
+                AIAssistantConstants.Prompts.CodeAssistantMergeConflictDiffTemplate,
+                CommandType.Code,
+                CodeDiffType.MergeConflictDiff
+            );
+
+            return promptStorage;
+        });
+    }
+
+    private static void AddClientDependencies(HostApplicationBuilder builder)
+    {
+        builder.AddConfigurationOptions<LLMOptions>(nameof(LLMOptions));
+
+        builder.Services.AddKeyedSingleton<ILLMClient, OllamaClient>(AIProvider.Ollama);
+        builder.Services.AddKeyedSingleton<ILLMClient, OpenAiClient>(AIProvider.OpenAI);
+        builder.Services.AddKeyedSingleton<ILLMClient, AnthropicClient>(AIProvider.Anthropic);
+        builder.Services.AddSingleton<ILLMClientManager, LLMClientManager>();
+
+        builder.Services.AddSingleton<ILLMClientFactory, LLMClientFactory>(sp =>
+        {
+            var ollamaClient = sp.GetRequiredKeyedService<ILLMClient>(AIProvider.Ollama);
+            var openAIClient = sp.GetRequiredKeyedService<ILLMClient>(AIProvider.OpenAI);
+            var anthropicClient = sp.GetRequiredKeyedService<ILLMClient>(AIProvider.Anthropic);
+
+            IDictionary<AIProvider, ILLMClient> clientStrategies = new Dictionary<AIProvider, ILLMClient>
+            {
+                { AIProvider.Ollama, ollamaClient },
+                { AIProvider.OpenAI, openAIClient },
+                { AIProvider.Anthropic, anthropicClient },
+            };
+
+            return new LLMClientFactory(clientStrategies);
+        });
+
+        // https://learn.microsoft.com/en-us/dotnet/architecture/microservices/implement-resilient-applications/use-httpclientfactory-to-implement-resilient-http-requests
+        // https://learn.microsoft.com/en-us/aspnet/core/fundamentals/http-requests
+        builder.Services.AddHttpClient(
+            "llm_client",
+            (sp, client) =>
+            {
+                var options = sp.GetRequiredService<IOptions<LLMOptions>>().Value;
+                var policyOptions = sp.GetRequiredService<IOptions<PolicyOptions>>().Value;
+                var modelStorage = sp.GetRequiredService<IModelsStorageService>();
+
+                ArgumentException.ThrowIfNullOrEmpty(options.BaseAddress);
+                ArgumentException.ThrowIfNullOrEmpty(options.ChatModel);
+
+                client.BaseAddress = new Uri(options.BaseAddress);
+                client.Timeout = TimeSpan.FromSeconds(policyOptions.TimeoutSeconds);
+
+                var providerType = modelStorage.GetAIProviderFromModel(options.ChatModel, ModelType.ChatModel);
+
+                switch (providerType)
+                {
+                    case AIProvider.Anthropic:
+                        ArgumentException.ThrowIfNullOrEmpty(options.ApiKey);
+                        client.DefaultRequestHeaders.Add("x-api-key", options.ApiKey);
+                        // client.DefaultRequestHeaders.Add("anthropic-version", options.Version);
+                        break;
+                    case AIProvider.OpenAI:
+                        ArgumentException.ThrowIfNullOrEmpty(options.ApiKey);
+                        client.DefaultRequestHeaders.Authorization = new AuthenticationHeaderValue(
+                            "Bearer",
+                            options.ApiKey
+                        );
+                        break;
+                    case AIProvider.Ollama:
+                        client.DefaultRequestHeaders.Accept.Add(
+                            new MediaTypeWithQualityHeaderValue("application/json")
+                        );
+                        break;
+                }
+            }
+        );
+    }
+
+    private static void AddCommandsDependencies(HostApplicationBuilder builder)
+    {
         // Commands
         builder.Services.AddSingleton<CodeAssistCommand>();
         builder.Services.AddSingleton<CodeExplanationCommand>();
         builder.Services.AddSingleton<ChatAssistCommand>();
         builder.Services.AddSingleton<TreeStructureCommand>();
         builder.Services.AddSingleton<AIAssistCommand>();
+    }
 
-        return builder;
+    private static void AddCodeDiffDependency(HostApplicationBuilder builder)
+    {
+        builder.Services.AddKeyedSingleton<ICodeDiffParser, CodeBlockCodeDiffParser>(CodeDiffType.CodeBlockDiff);
+        builder.Services.AddKeyedSingleton<ICodeDiffParser, UnifiedCodeDiffParser>(CodeDiffType.UnifiedDiff);
+        builder.Services.AddKeyedSingleton<ICodeDiffParser, MergeConflictCodeDiffParser>(
+            CodeDiffType.MergeConflictDiff
+        );
+        builder.Services.AddSingleton<ICodeDiffUpdater, CodeDiffUpdater>();
+
+        builder.Services.AddSingleton<ICodeDiffParserFactory, CodeDiffParserFactory>(sp =>
+        {
+            var codeBlockDiffParser = sp.GetRequiredKeyedService<ICodeDiffParser>(CodeDiffType.CodeBlockDiff);
+            var unifiedDiffParser = sp.GetRequiredKeyedService<ICodeDiffParser>(CodeDiffType.UnifiedDiff);
+            var mergeConflictDiffParser = sp.GetRequiredKeyedService<ICodeDiffParser>(CodeDiffType.MergeConflictDiff);
+
+            IDictionary<CodeDiffType, ICodeDiffParser> codeDiffStrategies = new Dictionary<
+                CodeDiffType,
+                ICodeDiffParser
+            >
+            {
+                { CodeDiffType.CodeBlockDiff, codeBlockDiffParser },
+                { CodeDiffType.UnifiedDiff, unifiedDiffParser },
+                { CodeDiffType.MergeConflictDiff, mergeConflictDiffParser },
+            };
+
+            return new CodeDiffParserFactory(codeDiffStrategies);
+        });
+
+        builder.Services.AddSingleton<ICodeDiffManager, CodeDiffManager>(sp =>
+        {
+            var options = sp.GetRequiredService<IOptions<CodeAssistOptions>>();
+            var factory = sp.GetRequiredService<ICodeDiffParserFactory>();
+            var codeDiffParser = factory.Create(options.Value.CodeDiffType);
+
+            var codeDiffUpdater = sp.GetRequiredService<ICodeDiffUpdater>();
+
+            return new CodeDiffManager(codeDiffParser, codeDiffUpdater);
+        });
     }
 }

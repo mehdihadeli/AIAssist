@@ -13,7 +13,7 @@ namespace Clients.IntegrationTests.Anthropic;
 public class AnthropicClientStrategyIntegrationTests(ApplicationFixture applicationFixture) : IAsyncLifetime
 {
     private IHost _app = default!;
-    private ILLMClientStratgey _llmClientStratgey = default!;
+    private ILLMClient _illmClient = default!;
 
     public Task InitializeAsync()
     {
@@ -24,7 +24,7 @@ public class AnthropicClientStrategyIntegrationTests(ApplicationFixture applicat
         llmOptions.Value.EmbeddingsModel = "";
 
         var clientFactory = _app.Services.GetRequiredService<ILLMClientFactory>();
-        _llmClientStratgey = clientFactory.CreateClient(AIProvider.Anthropic);
+        _illmClient = clientFactory.CreateClient(AIProvider.Anthropic);
 
         return Task.CompletedTask;
     }
@@ -41,7 +41,7 @@ public class AnthropicClientStrategyIntegrationTests(ApplicationFixture applicat
         var chatItems = new List<ChatItem> { new(Role: RoleType.User, Prompt: "Hello, Claude!") };
 
         // Act
-        var result = await _llmClientStratgey.GetCompletionAsync(chatItems);
+        var result = await _illmClient.GetCompletionAsync(chatItems);
 
         // Assert
         result.Should().NotBeNullOrEmpty();
@@ -56,7 +56,7 @@ public class AnthropicClientStrategyIntegrationTests(ApplicationFixture applicat
         var cancellationToken = CancellationToken.None;
 
         // Act
-        var messages = await _llmClientStratgey
+        var messages = await _illmClient
             .GetCompletionStreamAsync(chatItems, cancellationToken)
             .ToListAsync(cancellationToken: cancellationToken);
 

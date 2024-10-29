@@ -1,6 +1,8 @@
 ﻿using AIAssistant.Commands;
 using AIAssistant.Extensions;
 using BuildingBlocks.SpectreConsole;
+using Microsoft.Extensions.Configuration;
+using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Hosting;
 using Serilog;
 using Spectre.Console;
@@ -16,7 +18,11 @@ try
 {
     var builder = Host.CreateApplicationBuilder(args);
 
+    builder.AddDefaultConfigurations();
+
     builder.AddDependencies();
+
+    builder.Services.AddLogging();
 
     isDev = builder.Environment.IsDevelopment();
 

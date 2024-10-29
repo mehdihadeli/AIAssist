@@ -5,6 +5,16 @@ namespace TreeSitter.Bindings.Utilities;
 
 public static class TreeGenerator
 {
+    public static string GenerateOriginalCodeTree(string originalCode, string relativePath)
+    {
+        var sb = new StringBuilder();
+
+        sb.AppendLine($"{relativePath}:");
+        WriteRootCodeLine(sb, "│   ", originalCode);
+
+        return sb.ToString();
+    }
+
     public static string GenerateTreeSitter(IList<DefinitionCaptureItem> definitionItems, bool isFull)
     {
         var sb = new StringBuilder();
@@ -12,7 +22,7 @@ public static class TreeGenerator
         var relativePath = definitionItems.FirstOrDefault()?.RelativePath ?? "Unknown File";
 
         // Add the relative path as the root node with "⋮..." to indicate omitted content
-        sb.AppendLine($"file relativePath: {relativePath}");
+        sb.AppendLine($"{relativePath}:");
         sb.AppendLine("⋮...");
 
         var groupedItems = definitionItems
@@ -46,7 +56,7 @@ public static class TreeGenerator
             if (string.IsNullOrEmpty(code))
                 continue;
 
-            WriteCodeLine(sb, indent, code);
+            WriteChildrenCodeLine(sb, indent, code);
         }
 
         // Add omitted code indicator if there are no further child nodes
@@ -71,7 +81,7 @@ public static class TreeGenerator
         return input;
     }
 
-    private static void WriteCodeLine(StringBuilder sb, string indent, string itemDefinition)
+    private static void WriteChildrenCodeLine(StringBuilder sb, string indent, string itemDefinition)
     {
         var lines = itemDefinition.Trim().Split('\n');
         sb.AppendLine($"{indent}├── {lines[0].Trim()}");
@@ -80,5 +90,11 @@ public static class TreeGenerator
         {
             sb.AppendLine($"{indent}│   {lines[i].Trim()}");
         }
+    }
+
+    private static void WriteRootCodeLine(StringBuilder sb, string indent, string originalCode)
+    {
+        sb.AppendLine("├── code:");
+        WriteChildrenCodeLine(sb, indent, originalCode);
     }
 }

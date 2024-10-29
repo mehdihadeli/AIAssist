@@ -20,7 +20,8 @@ public class EmbeddingService(ILLMClientManager llmClientManager, EmbeddingsStor
                 new CodeEmbedding
                 {
                     RelativeFilePath = codeFileMap.RelativePath,
-                    TreeSitterCode = codeFileMap.TreeSitterFullCode,
+                    TreeSitterFullCode = codeFileMap.TreeSitterFullCode,
+                    TreeOriginalCode = codeFileMap.TreeOriginalCode,
                     Code = codeFileMap.OriginalCode,
                     SessionId = sessionId,
                     Embeddings = embeddingData,
@@ -55,7 +56,7 @@ public class EmbeddingService(ILLMClientManager llmClientManager, EmbeddingsStor
             relevantCode.Select(rc =>
                 PromptManager.RenderPromptTemplate(
                     AIAssistantConstants.Prompts.CodeBlockTemplate,
-                    new { treeSitterCode = rc.TreeSitterCode }
+                    new { treeSitterCode = rc.TreeOriginalCode, relativeFilePath = rc.RelativeFilePath }
                 )
             )
         );

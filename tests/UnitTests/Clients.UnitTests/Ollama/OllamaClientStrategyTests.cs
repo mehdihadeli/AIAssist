@@ -20,7 +20,7 @@ public class OllamaClientStrategyTests : IAsyncLifetime
 {
     private readonly MockHttpMessageHandler _mockHttp;
     private readonly Uri _clientBaseUri;
-    private readonly OllamaClientStratgey _clientStrategy;
+    private readonly OllamaClient _clientStrategy;
 
     public OllamaClientStrategyTests()
     {
@@ -76,7 +76,7 @@ public class OllamaClientStrategyTests : IAsyncLifetime
         // Configure the IHttpClientFactory to return the mocked HttpClient
         httpClientFactory.CreateClient("llm_client").Returns(client);
 
-        _clientStrategy = new OllamaClientStratgey(httpClientFactory, llmOptions, combinedPolicy);
+        _clientStrategy = new OllamaClient(httpClientFactory, llmOptions, combinedPolicy);
     }
 
     [Fact]

@@ -3,9 +3,9 @@ using Clients.Models;
 
 namespace Clients;
 
-public class LLMClientFactory(IDictionary<AIProvider, ILLMClientStratgey> clientStrategies) : ILLMClientFactory
+public class LLMClientFactory(IDictionary<AIProvider, ILLMClient> clientStrategies) : ILLMClientFactory
 {
-    public ILLMClientStratgey CreateClient(AIProvider aiProvider)
+    public ILLMClient CreateClient(AIProvider aiProvider)
     {
         return clientStrategies[aiProvider];
     }

@@ -5,7 +5,6 @@ using BuildingBlocks.Serialization;
 using Clients.Chat.Models;
 using Clients.Contracts;
 using Clients.Models;
-using Clients.Models.Ollama.Completion;
 using Clients.Models.Ollama.Embeddings;
 using Clients.Models.OpenAI.Completion;
 using Clients.Options;
@@ -13,13 +12,13 @@ using Humanizer;
 using Microsoft.Extensions.Options;
 using Polly.Wrap;
 
-namespace Clients.Ollama;
+namespace Clients.OpenAI;
 
-public class OllamaClientStratgey(
+public class OpenAiClient(
     IHttpClientFactory httpClientFactory,
     IOptions<LLMOptions> options,
     AsyncPolicyWrap<HttpResponseMessage> combinedPolicy
-) : ILLMClientStratgey
+) : ILLMClient
 {
     private readonly LLMOptions _options = options.Value;
 
@@ -28,17 +27,16 @@ public class OllamaClientStratgey(
         CancellationToken cancellationToken = default
     )
     {
-        // https://platform.openai.com/docs/guides/text-generation/building-prompts
+        // https://platform.openai.com/docs/api-reference/chat/create
         var requestBody = new
         {
-            model = _options.ChatModel,
+            model = _options.ChatModel.Trim(),
             messages = chatItems.Select(x => new
             {
                 role = x.Role.Humanize(LetterCasing.LowerCase),
                 content = x.Prompt,
             }),
-            // Temperature set to 0 to reduce the randomness of the response. Better for applications that expect consistent responses.
-            temperature = _options.Temperature,
+            temperature = 0.2,
             max_tokens = _options.MaxTokenSize,
         };
 
@@ -47,10 +45,7 @@ public class OllamaClientStratgey(
         // https://github.com/App-vNext/Polly#handing-return-values-and-policytresult
         var httpResponse = await combinedPolicy.ExecuteAsync(async () =>
         {
-            // https://ollama.com/blog/openai-compatibility
-            // https://www.youtube.com/watch?v=38jlvmBdBrU
             // https://platform.openai.com/docs/api-reference/chat/create
-            // https://github.com/ollama/ollama/blob/main/docs/api.md#generate-a-chat-completion
             var response = await client.PostAsJsonAsync(
                 "v1/chat/completions",
                 requestBody,
@@ -62,7 +57,7 @@ public class OllamaClientStratgey(
 
         httpResponse.EnsureSuccessStatusCode();
 
-        var completionResponse = await httpResponse.Content.ReadFromJsonAsync<LlamaCompletionResponse>(
+        var completionResponse = await httpResponse.Content.ReadFromJsonAsync<OpenAiCompletionResponse>(
             options: JsonObjectSerializer.Options,
             cancellationToken: cancellationToken
         );
@@ -79,7 +74,7 @@ public class OllamaClientStratgey(
     {
         var requestBody = new
         {
-            model = _options.ChatModel,
+            model = _options.ChatModel.Trim(),
             messages = chatItems.Select(x => new
             {
                 role = x.Role.Humanize(LetterCasing.LowerCase),
@@ -102,6 +97,7 @@ public class OllamaClientStratgey(
 
             // Send the request and get the response
             var response = await client.SendAsync(request, HttpCompletionOption.ResponseHeadersRead, cancellationToken);
+
             return response;
         });
 
@@ -152,22 +148,19 @@ public class OllamaClientStratgey(
 
     public async Task<IList<double>> GetEmbeddingAsync(string input, CancellationToken cancellationToken = default)
     {
-        var requestBody = new { input = new[] { input }, model = _options.EmbeddingsModel };
+        var requestBody = new { input = new[] { input }, model = _options.EmbeddingsModel.Trim() };
 
         var client = httpClientFactory.CreateClient("llm_client");
 
         // https://github.com/App-vNext/Polly#handing-return-values-and-policytresult
         var httpResponse = await combinedPolicy.ExecuteAsync(async () =>
         {
-            // https://github.com/ollama/ollama/blob/main/docs/api.md#generate-embeddings
             // https://platform.openai.com/docs/api-reference/embeddings
-            // https://ollama.com/blog/embedding-models
             var response = await client.PostAsJsonAsync(
                 "v1/embeddings",
                 requestBody,
                 cancellationToken: cancellationToken
             );
-
             return response;
         });
 

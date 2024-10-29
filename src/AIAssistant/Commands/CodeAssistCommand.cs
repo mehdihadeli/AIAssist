@@ -1,9 +1,10 @@
 using System.ComponentModel;
 using System.Text;
 using AIAssistant.Contracts;
+using AIAssistant.Contracts.CodeAssist;
 using AIAssistant.Models;
 using AIAssistant.Models.Options;
-using Clients;
+using BuildingBlocks.SpectreConsole;
 using Clients.Chat.Models;
 using Clients.Options;
 using Microsoft.Extensions.Options;
@@ -33,29 +34,31 @@ public class CodeAssistCommand(
         [Description("[grey] disable auto adding all files to the context.[/].")]
         public bool DisableAutoContext { get; set; }
 
+        [CommandOption("-s|--summarize-history")]
+        [Description("[grey] summarize history by llm for deacreasing consumption tkoen.[/].")]
+        public bool Summarize { get; set; }
+
         [CommandOption("-m|--chat-model <Chat-Model>")]
         [Description("[grey] llm model for chatting with ai. for example llama3.1.[/].")]
-        [DefaultValue(ClientsConstants.Ollama.ChatModels.Deepseek_Coder_V2)]
         public string? ChatModel { get; set; }
-
-        [CommandOption("-d|--diff <Diff-Strategy>")]
-        [Description("[grey] the diff tool for showing changes. it can be `unifieddiff` or `filesnippeddiff`.[/].")]
-        [DefaultValue(DiffType.FileSnippedDiff)]
-        public DiffType Diff { get; set; }
 
         [CommandOption("-t|--code-assist-type <DiffTool>")]
         [Description("[grey] the type of code assist. it can be `embedding` or `summary`.[/].")]
-        [DefaultValue(CodeAssistStrategyType.Embedding)]
-        public CodeAssistStrategyType CodeAssistType { get; set; }
+        public CodeAssistType? CodeAssistType { get; set; }
 
         [CommandOption("-e|--embedding-model <Embedding-Chat-Model>")]
-        [Description("[grey] llm model for embedding purpose. for example llama3.1.[/].")]
-        [DefaultValue(ClientsConstants.Ollama.EmbeddingsModels.Mxbai_Embed_Large)]
+        [Description("[grey] llm model for embedding purpose. for example mxbai_embed_large.[/].")]
         public string? EmbeddingModel { get; set; }
 
         [CommandOption("-f|--files <Files>")]
         [Description("[grey] the list of files to add the context.[/].")]
-        public IEnumerable<string>? Files { get; set; }
+        public IList<string>? Files { get; set; }
+
+        [CommandOption("-d|--diff <Diff-Strategy>")]
+        [Description(
+            "[grey] the diff tool for showing changes. it can be `unifieddiff`, `codeblockdiff` and `mergeconflictdiff`.[/]."
+        )]
+        public CodeDiffType? CodeDiff { get; set; }
     }
 
     public override async Task<int> ExecuteAsync(CommandContext context, Settings settings)
@@ -63,6 +66,7 @@ public class CodeAssistCommand(
         AnsiConsole.MarkupLine("[grey]code assist mode is activated![/]");
 
         AnsiConsole.MarkupLine("[grey]Please Ctrl+C to exit from code assistant mode.[/]");
+        AnsiConsole.Write(new Rule());
 
         // Handle Ctrl+C to exit gracefully
         Console.CancelKeyPress += (sender, eventArgs) =>
@@ -98,104 +102,92 @@ public class CodeAssistCommand(
             _options.AutoContextEnabled = false;
         }
 
-        switch (settings.Diff)
+        switch (settings.CodeDiff)
         {
-            case DiffType.UnifiedDiff:
-                _options.DiffType = DiffType.UnifiedDiff;
+            case CodeDiffType.UnifiedDiff:
+                _options.CodeDiffType = CodeDiffType.UnifiedDiff;
                 break;
-            case DiffType.FileSnippedDiff:
-                _options.DiffType = DiffType.FileSnippedDiff;
+            case CodeDiffType.CodeBlockDiff:
+                _options.CodeDiffType = CodeDiffType.CodeBlockDiff;
                 break;
         }
 
         switch (settings.CodeAssistType)
         {
-            case CodeAssistStrategyType.Embedding:
-                _options.CodeAssistType = CodeAssistStrategyType.Embedding;
+            case CodeAssistType.Embedding:
+                _options.CodeAssistType = CodeAssistType.Embedding;
                 break;
-            case CodeAssistStrategyType.Summary:
-                _options.CodeAssistType = CodeAssistStrategyType.Summary;
+            case CodeAssistType.Summary:
+                _options.CodeAssistType = CodeAssistType.Summary;
                 break;
         }
 
-        var session = new ChatSession();
-        await codeAssistantManager.LoadCodeFiles(session, _options.ContextWorkingDirectory, _options.Files);
+        await AnsiConsole
+            .Console.Status()
+            .Spinner(Spinner.Known.Star)
+            .SpinnerStyle(Style.Parse("deepskyblue1 bold"))
+            .StartAsync(
+                "initializing...",
+                async _ =>
+                {
+                    var session = new ChatSession();
+                    await codeAssistantManager.LoadCodeFiles(session, _options.ContextWorkingDirectory, _options.Files);
+                }
+            );
 
         // Run in a loop until Ctrl+C is pressed
         while (_running)
         {
             //var userRequest = ReadInput("Please enter your request to apply on your code base:");
-
             var userRequest = "can you remove all comments in Add.cs file?";
 
-            // Show a spinner while processing the request
-            await AnsiConsole
-                .Status()
-                .StartAsync(
-                    "Processing your request...",
-                    async ctx =>
-                    {
-                        ctx.Spinner(Spinner.Known.Dots);
-                        ctx.SpinnerStyle(Style.Parse("green"));
+            var responseStreams = codeAssistantManager.QueryAsync(userRequest);
+            var responseContent = await CollectAndWriteStreamResponseAsync(responseStreams);
 
-                        var responseStreams = codeAssistantManager.QueryAsync(userRequest);
-                        var responseContent = await CollectAndWriteStreamResponseAsync(responseStreams);
+            var changesCodeBlocks = codeAssistantManager.ParseResponseCodeBlocks(responseContent);
 
-                        var changesCodeBlocks = codeAssistantManager.ParseResponseCodeBlocks(responseContent);
-
-                        foreach (var changesCodeBlock in changesCodeBlocks)
-                        {
-                            var confirmation = AnsiConsole.Prompt(
-                                new TextPrompt<bool>($"Do you accept the changes for `{changesCodeBlock.FilePath}`?")
-                                    .AddChoice(true)
-                                    .AddChoice(false)
-                                    .DefaultValue(true)
-                                    .WithConverter(choice => choice ? "y" : "n")
-                            );
-
-                            if (confirmation)
-                            {
-                                codeAssistantManager.ApplyChangesToFiles([changesCodeBlock]);
-                            }
-                        }
-                    }
+            foreach (var changesCodeBlock in changesCodeBlocks)
+            {
+                var confirmation = AnsiConsole.Prompt(
+                    new TextPrompt<bool>(
+                        $"[lightsteelblue]Do you accept the changes for `{changesCodeBlock.FilePath}`?[/]"
+                    )
+                        .AddChoice(true)
+                        .AddChoice(false)
+                        .DefaultValue(true)
+                        .WithConverter(choice => choice ? "y" : "n")
                 );
 
+                if (confirmation)
+                {
+                    codeAssistantManager.ApplyChangesToFiles([changesCodeBlock]);
+                }
+            }
+
             // Output result after processing
-            AnsiConsole.MarkupLine($"[green]Request '{userRequest}' processed successfully![/]");
+            AnsiConsole.MarkupLine($"[seagreen1]Request '{userRequest}' processed successfully![/]");
             Thread.Sleep(1000); // Delay before asking again
         }
 
         return 0;
     }
 
-    public async Task<string> CollectAndWriteStreamResponseAsync(IAsyncEnumerable<string?> responseStreams)
+    private async Task<string> CollectAndWriteStreamResponseAsync(IAsyncEnumerable<string?> responseStreams)
     {
-        var completeResponse = new StringBuilder();
+        var printer = new StreamPrinter(AnsiConsole.Console, useMarkdown: true);
+        var result = await printer.PrintAsync(responseStreams);
 
-        // Collect and display each line from the response stream
-        await foreach (var responseStream in responseStreams)
-        {
-            if (responseStream != null)
-            {
-                if (string.IsNullOrEmpty(responseStream))
-                    continue;
-
-                AnsiConsole.WriteLine(responseStream);
-                completeResponse.Append(responseStream);
-            }
-        }
-
-        // Return the complete collected response
-        return completeResponse.ToString();
+        return result;
     }
 
-    static string ReadInput(string prompt)
+    private string ReadInput(string prompt)
     {
         string input;
         while (true)
         {
-            input = AnsiConsole.Prompt(new TextPrompt<string>(prompt));
+            input = AnsiConsole.Prompt(
+                new TextPrompt<string>($"[lightsteelblue]{prompt}[/]").PromptStyle(new Style(Color.White))
+            );
 
             // Check if the input is not null or empty
             if (!string.IsNullOrWhiteSpace(input))

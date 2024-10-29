@@ -26,8 +26,8 @@ public class CodeExplanationCommand : Command<CodeExplanationCommand.Settings>
 
         [CommandOption("-t|--code-assist-type <DiffTool>")]
         [Description("[grey] the type of code assist. it can be `embedding` or `summary`.[/].")]
-        [DefaultValue(CodeAssistStrategyType.Embedding)]
-        public CodeAssistStrategyType CodeAssistType { get; set; }
+        [DefaultValue(Models.CodeAssistType.Embedding)]
+        public CodeAssistType CodeAssistType { get; set; }
 
         [CommandOption("-e|--embedding-model <Embedding-Chat-Model>")]
         [Description("[grey] llm model for embedding purpose. for example llama3.1.[/].")]

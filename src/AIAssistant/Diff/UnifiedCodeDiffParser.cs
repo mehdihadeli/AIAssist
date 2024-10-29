@@ -1,15 +1,18 @@
 using System.Text.RegularExpressions;
+using AIAssistant.Contracts;
+using AIAssistant.Contracts.Diff;
+using AIAssistant.Models;
 
 namespace AIAssistant.Diff;
 
-public class DiffParser
+public class UnifiedCodeDiffParser : ICodeDiffParser
 {
     private static readonly Regex _diffHeaderRegex = new Regex(@"@@ -(\d+),?(\d+)? \+(\d+),?(\d+)? @@");
 
-    public IEnumerable<Change> ParseUnifiedDiff(string diff)
+    public IList<FileChange> ExtractFileChanges(string diff)
     {
-        var changes = new List<Change>();
-        Change currentChange = null;
+        var fileChanges = new List<FileChange>();
+        FileChange? currentFileChange = null;
 
         var lines = diff.Split('\n');
         int currentLineNumberOriginal = 0;
@@ -40,19 +43,19 @@ public class DiffParser
             // Match the file header
             if (line.StartsWith("--- "))
             {
-                if (currentChange != null)
+                if (currentFileChange != null)
                 {
-                    changes.Add(currentChange);
+                    fileChanges.Add(currentFileChange);
                 }
                 var filePath = line.Substring(4).Trim();
 
                 if (filePath == "/dev/null")
                 {
-                    currentChange = new Change(lines[i + 1].Substring(4).Trim()) { IsNewFile = true };
+                    currentFileChange = new FileChange(lines[i + 1].Substring(4).Trim()) { IsNewFile = true };
                 }
                 else
                 {
-                    currentChange = new Change(filePath);
+                    currentFileChange = new FileChange(filePath);
                 }
             }
             else if (line.StartsWith("+++ "))
@@ -72,22 +75,24 @@ public class DiffParser
             // Handle removed lines
             else if (line.StartsWith("-"))
             {
-                currentChange?.Changes.Add(
-                    new ChangeLine(currentLineNumberOriginal++, line.Substring(1).Trim(), false)
+                currentFileChange?.ChangeLines.Add(
+                    new FileChangeLine(currentLineNumberOriginal++, line.Substring(1).Trim(), false)
                 );
             }
             // Handle added lines
             else if (line.StartsWith("+"))
             {
-                currentChange?.Changes.Add(new ChangeLine(currentLineNumberNew++, line.Substring(1).Trim(), true));
+                currentFileChange?.ChangeLines.Add(
+                    new FileChangeLine(currentLineNumberNew++, line.Substring(1).Trim(), true)
+                );
             }
         }
 
-        if (currentChange != null)
+        if (currentFileChange != null)
         {
-            changes.Add(currentChange);
+            fileChanges.Add(currentFileChange);
         }
 
-        return changes;
+        return fileChanges;
     }
 }

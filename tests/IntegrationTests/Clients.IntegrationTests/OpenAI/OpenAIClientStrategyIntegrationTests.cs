@@ -13,7 +13,7 @@ namespace Clients.IntegrationTests.OpenAI;
 public class OpenAIClientStrategyIntegrationTests(ApplicationFixture applicationFixture) : IAsyncLifetime
 {
     private IHost _app = default!;
-    private ILLMClientStratgey _llmClientStratgey = default!;
+    private ILLMClient _illmClient = default!;
 
     public Task InitializeAsync()
     {
@@ -24,7 +24,7 @@ public class OpenAIClientStrategyIntegrationTests(ApplicationFixture application
         llmOptions.Value.EmbeddingsModel = ClientsConstants.OpenAI.EmbeddingsModels.TextEmbedding3Small;
 
         var clientFactory = _app.Services.GetRequiredService<ILLMClientFactory>();
-        _llmClientStratgey = clientFactory.CreateClient(AIProvider.OpenAI);
+        _illmClient = clientFactory.CreateClient(AIProvider.OpenAI);
 
         return Task.CompletedTask;
     }
@@ -41,7 +41,7 @@ public class OpenAIClientStrategyIntegrationTests(ApplicationFixture application
         var chatItems = new List<ChatItem> { new(Role: RoleType.User, Prompt: "Hello") };
 
         // Act
-        var result = await _llmClientStratgey.GetCompletionAsync(chatItems);
+        var result = await _illmClient.GetCompletionAsync(chatItems);
 
         // Assert
         result.Should().NotBeNull();
@@ -54,7 +54,7 @@ public class OpenAIClientStrategyIntegrationTests(ApplicationFixture application
         var input = "test input";
 
         // Act
-        var result = await _llmClientStratgey.GetEmbeddingAsync(input);
+        var result = await _illmClient.GetEmbeddingAsync(input);
 
         // Assert
         result.Should().NotBeNull();
@@ -68,7 +68,7 @@ public class OpenAIClientStrategyIntegrationTests(ApplicationFixture application
         var chatItems = new List<ChatItem> { new(Role: RoleType.User, Prompt: "Hello, how are you?") };
 
         // Act
-        var messages = await _llmClientStratgey.GetCompletionStreamAsync(chatItems).ToListAsync();
+        var messages = await _illmClient.GetCompletionStreamAsync(chatItems).ToListAsync();
 
         // Assert
         messages.Should().NotBeNull();

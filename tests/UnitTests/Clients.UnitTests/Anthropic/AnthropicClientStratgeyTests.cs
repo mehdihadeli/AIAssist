@@ -18,7 +18,7 @@ namespace Clients.UnitTests.Anthropic;
 public class AnthropicClientStrategyTests : IAsyncLifetime
 {
     private readonly MockHttpMessageHandler _mockHttp;
-    private readonly AnthropicClientStratgey _clientStrategy;
+    private readonly AnthropicClient _clientStrategy;
     private readonly Uri _clientBaseUri;
 
     public AnthropicClientStrategyTests()
@@ -75,7 +75,7 @@ public class AnthropicClientStrategyTests : IAsyncLifetime
         // Configure the IHttpClientFactory to return the mocked HttpClient
         httpClientFactory.CreateClient("llm_client").Returns(client);
 
-        _clientStrategy = new AnthropicClientStratgey(httpClientFactory, llmOptions, combinedPolicy);
+        _clientStrategy = new AnthropicClient(httpClientFactory, llmOptions, combinedPolicy);
     }
 
     [Fact]

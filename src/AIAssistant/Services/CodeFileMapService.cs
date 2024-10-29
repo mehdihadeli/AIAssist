@@ -1,9 +1,10 @@
+using AIAssistant.Contracts;
 using TreeSitter.Bindings.CustomTypes.TreeParser;
 using TreeSitter.Bindings.Utilities;
 
 namespace AIAssistant.Services;
 
-public class CodeFileMapService
+public class CodeFileMapService : ICodeFileMapService
 {
     public IEnumerable<CodeFileMap> GenerateCodeFileMaps(IReadOnlyList<DefinitionCaptureItem> definitions)
     {
@@ -14,6 +15,10 @@ public class CodeFileMapService
             {
                 RelativePath = fileCapturesGroup.Key,
                 TreeSitterFullCode = TreeGenerator.GenerateTreeSitter(fileCapturesGroup.ToList(), true),
+                TreeOriginalCode = TreeGenerator.GenerateOriginalCodeTree(
+                    GetOriginalCode(fileCapturesGroup.ToList()),
+                    fileCapturesGroup.Key
+                ),
                 OriginalCode = GetOriginalCode(fileCapturesGroup.ToList()),
                 TreeSitterSummarizeCode = TreeGenerator.GenerateTreeSitter(fileCapturesGroup.ToList(), false),
                 ReferencedCodesMap = GenerateRelatedCodeFilesMap(fileCapturesGroup.ToList()),

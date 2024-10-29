@@ -1,5 +1,6 @@
 using System.Text;
 using AIAssistant.Contracts;
+using AIAssistant.Contracts.CodeAssist;
 using Clients.Chat.Models;
 using FluentAssertions;
 using Microsoft.Extensions.DependencyInjection;

@@ -20,7 +20,7 @@ public class OpenAIClientStrategyTests : IAsyncLifetime
 {
     private readonly MockHttpMessageHandler _mockHttp;
     private readonly Uri _clientBaseUri;
-    private readonly OpenAIClientStratgey _clientStrategy;
+    private readonly OpenAiClient _clientStrategy;
 
     public OpenAIClientStrategyTests()
     {
@@ -77,7 +77,7 @@ public class OpenAIClientStrategyTests : IAsyncLifetime
         httpClientFactory.CreateClient("llm_client").Returns(client);
 
         // Initialize the OpenAIClientStrategy with IHttpClientFactory
-        _clientStrategy = new OpenAIClientStratgey(httpClientFactory, llmOptions, combinedPolicy);
+        _clientStrategy = new OpenAiClient(httpClientFactory, llmOptions, combinedPolicy);
     }
 
     [Fact]

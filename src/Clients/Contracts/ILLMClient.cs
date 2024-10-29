@@ -3,7 +3,7 @@ using Clients.Models;
 
 namespace Clients.Contracts;
 
-public interface ILLMClientStratgey
+public interface ILLMClient
 {
     Task<string?> GetCompletionAsync(IReadOnlyList<ChatItem> chatItems, CancellationToken cancellationToken = default);
     IAsyncEnumerable<string?> GetCompletionStreamAsync(

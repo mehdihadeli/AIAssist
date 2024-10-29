@@ -17,11 +17,11 @@ namespace Clients.Anthropic;
 // https://docs.anthropic.com/en/api/messages-streaming
 // https://docs.anthropic.com/en/api/messages-examples
 
-public class AnthropicClientStratgey(
+public class AnthropicClient(
     IHttpClientFactory httpClientFactory,
     IOptions<LLMOptions> options,
     AsyncPolicyWrap<HttpResponseMessage> combinedPolicy
-) : ILLMClientStratgey
+) : ILLMClient
 {
     private readonly LLMOptions _options = options.Value;
 

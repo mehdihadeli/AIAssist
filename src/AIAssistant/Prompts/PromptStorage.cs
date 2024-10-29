@@ -8,7 +8,7 @@ public class PromptStorage : IPromptStorage
 {
     private readonly IList<PromptInformation> _promptInformations = new List<PromptInformation>();
 
-    public void AddPrompt(string embeddedResourceName, CommandType commandType, DiffType? diffType)
+    public void AddPrompt(string embeddedResourceName, CommandType commandType, CodeDiffType? diffType)
     {
         if (_promptInformations.Any(x => x.CommandType == commandType && x.DiffType == diffType))
         {
@@ -23,7 +23,7 @@ public class PromptStorage : IPromptStorage
         _promptInformations.Add(new PromptInformation(embeddedResourceName, commandType, diffType));
     }
 
-    public string GetPrompt(CommandType commandType, DiffType? diffType, object? parameters)
+    public string GetPrompt(CommandType commandType, CodeDiffType? diffType, object? parameters)
     {
         var prompt = _promptInformations.SingleOrDefault(x => x.CommandType == commandType && x.DiffType == diffType);
 
@@ -42,4 +42,4 @@ public class PromptStorage : IPromptStorage
     }
 }
 
-public record PromptInformation(string EmbeddedResourceName, CommandType CommandType, DiffType? DiffType);
+public record PromptInformation(string EmbeddedResourceName, CommandType CommandType, CodeDiffType? DiffType);

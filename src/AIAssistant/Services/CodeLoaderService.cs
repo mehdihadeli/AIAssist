@@ -8,7 +8,7 @@ public class CodeLoaderService
 {
     public IReadOnlyList<DefinitionCaptureItem> LoadTreeSitterCodeCaptures(
         string? contextWorkingDir,
-        IEnumerable<string>? extraFiles = null
+        IList<string>? extraFiles = null
     )
     {
         if (string.IsNullOrEmpty(contextWorkingDir) && extraFiles is null)
@@ -22,7 +22,7 @@ public class CodeLoaderService
         return treeSitterCodeCaptures;
     }
 
-    private IList<CodeFile> ReadCodeFiles(string? contextWorkingDir, IEnumerable<string>? extraFiles)
+    private IList<CodeFile> ReadCodeFiles(string? contextWorkingDir, IList<string>? extraFiles)
     {
         List<string> allFiles = new List<string>();
 
@@ -31,7 +31,7 @@ public class CodeLoaderService
             allFiles.AddRange(Directory.GetFiles(contextWorkingDir, "*", SearchOption.AllDirectories));
         }
 
-        if (extraFiles is not null)
+        if (extraFiles is not null && extraFiles.Any())
         {
             allFiles.AddRange(extraFiles);
         }

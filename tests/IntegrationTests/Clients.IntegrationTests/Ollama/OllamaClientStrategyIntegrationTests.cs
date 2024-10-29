@@ -13,7 +13,7 @@ namespace Clients.IntegrationTests.Ollama;
 public class OllamaClientStrategyIntegrationTests(ApplicationFixture applicationFixture) : IAsyncLifetime
 {
     private IHost _app = default!;
-    private ILLMClientStratgey _llmClientStratgey = default!;
+    private ILLMClient _illmClient = default!;
 
     public Task InitializeAsync()
     {
@@ -24,7 +24,7 @@ public class OllamaClientStrategyIntegrationTests(ApplicationFixture application
         llmOptions.Value.EmbeddingsModel = ClientsConstants.Ollama.EmbeddingsModels.Mxbai_Embed_Large;
 
         var clientFactory = _app.Services.GetRequiredService<ILLMClientFactory>();
-        _llmClientStratgey = clientFactory.CreateClient(AIProvider.Ollama);
+        _illmClient = clientFactory.CreateClient(AIProvider.Ollama);
 
         return Task.CompletedTask;
     }
@@ -39,7 +39,7 @@ public class OllamaClientStrategyIntegrationTests(ApplicationFixture application
     {
         // Act
         var chatItems = new List<ChatItem> { new(Role: RoleType.User, Prompt: "Hello") };
-        var result = await _llmClientStratgey.GetCompletionAsync(chatItems);
+        var result = await _illmClient.GetCompletionAsync(chatItems);
 
         // Assert
         result.Should().NotBeNull();
@@ -52,7 +52,7 @@ public class OllamaClientStrategyIntegrationTests(ApplicationFixture application
         var input = "test input";
 
         // Act
-        var result = await _llmClientStratgey.GetEmbeddingAsync(input);
+        var result = await _illmClient.GetEmbeddingAsync(input);
 
         // Assert
         result.Should().NotBeNull();
@@ -66,7 +66,7 @@ public class OllamaClientStrategyIntegrationTests(ApplicationFixture application
         var chatItems = new List<ChatItem> { new(Role: RoleType.User, Prompt: "Hello, how are you?") };
 
         // Act
-        var messages = await _llmClientStratgey.GetCompletionStreamAsync(chatItems).ToListAsync();
+        var messages = await _illmClient.GetCompletionStreamAsync(chatItems).ToListAsync();
 
         // Assert
         messages.Should().NotBeEmpty();

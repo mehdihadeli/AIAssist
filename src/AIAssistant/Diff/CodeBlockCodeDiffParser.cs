@@ -1,22 +1,25 @@
 using System.Text.RegularExpressions;
+using AIAssistant.Contracts;
+using AIAssistant.Contracts.Diff;
+using AIAssistant.Models;
 
-namespace AIAssistant.Diff.CodeBlock;
+namespace AIAssistant.Diff;
 
-public class CodeBlockParser
+public class CodeBlockCodeDiffParser : ICodeDiffParser
 {
     // regex to match file paths with typical extensions like .cs, .js, etc.
-    private static readonly Regex _filePathRegex = new Regex(@"^[\w\-./\\]+?\.[\w]+$", RegexOptions.Compiled);
+    private static readonly Regex _filePathRegex = new(@"^[\w\-./\\]+?\.[\w]+$", RegexOptions.Compiled);
     private static readonly Regex _codeFenceStartRegex = new(@"^```csharp$", RegexOptions.Compiled);
     private static readonly Regex _codeFenceEndRegex = new(@"^```$", RegexOptions.Compiled);
 
-    public IList<CodeBlock> ExtractCodeBlocks(string responseContent)
+    public IList<FileChange> ExtractFileChanges(string diff)
     {
-        var codeBlocks = new List<CodeBlock>();
+        var fileChanges = new List<FileChange>();
         string? currentFilePath = null;
         var currentFileContent = new List<string>();
         bool insideCodeBlock = false;
 
-        var lines = responseContent.Split('\n');
+        var lines = diff.Split('\n');
 
         foreach (var line in lines)
         {
@@ -28,7 +31,7 @@ public class CodeBlockParser
                 if (currentFilePath != null)
                 {
                     // Save the previous code block before starting a new one
-                    codeBlocks.Add(new CodeBlock(currentFilePath, string.Join("\n", currentFileContent)));
+                    fileChanges.Add(new FileChange(currentFilePath, string.Join("\n", currentFileContent)));
                 }
 
                 // Start a new file block
@@ -48,7 +51,7 @@ public class CodeBlockParser
                     insideCodeBlock = false;
 
                     // Save the current code block
-                    codeBlocks.Add(new CodeBlock(currentFilePath, string.Join("\n", currentFileContent)));
+                    fileChanges.Add(new FileChange(currentFilePath, string.Join("\n", currentFileContent)));
 
                     // Reset for the next potential block
                     currentFilePath = null;
@@ -62,6 +65,6 @@ public class CodeBlockParser
             }
         }
 
-        return codeBlocks;
+        return fileChanges;
     }
 }

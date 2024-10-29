@@ -1,57 +1,32 @@
-using System.Text;
 using AIAssistant.Contracts;
-using AIAssistant.Diff.CodeBlock;
-using AIAssistant.Models.Options;
+using AIAssistant.Contracts.CodeAssist;
+using AIAssistant.Contracts.Diff;
+using AIAssistant.Models;
 using Clients.Chat.Models;
-using Microsoft.Extensions.Options;
 
 namespace AIAssistant.Services;
 
-public class CodeAssistantManager(
-    ICodeAssistStrategyFactory codeAssistStrategyFactory,
-    IOptions<CodeAssistOptions> codeAssistOptions
-) : ICodeAssistantManager
+public class CodeAssistantManager(ICodeAssist codeAssist, ICodeDiffManager diffManager) : ICodeAssistantManager
 {
-    private readonly ICodeStrategy _codeStrategy = codeAssistStrategyFactory.Create(
-        codeAssistOptions.Value.CodeAssistType
-    );
-
-    public Task LoadCodeFiles(ChatSession chatSession, string? contextWorkingDirectory, IEnumerable<string>? codeFiles)
+    public Task LoadCodeFiles(ChatSession chatSession, string? contextWorkingDirectory, IList<string>? codeFiles)
     {
-        return _codeStrategy.LoadCodeFiles(chatSession, contextWorkingDirectory, codeFiles);
+        return codeAssist.LoadCodeFiles(chatSession, contextWorkingDirectory, codeFiles);
     }
 
     public IAsyncEnumerable<string?> QueryAsync(string userQuery)
     {
-        return _codeStrategy.QueryAsync(userQuery);
+        return codeAssist.QueryAsync(userQuery);
     }
 
-    public IList<CodeBlock> ParseResponseCodeBlocks(string response)
+    public IList<FileChange> ParseResponseCodeBlocks(string response)
     {
-        CodeBlockParser codeBlockParser = new CodeBlockParser();
-        var codeBlocks = codeBlockParser.ExtractCodeBlocks(response);
+        var codeBlocks = diffManager.ExtractFileChanges(response);
 
         return codeBlocks;
     }
 
-    public void ApplyChangesToFiles(IList<CodeBlock> codeBlocks)
+    public void ApplyChangesToFiles(IList<FileChange> codeBlocks)
     {
-        CodeBlockCodeUpdater codeBlockCodeUpdater = new CodeBlockCodeUpdater();
-        codeBlockCodeUpdater.ApplyChanges(codeBlocks);
-    }
-
-    public async Task<string> GetResponseFromStreamAsync(IAsyncEnumerable<string?> responseStream)
-    {
-        var responseBuilder = new StringBuilder();
-
-        await foreach (var chunk in responseStream)
-        {
-            if (!string.IsNullOrEmpty(chunk))
-            {
-                responseBuilder.Append(chunk);
-            }
-        }
-
-        return responseBuilder.ToString();
+        diffManager.ApplyChanges(codeBlocks);
     }
 }
