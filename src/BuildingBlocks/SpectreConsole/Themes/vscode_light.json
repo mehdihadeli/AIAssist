@@ -1,0 +1,45 @@
+{
+  "code": {
+    "background": "#FFFFFF",
+    "foreground": "#333333",
+    "bold": true
+  },
+  "block_quote": {
+    "foreground": "#008080",
+    "prefix_foreground": "#A020F0",
+    "italic": true
+  },
+  "list": {
+    "foreground": "#333333",
+    "prefix_foreground": "#A020F0",
+    "block_prefix": "•",
+    "margin": 2
+  },
+  "head": {
+    "foreground": "#A020F0",
+    "bold": true,
+    "margin": 2
+  },
+  "paragraph": {
+    "foreground": "#333333",
+    "margin": 2
+  },
+  "emph": {
+    "foreground": "#008080"
+  },
+  "task": {
+    "ticked": "[✓] ",
+    "unticked": "[ ] ",
+    "prefix_foreground": "#333333",
+    "foreground": "#333333"
+  },
+  "link": {
+    "underline": true,
+    "link_foreground": "#0000EE",
+    "link_text_foreground": "#1E90FF"
+  },
+  "code_block": {
+    "theme_name": "vscode_light",
+    "margin": 2
+  }
+}

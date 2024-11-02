@@ -1,14 +1,13 @@
-using ColorCode.Styling;
 using Markdig;
 using Markdig.Syntax.Inlines;
 
-namespace BuildingBlocks.Markdig;
+namespace BuildingBlocks.MarkdigMarkdown;
 
 public static class Extensions
 {
     public static MarkdownPipelineBuilder UseColorCodeBlock(
         this MarkdownPipelineBuilder pipeline,
-        StyleDictionary theme
+        string theme = "dracula"
     )
     {
         pipeline.Extensions.AddIfNotAlready(new ColorCodeBlockExtension(theme));

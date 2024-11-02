@@ -1,0 +1,142 @@
+{
+  "background": "#F8F8F8",
+  "foreground": "#333333",
+  "margin": 2,
+  "code_elements": {
+    "plain_text": {
+      "foreground": "#333333",
+      "background": "#F8F8F8",
+      "reference_name": "plain_text"
+    },
+    "comment": {
+      "foreground": "#008000",
+      "reference_name": "comment"
+    },
+    "string": {
+      "foreground": "#A52A2A",
+      "reference_name": "string"
+    },
+    "keyword": {
+      "foreground": "#0000FF",
+      "reference_name": "keyword"
+    },
+    "type": {
+      "foreground": "#008080",
+      "reference_name": "type"
+    },
+    "operator": {
+      "foreground": "#0000FF",
+      "reference_name": "operator"
+    },
+    "number": {
+      "foreground": "#2E8B57",
+      "reference_name": "number"
+    },
+    "html_element_name": {
+      "foreground": "#8B0000",
+      "reference_name": "html_element_name"
+    },
+    "html_attribute_name": {
+      "foreground": "#FF4500",
+      "reference_name": "html_attribute_name"
+    },
+    "html_attribute_value": {
+      "foreground": "#2E8B57",
+      "reference_name": "html_attribute_value"
+    },
+    "html_comment": {
+      "foreground": "#008000",
+      "reference_name": "html_comment"
+    },
+    "html_tag_delimiter": {
+      "foreground": "#333333",
+      "reference_name": "html_tag_delimiter"
+    },
+    "json_key": {
+      "foreground": "#FF8C00",
+      "reference_name": "json_key"
+    },
+    "json_string": {
+      "foreground": "#A52A2A",
+      "reference_name": "json_string"
+    },
+    "json_number": {
+      "foreground": "#2E8B57",
+      "reference_name": "json_number"
+    },
+    "json_const": {
+      "foreground": "#8A2BE2",
+      "reference_name": "json_const"
+    },
+    "markdown_header": {
+      "foreground": "#A020F0",
+      "bold": true,
+      "reference_name": "markdown_header"
+    },
+    "markdown_code": {
+      "foreground": "#008080",
+      "reference_name": "markdown_code"
+    },
+    "markdown_emph": {
+      "foreground": "#008080",
+      "italic": true,
+      "reference_name": "markdown_emph"
+    },
+    "markdown_bold": {
+      "foreground": "#A52A2A",
+      "bold": true,
+      "reference_name": "markdown_bold"
+    },
+    "builtin_function": {
+      "foreground": "#000080",
+      "bold": true,
+      "reference_name": "builtin_function"
+    },
+    "builtin_value": {
+      "foreground": "#4B0082",
+      "bold": true,
+      "reference_name": "builtin_value"
+    },
+    "control_keyword": {
+      "foreground": "#0000FF",
+      "reference_name": "control_keyword"
+    },
+    "class_name": {
+      "foreground": "#8A2BE2",
+      "reference_name": "class_name"
+    },
+    "type_variable": {
+      "foreground": "#008080",
+      "italic": true,
+      "reference_name": "type_variable"
+    },
+    "namespace": {
+      "foreground": "#A020F0",
+      "reference_name": "namespace"
+    },
+    "constructor": {
+      "foreground": "#FF8C00",
+      "reference_name": "constructor"
+    },
+    "string_escape": {
+      "foreground": "#008000",
+      "reference_name": "string_escape"
+    },
+    "xml_name": {
+      "foreground": "#8A2BE2",
+      "reference_name": "xml_name"
+    },
+    "xml_attribute": {
+      "foreground": "#2E8B57",
+      "reference_name": "xml_attribute"
+    },
+    "xml_cdata_section": {
+      "foreground": "#808080",
+      "reference_name": "xml_cdata_section"
+    },
+    "html_entity": {
+      "foreground": "#DC143C",
+      "reference_name": "html_entity"
+    }
+  }
+}

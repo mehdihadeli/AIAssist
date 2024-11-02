@@ -1,0 +1,45 @@
+{
+  "code": {
+    "background": "#282C34",
+    "foreground": "#ABB2BF",
+    "bold": true
+  },
+  "block_quote": {
+    "foreground": "#98C379",
+    "prefix_foreground": "#61AFEF",
+    "italic": true
+  },
+  "list": {
+    "foreground": "#E5C07B",
+    "prefix_foreground": "#61AFEF",
+    "block_prefix": "•",
+    "margin": 2
+  },
+  "head": {
+    "foreground": "#61AFEF",
+    "bold": true,
+    "margin": 2
+  },
+  "paragraph": {
+    "foreground": "#ABB2BF",
+    "margin": 2
+  },
+  "emph": {
+    "foreground": "#E5C07B"
+  },
+  "task": {
+    "ticked": "[✔] ",
+    "unticked": "[ ] ",
+    "prefix_foreground": "#ABB2BF",
+    "foreground": "#ABB2BF"
+  },
+  "link": {
+    "underline": true,
+    "link_foreground": "#61AFEF",
+    "link_text_foreground": "#98C379"
+  },
+  "code_block": {
+    "theme_name": "atom_one_dark",
+    "margin": 2
+  }
+}

@@ -3,7 +3,7 @@ using System.Text;
 using AngleSharp;
 using AngleSharp.Dom;
 
-namespace BuildingBlocks.Markdig;
+namespace BuildingBlocks.Utils;
 
 public static class HtmlHelper
 {

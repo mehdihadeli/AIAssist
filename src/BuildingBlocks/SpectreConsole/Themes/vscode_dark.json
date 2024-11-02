@@ -1,0 +1,45 @@
+{
+  "code": {
+    "background": "#1E1E1E",
+    "foreground": "#D4D4D4",
+    "bold": true
+  },
+  "block_quote": {
+    "foreground": "#DCDCAA",
+    "prefix_foreground": "#569CD6",
+    "italic": true
+  },
+  "list": {
+    "foreground": "#D4D4D4",
+    "prefix_foreground": "#569CD6",
+    "block_prefix": "■",
+    "margin": 2
+  },
+  "head": {
+    "foreground": "#569CD6",
+    "bold": true,
+    "margin": 2
+  },
+  "paragraph": {
+    "foreground": "#D4D4D4",
+    "margin": 2
+  },
+  "emph": {
+    "foreground": "#DCDCAA"
+  },
+  "task": {
+    "ticked": "[✓] ",
+    "unticked": "[ ] ",
+    "prefix_foreground": "#D4D4D4",
+    "foreground": "#D4D4D4"
+  },
+  "link": {
+    "underline": true,
+    "link_foreground": "#4EC9B0",
+    "link_text_foreground": "#9CDCFE"
+  },
+  "code_block": {
+    "theme_name": "vscode_dark",
+    "margin": 2
+  }
+}

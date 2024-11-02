@@ -1,0 +1,45 @@
+{
+  "code": {
+    "background": "#FAFAFA",
+    "foreground": "#383A42",
+    "bold": true
+  },
+  "block_quote": {
+    "foreground": "#50A14F",
+    "prefix_foreground": "#4078F2",
+    "italic": true
+  },
+  "list": {
+    "foreground": "#383A42",
+    "prefix_foreground": "#4078F2",
+    "block_prefix": "•",
+    "margin": 2
+  },
+  "head": {
+    "foreground": "#4078F2",
+    "bold": true,
+    "margin": 2
+  },
+  "paragraph": {
+    "foreground": "#383A42",
+    "margin": 2
+  },
+  "emph": {
+    "foreground": "#986801"
+  },
+  "task": {
+    "ticked": "[✔] ",
+    "unticked": "[ ] ",
+    "prefix_foreground": "#383A42",
+    "foreground": "#383A42"
+  },
+  "link": {
+    "underline": true,
+    "link_foreground": "#4078F2",
+    "link_text_foreground": "#A626A4"
+  },
+  "code_block": {
+    "theme_name": "atom_one_light",
+    "margin": 2
+  }
+}

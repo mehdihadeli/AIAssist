@@ -111,8 +111,6 @@ public class FilesUtilities
     /// <param name="fullResourceName">The full name of the resource, including the namespace and any folders, following the pattern:
     /// <c>[RootNamespace].[Folder].[Subfolder].[FileName]</c>.</param>
     /// <returns>A string containing the content of the embedded resource, or null if the resource is not found.</returns>
-    /// <exception cref="ArgumentNullException">Thrown if <paramref name="assembly"/> or <paramref name="fullResourceName"/> is null.</exception>
-    /// <exception cref="IOException">Thrown if there is an error reading the resource stream.</exception>
     public static string ReadEmbeddedResource(Assembly assembly, string fullResourceName)
     {
         using Stream? stream = assembly.GetManifestResourceStream(fullResourceName);

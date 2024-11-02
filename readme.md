@@ -1,4 +1,13 @@
 
+## Installation
+By default, `AIAssist` uses OpenAI's API and GPT modeles and You'll need an API key. 
+
+> [!TIP]
+> Alternatively, you can use ollama and its models like `llama 3.2` locally. To use local models, you will need to run ollama [Ollama](https://github.com/ollama/ollama) first, personally I perefere to use ollama docker container. 
+>
+> **❗️Note that AIAssist is not optimized for local models and may not work as expected.**
+
+
 # Getting started
 
 ```bash

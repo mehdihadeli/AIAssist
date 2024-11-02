@@ -1,0 +1,53 @@
+{
+  "console": {
+    "prompt": {
+      "foreground": ""
+    },
+    "text":{
+      "foreground": ""
+    }
+  },
+  "code": {
+    "background": "#44475A",
+    "foreground": "#ff79c6",
+    "bold": true
+  },
+  "block_quote": {
+    "foreground": "#f1fa8c",
+    "prefix_foreground": "#bd93f9",
+    "italic": true
+  },
+  "list": {
+    "foreground": "#f8f8f2",
+    "prefix_foreground": "#bd93f9",
+    "block_prefix": "■",
+    "margin": 2
+  },
+  "head": {
+    "foreground": "#bd93f9",
+    "bold": true,
+    "margin": 2
+  },
+  "paragraph": {
+    "foreground": "#f8f8f2",
+    "margin": 2
+  },
+  "emph": {
+    "foreground": "#f1fa8c"
+  },
+  "task": {
+    "ticked": "[✓] ",
+    "unticked": "[ ] ",
+    "prefix_foreground": "#f8f8f2",
+    "foreground": "#f8f8f2"
+  },
+  "link": {
+    "underline": true,
+    "link_foreground": "#8be9fd",
+    "link_text_foreground": "#ff79c6"
+  },
+  "code_block": {
+    "theme_name": "dracula",
+    "margin": 2
+  }
+}

@@ -1,8 +1,10 @@
 using System.Text;
+using BuildingBlocks.SpectreConsole.StyleElements;
 using Markdig.Extensions.Abbreviations;
 using Markdig.Extensions.CustomContainers;
 using Markdig.Extensions.Emoji;
 using Markdig.Extensions.Footnotes;
+using Markdig.Extensions.JiraLinks;
 using Markdig.Extensions.Mathematics;
 using Markdig.Extensions.SmartyPants;
 using Markdig.Extensions.Tables;
@@ -13,12 +15,14 @@ using Spectre.Console.Rendering;
 
 namespace BuildingBlocks.SpectreConsole.Markdown;
 
-internal sealed class SpectreMarkdownInlineRendering
+internal sealed class SpectreMarkdownInlineRendering(ColorTheme colorTheme)
 {
     private IRenderable RenderInline(Inline inline, Style style, Justify alignment)
     {
         switch (inline)
         {
+            // TODO: These features are less adopted in practice and the MarkdownPipeline isn't configured to generate them - feel free to add support!
+            case JiraLink jiraLink:
             case SmartyPant smartyPant:
             case MathInline mathInline:
             case HtmlEntityInline htmlEntityInline:
@@ -32,7 +36,8 @@ internal sealed class SpectreMarkdownInlineRendering
             case EmojiInline emojiInline:
                 return new Text(Emoji.Replace(emojiInline.Content.ToString()), style) { Justification = alignment };
             case CodeInline codeInline:
-                return WriteCodeInline(codeInline);
+                var codeStyle = CreateStyle(colorTheme.CodeStyle);
+                return WriteCodeInline(codeInline, codeStyle);
 
             case EmphasisInline emphasisInline:
                 var styleDecoration =
@@ -44,11 +49,14 @@ internal sealed class SpectreMarkdownInlineRendering
                             2 => Decoration.Bold,
                             _ => Decoration.None,
                         };
-                var emphasisChildStyle = new Style(decoration: styleDecoration);
+                var emphasisChildStyle = CreateStyle(colorTheme.EmphStyle)
+                    .Combine(new Style(decoration: styleDecoration));
                 return RenderContainerInline(emphasisInline, emphasisChildStyle);
             case LinkInline linkInline:
-                var linkInlineChildStyle = new Style(link: linkInline.Url);
-                return RenderContainerInline(linkInline, linkInlineChildStyle);
+                string underline = colorTheme.LinkStyle.Underline ? "underline" : "default";
+                return new Markup(
+                    $"[{colorTheme.LinkStyle.LinkTextForeground}]{linkInline.FirstChild}[/] [{colorTheme.LinkStyle.LinkForeground} {"link"} {underline}]{linkInline.Url}[/]"
+                );
 
             // We don't care what delimiters were used to compose a particular document structure
             case PipeTableDelimiterInline:
@@ -62,10 +70,13 @@ internal sealed class SpectreMarkdownInlineRendering
             case ContainerInline containerInline:
                 return RenderContainerInline(containerInline);
             case LiteralInline literalInline:
-                return new Markup(literalInline.Content.ToString().EscapeMarkup(), style) { Justification = alignment };
+                return new Markup(literalInline.Content.ToString(), style) { Justification = alignment };
             case TaskList task:
-                var bullet = task.Checked ? CharacterSet.TaskListBulletDone : CharacterSet.TaskListBulletToDo;
-                return new Markup($"[deepskyblue1]{bullet.EscapeMarkup()}[/]");
+                var taskStyle = CreateStyle(colorTheme.TaskStyle);
+                var bullet = task.Checked
+                    ? colorTheme.TaskStyle.Ticked ?? CharacterSet.TaskListBulletDone
+                    : colorTheme.TaskStyle.UnTicked ?? CharacterSet.TaskListBulletToDo;
+                return new Markup($"[{colorTheme.TaskStyle.PrefixForeground}]{bullet.EscapeMarkup()}[/]", taskStyle);
             default:
                 throw new ArgumentOutOfRangeException(nameof(inline));
         }
@@ -82,7 +93,7 @@ internal sealed class SpectreMarkdownInlineRendering
         return new SpectreCompositeRenderable(inline.Select(x => RenderInline(x, style ?? Style.Plain, alignment)));
     }
 
-    private Markup WriteCodeInline(CodeInline code)
+    private Markup WriteCodeInline(CodeInline code, Style style)
     {
         var sb = new StringBuilder();
 
@@ -90,9 +101,16 @@ internal sealed class SpectreMarkdownInlineRendering
         sb.Append(code.Content.EscapeMarkup());
         sb.Append(CharacterSet.InlineCodeClosing);
 
-        return new Markup(
-            sb.ToString(),
-            new Style(foreground: Color.White, background: Color.SlateBlue1, decoration: Decoration.Bold)
+        return new Markup($" {sb} ", style);
+    }
+
+    private Style CreateStyle(StyleBase styleBase)
+    {
+        var italic = styleBase.Italic ? "italic" : "default";
+        var bold = styleBase.Bold ? "bold" : "default";
+        var underline = styleBase.Underline ? "underline" : "default";
+        return Style.Parse(
+            $"{styleBase.Foreground ?? "default"} on {styleBase.Background ?? "default"} {italic} {bold} {underline}"
         );
     }
 }

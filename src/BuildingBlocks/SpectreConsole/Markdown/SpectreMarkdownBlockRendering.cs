@@ -1,4 +1,5 @@
-using BuildingBlocks.Markdig;
+using BuildingBlocks.MarkdigMarkdown;
+using BuildingBlocks.SpectreConsole.StyleElements;
 using Markdig.Extensions.Abbreviations;
 using Markdig.Extensions.AutoIdentifiers;
 using Markdig.Extensions.CustomContainers;
@@ -17,9 +18,23 @@ using TableRow = Markdig.Extensions.Tables.TableRow;
 
 namespace BuildingBlocks.SpectreConsole.Markdown;
 
-internal class SpectreMarkdownBlockRendering(SpectreMarkdownInlineRendering inlineRendering)
+internal class SpectreMarkdownBlockRendering : IDisposable
 {
-    public IRenderable RenderBlock(Block markdigBlock, Justify alignment = Justify.Left, bool suppressNewLine = false)
+    private readonly ColorTheme _colorTheme;
+    private readonly SpectreMarkdownInlineRendering _inlineRendering;
+
+    public SpectreMarkdownBlockRendering(ColorTheme colorTheme)
+    {
+        _colorTheme = colorTheme;
+        _inlineRendering = new SpectreMarkdownInlineRendering(_colorTheme);
+    }
+
+    public IRenderable RenderBlock(
+        Block markdigBlock,
+        Justify alignment = Justify.Left,
+        Style? style = null,
+        bool suppressNewLine = false
+    )
     {
         IRenderable? result = null;
         switch (markdigBlock)
@@ -40,6 +55,7 @@ internal class SpectreMarkdownBlockRendering(SpectreMarkdownInlineRendering inli
             case DefinitionTerm:
                 break;
 
+            // No point rendering these as the definitions are already reconciled by the parser.
             case HeadingLinkReferenceDefinition:
             case LinkReferenceDefinitionGroup:
             case LinkReferenceDefinition:
@@ -53,97 +69,143 @@ internal class SpectreMarkdownBlockRendering(SpectreMarkdownInlineRendering inli
                 result = RenderTableBlock(table);
                 break;
             case FencedCodeBlock fencedCodeBlock:
-                return RenderFencedCodeBlock(fencedCodeBlock);
+                return RenderFenceBlock(fencedCodeBlock);
             case CodeBlock codeBlock:
-                return RenderCodeBlock(codeBlock);
+                var blockContents = codeBlock.Lines.ToString();
+                result = new Panel(blockContents)
+                {
+                    Header = new PanelHeader("code"),
+                    Expand = true,
+                    Border = BoxBorder.Rounded,
+                };
+                break;
             case ListBlock listBlock:
-                result = RenderListBlock(listBlock);
+                result = RenderListBlock(listBlock, CreateStyle(_colorTheme.ListStyle, style));
                 break;
             case ListItemBlock listItemBlock:
-                result = RenderListItemBlock(listItemBlock);
+                result = RenderListItemBlock(listItemBlock, style);
                 break;
             case QuoteBlock quoteBlock:
-                result = RenderQuoteBlock(quoteBlock);
+                result = RenderQuoteBlock(quoteBlock, CreateStyle(_colorTheme.BlockQuoteStyle, style));
                 break;
             case HeadingBlock headingBlock:
-                result = RenderHeadingBlock(headingBlock);
+                result = RenderHeadingBlock(headingBlock, CreateStyle(_colorTheme.HeadStyle, style));
                 break;
             case ParagraphBlock paragraphBlock:
                 if (suppressNewLine)
-                    return RenderParagraphBlock(paragraphBlock, alignment, suppressNewLine);
-                result = RenderParagraphBlock(paragraphBlock, alignment, suppressNewLine);
+                    return RenderParagraphBlock(
+                        paragraphBlock,
+                        alignment,
+                        CreateStyle(_colorTheme.ParagraphStyle, style),
+                        suppressNewLine
+                    );
+                result = RenderParagraphBlock(
+                    paragraphBlock,
+                    alignment,
+                    CreateStyle(_colorTheme.ParagraphStyle, style),
+                    suppressNewLine
+                );
                 break;
             case ThematicBreakBlock:
                 result = new Rule { Style = new Style(decoration: Decoration.Bold), Border = BoxBorder.Double };
                 break;
-            default:
-                throw new ArgumentOutOfRangeException(nameof(markdigBlock));
         }
 
         if (result is not null)
-        {
             return new SpectreCompositeRenderable(new List<IRenderable> { result, new Text(Environment.NewLine) });
-        }
 
         return Text.Empty;
     }
 
-    private static IRenderable RenderCodeBlock(CodeBlock codeBlock)
+    private Style CreateStyle(StyleBase styleBase, Style? style = null)
     {
-        var blockContents = codeBlock.Lines.ToString();
-        return new Panel(blockContents)
-        {
-            Header = new PanelHeader("code"),
-            Expand = true,
-            Border = BoxBorder.Rounded,
-        };
+        var italic = styleBase.Italic ? "italic" : "default";
+        var bold = styleBase.Bold ? "bold" : "default";
+        var underline = styleBase.Underline ? "underline" : "default";
+        style ??= Style.Parse(
+            $"{styleBase.Foreground ?? "default"} on {styleBase.Background ?? "default"} {italic} {bold} {underline}"
+        );
+
+        return style;
     }
 
-    private static IRenderable RenderFencedCodeBlock(FencedCodeBlock fencedCodeBlock)
+    private IRenderable RenderFenceBlock(FencedCodeBlock fencedCodeBlock)
     {
         var bbcode = fencedCodeBlock.Lines.ToString();
         var backgroundColor = fencedCodeBlock.GetData("background") as string;
 
         return string.IsNullOrEmpty(backgroundColor)
-            ? new CustomPanel(bbcode)
-            {
-                Expand = true,
-                Border = BoxBorder.Rounded,
-                Header = new PanelHeader(fencedCodeBlock.Info ?? "code"),
-            }
-            : new CustomPanel(bbcode, Style.Parse($"on {backgroundColor}"))
-            {
-                Expand = true,
-                Border = BoxBorder.Rounded,
-                Header = new PanelHeader(fencedCodeBlock.Info ?? "code"),
-            };
+            ? new Padder(
+                new CustomPanel(bbcode)
+                {
+                    Expand = true,
+                    Border = BoxBorder.Rounded,
+                    Header = new PanelHeader(fencedCodeBlock.Info ?? "code"),
+                }
+            ).PadLeft(_colorTheme.CodeBlockStyle.Margin)
+            : new Padder(
+                new CustomPanel(bbcode, Style.Parse($"on {backgroundColor}"))
+                {
+                    Expand = true,
+                    Border = BoxBorder.Rounded,
+                    Header = new PanelHeader(fencedCodeBlock.Info ?? "code"),
+                }
+            ).PadLeft(_colorTheme.CodeBlockStyle.Margin);
     }
 
-    private IRenderable RenderQuoteBlock(QuoteBlock quoteBlock)
+    private IRenderable RenderQuoteBlock(QuoteBlock quoteBlock, Style style)
     {
         foreach (var subBlock in quoteBlock)
-        {
             if (subBlock is ParagraphBlock paragraph)
-            {
                 return new SpectreCompositeRenderable(
                     new List<IRenderable>
                     {
-                        new Markup($"[deepskyblue1] {CharacterSet.QuotePrefix} [/]"),
-                        RenderParagraphBlock(paragraph, Justify.Left),
+                        new Markup(
+                            $"{CharacterSet.QuotePrefix} ",
+                            Style.Parse(_colorTheme.BlockQuoteStyle.PrefixForeground)
+                        ),
+                        RenderParagraphBlock(paragraph, Justify.Left, style: style),
                     }
                 );
-            }
-        }
 
         return new Text("");
     }
 
-    private IRenderable RenderListItemBlock(ListItemBlock listItemBlock)
+    private IRenderable RenderListBlock(ListBlock listBlock, Style style)
     {
-        return new SpectreCompositeRenderable(listItemBlock.Select(x => RenderBlock(x, suppressNewLine: true)));
+        IEnumerable<string>? itemPrefixes;
+        if (listBlock.IsOrdered)
+        {
+            var startNum = int.Parse(listBlock.OrderedStart);
+            var orderedDelimiter = listBlock.OrderedDelimiter;
+            itemPrefixes = Enumerable.Range(startNum, listBlock.Count).Select(num => $"{num}{orderedDelimiter}");
+        }
+        else
+        {
+            itemPrefixes = Enumerable.Repeat(
+                _colorTheme.ListStyle.BlockPrefix ?? CharacterSet.ListBullet,
+                listBlock.Count
+            );
+        }
+
+        var paddedItemPrefixes = itemPrefixes.Select(x => new Text(
+            $"  {x} ",
+            style: Style.Parse(_colorTheme.ListStyle.PrefixForeground ?? "default")
+        ));
+
+        return new SpectreCompositeRenderable(
+            [.. Interleave(paddedItemPrefixes, listBlock.Select(x => RenderBlock(x, style: style)))]
+        );
     }
 
-    private IRenderable RenderTableBlock(Table table)
+    private IRenderable RenderListItemBlock(ListItemBlock listItemBlock, Style? style = null)
+    {
+        return new SpectreCompositeRenderable(
+            listItemBlock.Select(x => RenderBlock(x, suppressNewLine: true, style: style))
+        );
+    }
+
+    private IRenderable RenderTableBlock(Table table, Style? style = null)
     {
         if (table.IsValid())
         {
@@ -152,9 +214,9 @@ internal class SpectreMarkdownBlockRendering(SpectreMarkdownInlineRendering inli
             // Safe to unconditionally cast to TableRow as IsValid() ensures this is the case under the hood
             foreach (var tableRow in table.Cast<TableRow>())
                 if (tableRow.IsHeader)
-                    AddColumnsToTable(tableRow, table.ColumnDefinitions, renderedTable);
+                    AddColumnsToTable(tableRow, table.ColumnDefinitions, renderedTable, style);
                 else
-                    AddRowToTable(tableRow, table.ColumnDefinitions, renderedTable);
+                    AddRowToTable(tableRow, table.ColumnDefinitions, renderedTable, style);
 
             return renderedTable;
         }
@@ -165,30 +227,32 @@ internal class SpectreMarkdownBlockRendering(SpectreMarkdownInlineRendering inli
     private void AddColumnsToTable(
         TableRow tableRow,
         List<TableColumnDefinition> columnDefinitions,
-        Spectre.Console.Table renderedTable
+        Spectre.Console.Table renderedTable,
+        Style? style = null
     )
     {
         // Safe to unconditionally cast to TableCell as IsValid() ensures this is the case under the hood
         foreach (var (cell, def) in tableRow.Cast<TableCell>().Zip(columnDefinitions))
-            renderedTable.AddColumn(new TableColumn(RenderTableCell(cell, def.Alignment)));
+            renderedTable.AddColumn(new TableColumn(RenderTableCell(cell, def.Alignment, style)));
     }
 
     private void AddRowToTable(
         TableRow tableRow,
         List<TableColumnDefinition> columnDefinitions,
-        Spectre.Console.Table renderedTable
+        Spectre.Console.Table renderedTable,
+        Style? style = null
     )
     {
         var renderedRow = new List<IRenderable>();
 
         // Safe to unconditionally cast to TableCell as IsValid() ensures this is the case under the hood
         foreach (var (cell, def) in tableRow.Cast<TableCell>().Zip(columnDefinitions))
-            renderedRow.Add(RenderTableCell(cell, def.Alignment));
+            renderedRow.Add(RenderTableCell(cell, def.Alignment, style));
 
         renderedTable.AddRow(renderedRow);
     }
 
-    private IRenderable RenderTableCell(TableCell tableCell, TableColumnAlign? markdownAlignment)
+    private IRenderable RenderTableCell(TableCell tableCell, TableColumnAlign? markdownAlignment, Style? style = null)
     {
         var consoleAlignment = markdownAlignment switch
         {
@@ -204,28 +268,35 @@ internal class SpectreMarkdownBlockRendering(SpectreMarkdownInlineRendering inli
         };
 
         return new SpectreCompositeRenderable(
-            tableCell.Select(x => RenderBlock(x, consoleAlignment, suppressNewLine: true))
+            tableCell.Select(x => RenderBlock(x, consoleAlignment, style: style, true))
         );
     }
 
-    private IRenderable RenderListBlock(ListBlock listBlock)
+    private IRenderable RenderParagraphBlock(
+        ParagraphBlock paragraphBlock,
+        Justify alignment,
+        Style style,
+        bool suppressNewLine = false
+    )
     {
-        IEnumerable<string>? itemPrefixes;
-        if (listBlock.IsOrdered)
+        var text = _inlineRendering.RenderContainerInline(paragraphBlock.Inline, style, alignment: alignment);
+
+        if (!suppressNewLine)
         {
-            var startNum = int.Parse(listBlock.OrderedStart);
-            var orderedDelimiter = listBlock.OrderedDelimiter;
-            itemPrefixes = Enumerable.Range(startNum, listBlock.Count).Select(num => $"{num}{orderedDelimiter}");
-        }
-        else
-        {
-            itemPrefixes = Enumerable.Repeat(CharacterSet.ListBullet, listBlock.Count);
+            return new SpectreCompositeRenderable(new List<IRenderable> { text, new Text(Environment.NewLine) });
         }
 
-        var paddedItemPrefixes = itemPrefixes.Select(x => new Text($"  {x} "));
+        return new SpectreCompositeRenderable(new List<IRenderable> { text });
+    }
+
+    private IRenderable RenderHeadingBlock(HeadingBlock headingBlock, Style style)
+    {
+        var headingText = headingBlock.Inline?.GetInlineContent() ?? string.Empty;
+
+        var prefix = new string('#', headingBlock.Level);
 
         return new SpectreCompositeRenderable(
-            [.. Interleave(paddedItemPrefixes, listBlock.Select(x => RenderBlock(x)))]
+            new List<IRenderable> { new Markup($" {prefix} {headingText} ", style), new Text(Environment.NewLine) }
         );
     }
 
@@ -247,45 +318,8 @@ internal class SpectreMarkdownBlockRendering(SpectreMarkdownInlineRendering inli
             yield return enumeratorB.Current;
     }
 
-    private IRenderable RenderParagraphBlock(
-        ParagraphBlock paragraphBlock,
-        Justify alignment,
-        bool suppressNewLine = false
-    )
+    public void Dispose()
     {
-        var text = inlineRendering.RenderContainerInline(paragraphBlock.Inline, alignment: alignment);
-
-        if (!suppressNewLine)
-        {
-            return new SpectreCompositeRenderable(new List<IRenderable> { text, new Text(Environment.NewLine) });
-        }
-
-        return new SpectreCompositeRenderable(new List<IRenderable> { text });
-    }
-
-    private IRenderable RenderHeadingBlock(HeadingBlock headingBlock)
-    {
-        var headingText = headingBlock.Inline?.GetInlineContent() ?? string.Empty;
-
-        if (headingBlock.Level == 1)
-        {
-            return new SpectreCompositeRenderable(
-                new List<IRenderable>
-                {
-                    new Text($"# {headingText}", style: Style.Parse("white on slateblue1 bold")),
-                    new Text(Environment.NewLine),
-                }
-            );
-        }
-
-        string prefix = new string('#', headingBlock.Level);
-
-        return new SpectreCompositeRenderable(
-            new List<IRenderable>
-            {
-                new Markup($"[deepskyblue1 bold]{prefix} {headingText}[/]"),
-                new Text(Environment.NewLine),
-            }
-        );
+        GC.SuppressFinalize(this);
     }
 }
