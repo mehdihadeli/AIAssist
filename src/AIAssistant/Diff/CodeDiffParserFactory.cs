@@ -1,4 +1,3 @@
-using AIAssistant.Contracts;
 using AIAssistant.Contracts.Diff;
 using AIAssistant.Models;
 

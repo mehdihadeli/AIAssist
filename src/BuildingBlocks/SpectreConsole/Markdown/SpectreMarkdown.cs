@@ -1,8 +1,4 @@
-using System.Reflection;
-using System.Text.Json;
 using BuildingBlocks.MarkdigMarkdown;
-using BuildingBlocks.Serialization;
-using BuildingBlocks.Utils;
 using Spectre.Console.Rendering;
 
 namespace BuildingBlocks.SpectreConsole.Markdown;
@@ -13,12 +9,7 @@ public class SpectreMarkdown(string markdownText, string? theme = "dracula") : R
     {
         var spectreResult = new List<Segment>();
 
-        var jsonTheme = FilesUtilities.ReadEmbeddedResource(
-            Assembly.GetExecutingAssembly(),
-            $"{nameof(BuildingBlocks)}.{nameof(SpectreConsole)}.Themes.{theme ?? "vscode_light"}.json"
-        );
-
-        var themeObject = JsonSerializer.Deserialize<ColorTheme>(jsonTheme, JsonObjectSerializer.Options);
+        var themeObject = ThemeLoader.LoadTheme(theme);
 
         var markdownParser = new MarkdownParser();
         var markdigMarkdownDocument = markdownParser.ToMarkdownDocument(

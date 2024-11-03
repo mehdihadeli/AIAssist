@@ -1,13 +1,17 @@
+using AIAssistant.Models.Options;
 using BuildingBlocks.Utils;
+using Microsoft.Extensions.Options;
 using TreeSitter.Bindings.CustomTypes.TreeParser;
 using TreeSitter.Bindings.Utilities;
 
 namespace AIAssistant.Services;
 
-public class CodeLoaderService
+public class CodeLoaderService(IOptions<CodeAssistOptions> codeAssistOptions)
 {
+    private readonly CodeAssistOptions _codeAssistOptions = codeAssistOptions.Value;
+
     public IReadOnlyList<DefinitionCaptureItem> LoadTreeSitterCodeCaptures(
-        string? contextWorkingDir,
+        string contextWorkingDir,
         IList<string>? extraFiles = null
     )
     {
@@ -22,11 +26,11 @@ public class CodeLoaderService
         return treeSitterCodeCaptures;
     }
 
-    private IList<CodeFile> ReadCodeFiles(string? contextWorkingDir, IList<string>? extraFiles)
+    private IList<CodeFile> ReadCodeFiles(string contextWorkingDir, IList<string>? extraFiles)
     {
         List<string> allFiles = new List<string>();
 
-        if (!string.IsNullOrEmpty(contextWorkingDir))
+        if (!string.IsNullOrEmpty(contextWorkingDir) && _codeAssistOptions.AutoContextEnabled)
         {
             allFiles.AddRange(Directory.GetFiles(contextWorkingDir, "*", SearchOption.AllDirectories));
         }
@@ -42,7 +46,8 @@ public class CodeLoaderService
         {
             if (FilesUtilities.IsIgnored(file))
                 continue;
-            var relativePath = Path.GetRelativePath(Directory.GetCurrentDirectory(), file);
+
+            var relativePath = Path.GetRelativePath(contextWorkingDir, file);
 
             var fileContent = File.ReadAllText(file);
 

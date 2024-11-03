@@ -1,38 +1,38 @@
-using AIAssistant.Contracts;
 using AIAssistant.Contracts.Diff;
 using AIAssistant.Models;
-using Spectre.Console;
+using BuildingBlocks.SpectreConsole.Contracts;
 
 namespace AIAssistant.Diff;
 
-public class CodeDiffUpdater : ICodeDiffUpdater
+public class CodeDiffUpdater(ISpectreConsoleUtilities spectreConsoleUtilities) : ICodeDiffUpdater
 {
-    public void ApplyChanges(IEnumerable<FileChange> changes)
+    public void ApplyChanges(IEnumerable<FileChange> changes, string contextWorkingDirectory)
     {
         foreach (var change in changes)
         {
-            var filePath = change.FilePath;
+            // Construct the absolute file path based on the context working directory
+            var filePath = Path.Combine(contextWorkingDirectory, change.FilePath);
 
             try
             {
                 // Handle file creation if it's a new file
                 if (change.IsNewFile)
                 {
-                    HandleNewFile(change);
+                    HandleNewFile(change, contextWorkingDirectory);
                     continue;
                 }
 
                 // If the file is marked for deletion
                 if (change.IsDeletedFile)
                 {
-                    HandleFileDeletion(change);
+                    HandleFileDeletion(filePath);
                     continue;
                 }
 
                 // If no line-level changes are specified, assume a full content update
                 if (IsFullContentUpdate(change))
                 {
-                    UpdateFullFileContent(change);
+                    UpdateFullFileContent(change, contextWorkingDirectory);
                 }
                 else
                 {
@@ -41,7 +41,7 @@ public class CodeDiffUpdater : ICodeDiffUpdater
             }
             catch (Exception ex)
             {
-                AnsiConsole.MarkupLine($"[red]Failed to update file {filePath}: {ex.Message}[/]");
+                spectreConsoleUtilities.Exception($"Failed to update file {filePath}", ex);
             }
         }
     }
@@ -53,48 +53,50 @@ public class CodeDiffUpdater : ICodeDiffUpdater
         return change.ChangeLines.All(line => line.IsAddition);
     }
 
-    private void HandleNewFile(FileChange change)
+    private void HandleNewFile(FileChange change, string contextWorkingDirectory)
     {
         var newFileLines = change.ChangeLines.Where(c => c.IsAddition).Select(c => c.Content).ToList();
 
-        var directoryPath = Path.GetDirectoryName(change.FilePath);
-        if (!string.IsNullOrEmpty(directoryPath))
+        var directoryPath = Path.GetDirectoryName(change.FilePath)!;
+        var fullDirectoryPath = Path.Combine(contextWorkingDirectory, directoryPath);
+        if (!string.IsNullOrEmpty(fullDirectoryPath))
         {
-            Directory.CreateDirectory(directoryPath);
+            Directory.CreateDirectory(fullDirectoryPath);
         }
 
-        File.WriteAllLines(change.FilePath, newFileLines);
-        AnsiConsole.MarkupLine($"[green]File created: {change.FilePath}[/]");
+        File.WriteAllLines(Path.Combine(contextWorkingDirectory, change.FilePath), newFileLines);
+        spectreConsoleUtilities.SuccessText($"File created: {change.FilePath}");
     }
 
-    private void HandleFileDeletion(FileChange change)
+    private void HandleFileDeletion(string filePath)
     {
-        if (File.Exists(change.FilePath))
+        if (File.Exists(filePath))
         {
-            File.Delete(change.FilePath);
-            AnsiConsole.MarkupLine($"[yellow]Deleted file: {change.FilePath}[/]");
+            File.Delete(filePath);
+            spectreConsoleUtilities.SuccessText($"File deleted: {filePath}");
         }
     }
 
-    private void UpdateFullFileContent(FileChange change)
+    private void UpdateFullFileContent(FileChange change, string contextWorkingDirectory)
     {
         var fullContent = change.ChangeLines.OrderBy(c => c.LineNumber).Select(c => c.Content).ToList();
+        var directoryPath = Path.GetDirectoryName(change.FilePath)!;
+        var fullDirectoryPath = Path.Combine(contextWorkingDirectory, directoryPath);
 
-        var directoryPath = Path.GetDirectoryName(change.FilePath);
-        if (!string.IsNullOrEmpty(directoryPath))
+        if (!string.IsNullOrEmpty(fullDirectoryPath))
         {
-            Directory.CreateDirectory(directoryPath);
+            Directory.CreateDirectory(fullDirectoryPath);
         }
 
-        File.WriteAllLines(change.FilePath, fullContent);
-        AnsiConsole.MarkupLine($"[green]Full file content updated: {change.FilePath}[/]");
+        File.WriteAllLines(Path.Combine(contextWorkingDirectory, change.FilePath), fullContent);
+        spectreConsoleUtilities.SuccessText($"File updated: {change.FilePath}");
     }
 
     private void UpdateLineBasedContent(FileChange change)
     {
         if (!File.Exists(change.FilePath))
         {
-            AnsiConsole.MarkupLine($"[red]File not found: {change.FilePath}[/]");
+            spectreConsoleUtilities.ErrorText($"File not found: {change.FilePath}");
             return;
         }
 
@@ -128,6 +130,6 @@ public class CodeDiffUpdater : ICodeDiffUpdater
 
         // Write the updated lines back to the file
         File.WriteAllLines(change.FilePath, lines);
-        AnsiConsole.MarkupLine($"[green]File updated: {change.FilePath}[/]");
+        spectreConsoleUtilities.SuccessText($"File updated: {change.FilePath}");
     }
 }

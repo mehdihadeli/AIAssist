@@ -11,8 +11,8 @@ public class CodeDiffManager(ICodeDiffParser codeDiffParser, ICodeDiffUpdater co
         return codeDiffParser.ExtractFileChanges(diff);
     }
 
-    public void ApplyChanges(IList<FileChange> changes)
+    public void ApplyChanges(IList<FileChange> changes, string contextWorkingDirectory)
     {
-        codeDiffUpdater.ApplyChanges(changes);
+        codeDiffUpdater.ApplyChanges(changes, contextWorkingDirectory);
     }
 }

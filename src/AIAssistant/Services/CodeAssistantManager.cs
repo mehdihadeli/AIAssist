@@ -1,4 +1,3 @@
-using AIAssistant.Contracts;
 using AIAssistant.Contracts.CodeAssist;
 using AIAssistant.Contracts.Diff;
 using AIAssistant.Models;
@@ -8,7 +7,7 @@ namespace AIAssistant.Services;
 
 public class CodeAssistantManager(ICodeAssist codeAssist, ICodeDiffManager diffManager) : ICodeAssistantManager
 {
-    public Task LoadCodeFiles(ChatSession chatSession, string? contextWorkingDirectory, IList<string>? codeFiles)
+    public Task LoadCodeFiles(ChatSession chatSession, string contextWorkingDirectory, IList<string>? codeFiles)
     {
         return codeAssist.LoadCodeFiles(chatSession, contextWorkingDirectory, codeFiles);
     }
@@ -25,8 +24,8 @@ public class CodeAssistantManager(ICodeAssist codeAssist, ICodeDiffManager diffM
         return codeBlocks;
     }
 
-    public void ApplyChangesToFiles(IList<FileChange> codeBlocks)
+    public void ApplyChangesToFiles(IList<FileChange> codeBlocks, string contextWorkingDirectory)
     {
-        diffManager.ApplyChanges(codeBlocks);
+        diffManager.ApplyChanges(codeBlocks, contextWorkingDirectory);
     }
 }

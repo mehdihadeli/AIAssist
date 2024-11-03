@@ -1,10 +1,9 @@
 using System.ComponentModel;
-using System.Text;
-using AIAssistant.Contracts;
 using AIAssistant.Contracts.CodeAssist;
 using AIAssistant.Models;
 using AIAssistant.Models.Options;
 using BuildingBlocks.SpectreConsole;
+using BuildingBlocks.SpectreConsole.Contracts;
 using Clients.Chat.Models;
 using Clients.Options;
 using Microsoft.Extensions.Options;
@@ -16,6 +15,8 @@ namespace AIAssistant.Commands;
 [Description("Provide code assistance or enhance existing code or add some new features to our application context.")]
 public class CodeAssistCommand(
     ICodeAssistantManager codeAssistantManager,
+    ISpectreConsoleUtilities spectreConsoleUtilities,
+    IAnsiConsole console,
     IOptions<CodeAssistOptions> options,
     IOptions<LLMOptions> llmOptions
 ) : AsyncCommand<CodeAssistCommand.Settings>
@@ -61,23 +62,87 @@ public class CodeAssistCommand(
         public CodeDiffType? CodeDiff { get; set; }
     }
 
+    static async IAsyncEnumerable<string> GetMarkdownLinesAsync2()
+    {
+        yield return "```csharp\nConsole.Write('Hello World');\n";
+        yield return "Console.Write('Hello World');\n";
+        yield return "Console.Write('Hello World');\n";
+        yield return "Console.Write('Hello World');\n";
+        yield return "Console.Write('Hello World');\n";
+        yield return "```";
+    }
+
     public override async Task<int> ExecuteAsync(CommandContext context, Settings settings)
     {
-        AnsiConsole.MarkupLine("[grey]code assist mode is activated![/]");
+        // var printer = new StreamPrinter(console, true);
+        // await printer.PrintAsync(GetMarkdownLinesAsync2());
 
-        AnsiConsole.MarkupLine("[grey]Please Ctrl+C to exit from code assistant mode.[/]");
-        AnsiConsole.Write(new Rule());
+        spectreConsoleUtilities.InformationText("Code assist mode is activated!");
+        spectreConsoleUtilities.InformationText("Please 'Ctrl+C' to exit from code assistant mode.");
+        console.Write(new Rule());
 
         // Handle Ctrl+C to exit gracefully
         Console.CancelKeyPress += (sender, eventArgs) =>
         {
             _running = false;
-
-            AnsiConsole.MarkupLine("[red]process interrupted. Exiting...[/]");
-
-            eventArgs.Cancel = true; // Prevent immediate termination
+            spectreConsoleUtilities.ErrorText("Process interrupted. Exiting...");
         };
 
+        SetupOptions(settings);
+
+        await AnsiConsole
+            .Console.Status()
+            .Spinner(Spinner.Known.Star)
+            .SpinnerStyle(Style.Parse("deepskyblue1 bold"))
+            .StartAsync(
+                "initializing...",
+                async _ =>
+                {
+                    var session = new ChatSession();
+
+                    await codeAssistantManager.LoadCodeFiles(session, _options.ContextWorkingDirectory, _options.Files);
+                }
+            );
+
+        // Run in a loop until Ctrl+C is pressed
+        while (_running)
+        {
+            //var userRequest = spectreConsoleUtilities.UserPrompt("Please enter your request to apply on your code base:");
+            var userRequest = "can you remove all comments in Add.cs file?";
+
+            var responseStreams = codeAssistantManager.QueryAsync(userRequest);
+            var responseContent = await CollectAndWriteStreamResponseAsync(responseStreams);
+
+            var changesCodeBlocks = codeAssistantManager.ParseResponseCodeBlocks(responseContent);
+
+            foreach (var changesCodeBlock in changesCodeBlocks)
+            {
+                var confirmation = spectreConsoleUtilities.ConfirmationPrompt(
+                    $"Do you accept the changes for `{changesCodeBlock.FilePath}`?"
+                );
+
+                if (confirmation)
+                {
+                    codeAssistantManager.ApplyChangesToFiles([changesCodeBlock], options.Value.ContextWorkingDirectory);
+
+                    spectreConsoleUtilities.SuccessText(
+                        $"changes applied successfully on '{changesCodeBlock.FilePath}' file!"
+                    );
+                }
+            }
+
+            var goNext = spectreConsoleUtilities.ConfirmationPrompt("Do you want to continue");
+            if (goNext)
+                break;
+        }
+
+        Console.ReadKey();
+
+        return 0;
+    }
+
+    private void SetupOptions(Settings settings)
+    {
         if (!string.IsNullOrEmpty(settings.ChatModel))
         {
             _llmOptions.ChatModel = settings.ChatModel;
@@ -94,7 +159,9 @@ public class CodeAssistCommand(
 
         if (settings.Files is not null && settings.Files.Any())
         {
-            _options.Files = settings.Files;
+            _options.Files = settings
+                .Files.Select(file => Path.Combine(_options.ContextWorkingDirectory, file))
+                .ToList();
         }
 
         if (settings.DisableAutoContext)
@@ -121,55 +188,6 @@ public class CodeAssistCommand(
                 _options.CodeAssistType = CodeAssistType.Summary;
                 break;
         }
-
-        await AnsiConsole
-            .Console.Status()
-            .Spinner(Spinner.Known.Star)
-            .SpinnerStyle(Style.Parse("deepskyblue1 bold"))
-            .StartAsync(
-                "initializing...",
-                async _ =>
-                {
-                    var session = new ChatSession();
-                    await codeAssistantManager.LoadCodeFiles(session, _options.ContextWorkingDirectory, _options.Files);
-                }
-            );
-
-        // Run in a loop until Ctrl+C is pressed
-        while (_running)
-        {
-            //var userRequest = ReadInput("Please enter your request to apply on your code base:");
-            var userRequest = "can you remove all comments in Add.cs file?";
-
-            var responseStreams = codeAssistantManager.QueryAsync(userRequest);
-            var responseContent = await CollectAndWriteStreamResponseAsync(responseStreams);
-
-            var changesCodeBlocks = codeAssistantManager.ParseResponseCodeBlocks(responseContent);
-
-            foreach (var changesCodeBlock in changesCodeBlocks)
-            {
-                var confirmation = AnsiConsole.Prompt(
-                    new TextPrompt<bool>(
-                        $"[lightsteelblue]Do you accept the changes for `{changesCodeBlock.FilePath}`?[/]"
-                    )
-                        .AddChoice(true)
-                        .AddChoice(false)
-                        .DefaultValue(true)
-                        .WithConverter(choice => choice ? "y" : "n")
-                );
-
-                if (confirmation)
-                {
-                    codeAssistantManager.ApplyChangesToFiles([changesCodeBlock]);
-                }
-            }
-
-            // Output result after processing
-            AnsiConsole.MarkupLine($"[seagreen1]Request '{userRequest}' processed successfully![/]");
-            Thread.Sleep(1000); // Delay before asking again
-        }
-
-        return 0;
     }
 
     private async Task<string> CollectAndWriteStreamResponseAsync(IAsyncEnumerable<string?> responseStreams)
@@ -178,24 +196,5 @@ public class CodeAssistCommand(
         var result = await printer.PrintAsync(responseStreams);
 
         return result;
-    }
-
-    private string ReadInput(string prompt)
-    {
-        string input;
-        while (true)
-        {
-            input = AnsiConsole.Prompt(
-                new TextPrompt<string>($"[lightsteelblue]{prompt}[/]").PromptStyle(new Style(Color.White))
-            );
-
-            // Check if the input is not null or empty
-            if (!string.IsNullOrWhiteSpace(input))
-            {
-                break; // Exit the loop when a valid input is given
-            }
-            AnsiConsole.WriteLine("Invalid input, please try again.");
-        }
-        return input;
     }
 }

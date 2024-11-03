@@ -18,7 +18,7 @@ public class EmbeddingCodeAssist(
 {
     private ChatSession _chatSession = default!;
 
-    public async Task LoadCodeFiles(ChatSession chatSession, string? contextWorkingDirectory, IList<string>? codeFiles)
+    public async Task LoadCodeFiles(ChatSession chatSession, string contextWorkingDirectory, IList<string>? codeFiles)
     {
         _chatSession = chatSession;
 

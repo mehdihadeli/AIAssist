@@ -7,7 +7,7 @@ namespace AIAssistant.Services.CodeAssistStrategies;
 public class TreeSitterCodeAssistSummary(CodeLoaderService codeLoaderService, ICodeFileMapService codeFileMapService)
     : ICodeAssist
 {
-    public Task LoadCodeFiles(ChatSession chatSession, string? contextWorkingDirectory, IList<string>? codeFiles)
+    public Task LoadCodeFiles(ChatSession chatSession, string contextWorkingDirectory, IList<string>? codeFiles)
     {
         var codeCaptures = codeLoaderService.LoadTreeSitterCodeCaptures(contextWorkingDirectory);
 

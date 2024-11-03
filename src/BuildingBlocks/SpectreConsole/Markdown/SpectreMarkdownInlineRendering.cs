@@ -104,13 +104,32 @@ internal sealed class SpectreMarkdownInlineRendering(ColorTheme colorTheme)
         return new Markup($" {sb} ", style);
     }
 
-    private Style CreateStyle(StyleBase styleBase)
+    private Style CreateStyle(StyleBase styleBase, Style? style = null)
+    {
+        style ??= Style.Parse(CreateStringStyle(styleBase));
+
+        return style;
+    }
+
+    private string CreateStringStyle(StyleBase styleBase)
     {
         var italic = styleBase.Italic ? "italic" : "default";
         var bold = styleBase.Bold ? "bold" : "default";
         var underline = styleBase.Underline ? "underline" : "default";
-        return Style.Parse(
-            $"{styleBase.Foreground ?? "default"} on {styleBase.Background ?? "default"} {italic} {bold} {underline}"
-        );
+
+        var style =
+            $"{
+                styleBase.Foreground ?? "default"
+            } on {
+                styleBase.Background ?? "default"
+            } {
+                italic
+            } {
+                bold
+            } {
+                underline
+            }";
+
+        return style;
     }
 }

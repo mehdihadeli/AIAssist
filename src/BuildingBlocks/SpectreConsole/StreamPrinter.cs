@@ -7,20 +7,14 @@ namespace BuildingBlocks.SpectreConsole;
 
 public class StreamPrinter(IAnsiConsole console, bool useMarkdown)
 {
-    private readonly StringBuilder _currentText = new();
+    private readonly StringBuilder _completeResponse = new();
 
     public async Task<string> PrintAsync(
         IAsyncEnumerable<string?> textStream,
         CancellationToken cancellationToken = default
     )
     {
-        var initialContent = new Panel(new Markup(string.Empty))
-        {
-            Border = BoxBorder.Rounded,
-            Header = new PanelHeader("Loading", Justify.Center),
-        };
-
-        var completeResponse = new StringBuilder();
+        var initialContent = new Panel(new Markup(string.Empty)) { Expand = true, Border = BoxBorder.None };
 
         var enumerator = textStream.GetAsyncEnumerator(cancellationToken);
         string? firstStream = string.Empty;
@@ -45,49 +39,48 @@ public class StreamPrinter(IAnsiConsole console, bool useMarkdown)
             .Live(initialContent)
             .AutoClear(false)
             .Overflow(VerticalOverflow.Ellipsis)
-            .Cropping(VerticalOverflowCropping.Bottom)
+            .Cropping(VerticalOverflowCropping.Top)
             .StartAsync(async ctx =>
             {
                 if (!string.IsNullOrEmpty(firstStream))
                 {
-                    UpdateLiveDisplay(firstStream, completeResponse, ctx);
+                    await UpdateLiveDisplay(firstStream, ctx);
 
                     while (await enumerator.MoveNextAsync())
                     {
                         var text = enumerator.Current;
-
-                        UpdateLiveDisplay(text, completeResponse, ctx);
-
-                        await Task.Delay(50, cancellationToken);
+                        await UpdateLiveDisplay(text, ctx);
                     }
                 }
             });
 
-        return completeResponse.ToString();
+        return _completeResponse.ToString();
     }
 
-    private void UpdateLiveDisplay(string? text, StringBuilder completeResponse, LiveDisplayContext ctx)
+    private Task UpdateLiveDisplay(string? text, LiveDisplayContext ctx)
     {
-        // Generate the print content
-        completeResponse.Append(text);
+        if (string.IsNullOrEmpty(text))
+            return Task.CompletedTask;
 
-        var printContent = Print(text);
-        // Update the live print with the current content
+        _completeResponse.Append(text);
+
+        var printContent = Print();
+
         ctx.UpdateTarget(printContent);
 
-        // Refresh the context to render the latest updates
         ctx.Refresh();
+
+        return Task.CompletedTask;
     }
 
-    private IRenderable Print(string? text)
+    private IRenderable Print()
     {
-        _currentText.Append(text);
-
+        // Choose between Markdown or standard rendering based on `useMarkdown`
         if (!useMarkdown)
         {
-            return new Markup(_currentText.ToString());
+            return new Panel(new Markup(_completeResponse.ToString())) { Expand = true, Border = BoxBorder.None };
         }
 
-        return new SpectreMarkdown(_currentText.ToString());
+        return new Panel(new SpectreMarkdown(_completeResponse.ToString())) { Expand = true, Border = BoxBorder.None };
     }
 }

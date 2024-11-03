@@ -71,13 +71,13 @@ internal class SpectreMarkdownBlockRendering : IDisposable
             case FencedCodeBlock fencedCodeBlock:
                 return RenderFenceBlock(fencedCodeBlock);
             case CodeBlock codeBlock:
-                var blockContents = codeBlock.Lines.ToString();
-                result = new Panel(blockContents)
-                {
-                    Header = new PanelHeader("code"),
-                    Expand = true,
-                    Border = BoxBorder.Rounded,
-                };
+                // var blockContents = codeBlock.Lines.ToString();
+                // result = new Panel(blockContents)
+                // {
+                //     Header = new PanelHeader("code"),
+                //     Expand = true,
+                //     Border = BoxBorder.Rounded,
+                // };
                 break;
             case ListBlock listBlock:
                 result = RenderListBlock(listBlock, CreateStyle(_colorTheme.ListStyle, style));
@@ -115,18 +115,6 @@ internal class SpectreMarkdownBlockRendering : IDisposable
             return new SpectreCompositeRenderable(new List<IRenderable> { result, new Text(Environment.NewLine) });
 
         return Text.Empty;
-    }
-
-    private Style CreateStyle(StyleBase styleBase, Style? style = null)
-    {
-        var italic = styleBase.Italic ? "italic" : "default";
-        var bold = styleBase.Bold ? "bold" : "default";
-        var underline = styleBase.Underline ? "underline" : "default";
-        style ??= Style.Parse(
-            $"{styleBase.Foreground ?? "default"} on {styleBase.Background ?? "default"} {italic} {bold} {underline}"
-        );
-
-        return style;
     }
 
     private IRenderable RenderFenceBlock(FencedCodeBlock fencedCodeBlock)
@@ -316,6 +304,35 @@ internal class SpectreMarkdownBlockRendering : IDisposable
 
         while (enumeratorB.MoveNext())
             yield return enumeratorB.Current;
+    }
+
+    private Style CreateStyle(StyleBase styleBase, Style? style = null)
+    {
+        style ??= Style.Parse(CreateStringStyle(styleBase));
+
+        return style;
+    }
+
+    private string CreateStringStyle(StyleBase styleBase)
+    {
+        var italic = styleBase.Italic ? "italic" : "default";
+        var bold = styleBase.Bold ? "bold" : "default";
+        var underline = styleBase.Underline ? "underline" : "default";
+
+        var style =
+            $"{
+                styleBase.Foreground ?? "default"
+            } on {
+                styleBase.Background ?? "default"
+            } {
+                italic
+            } {
+                bold
+            } {
+                underline
+            }";
+
+        return style;
     }
 
     public void Dispose()

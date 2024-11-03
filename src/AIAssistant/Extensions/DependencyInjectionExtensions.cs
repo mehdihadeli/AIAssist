@@ -13,6 +13,8 @@ using AIAssistant.Services.CodeAssistStrategies;
 using BuildingBlocks.Extensions;
 using BuildingBlocks.InMemoryVectorDatabase;
 using BuildingBlocks.Serialization;
+using BuildingBlocks.SpectreConsole;
+using BuildingBlocks.SpectreConsole.Contracts;
 using Clients;
 using Clients.Anthropic;
 using Clients.Contracts;
@@ -35,10 +37,9 @@ public static class DependencyInjectionExtensions
 {
     public static HostApplicationBuilder AddDependencies(this HostApplicationBuilder builder)
     {
-        builder.Services.AddSingleton(AnsiConsole.Console);
+        AddSpectreConsoleDependencies(builder);
 
-        builder.Services.AddSingleton<ICodeFileMapService, CodeFileMapService>();
-        builder.Services.AddSingleton<CodeLoaderService>();
+        AddCodeLoaderDependencies(builder);
 
         AddResiliencyDependencies(builder);
 
@@ -61,6 +62,23 @@ public static class DependencyInjectionExtensions
         AddCommandsDependencies(builder);
 
         return builder;
+    }
+
+    private static void AddSpectreConsoleDependencies(HostApplicationBuilder builder)
+    {
+        builder.Services.AddSingleton<IAnsiConsole>(AnsiConsole.Console);
+        builder.Services.AddSingleton<ISpectreConsoleUtilities>(sp =>
+        {
+            var appOptions = sp.GetRequiredService<IOptions<AppOptions>>();
+            var console = sp.GetRequiredService<IAnsiConsole>();
+            return new SpectreConsoleUtilities(ThemeLoader.LoadTheme(appOptions.Value.ThemeName)!, console);
+        });
+    }
+
+    private static void AddCodeLoaderDependencies(HostApplicationBuilder builder)
+    {
+        builder.Services.AddSingleton<ICodeFileMapService, CodeFileMapService>();
+        builder.Services.AddSingleton<CodeLoaderService>();
     }
 
     private static void AddResiliencyDependencies(HostApplicationBuilder builder)
@@ -179,7 +197,7 @@ public static class DependencyInjectionExtensions
     private static void AddOptionsDependencies(HostApplicationBuilder builder)
     {
         builder.AddConfigurationOptions<CodeAssistOptions>(nameof(CodeAssistOptions));
-        builder.AddConfigurationOptions<LogOptions>(nameof(LogOptions));
+        builder.AddConfigurationOptions<AppOptions>(nameof(AppOptions));
         builder.AddConfigurationOptions<PolicyOptions>(nameof(PolicyOptions));
     }
 

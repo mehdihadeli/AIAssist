@@ -12,6 +12,7 @@ using Clients.Options;
 using Humanizer;
 using Microsoft.Extensions.Options;
 using Polly.Wrap;
+using Spectre.Console;
 
 namespace Clients.Ollama;
 
@@ -77,6 +78,22 @@ public class OllamaClient(
         [EnumeratorCancellation] CancellationToken cancellationToken = default
     )
     {
+        AnsiConsole.Write(
+            new Text(
+                chatItems.SingleOrDefault(x => x.Role == RoleType.User)?.Prompt,
+                new Style(foreground: Color.Green)
+            )
+        );
+        AnsiConsole.WriteLine();
+        AnsiConsole.Write(new Rule());
+        AnsiConsole.Write(
+            new Text(
+                chatItems.SingleOrDefault(x => x.Role == RoleType.System).Prompt,
+                new Style(foreground: Color.LightSkyBlue3_1)
+            )
+        );
+        AnsiConsole.Write(new Rule());
+
         var requestBody = new
         {
             model = _options.ChatModel,

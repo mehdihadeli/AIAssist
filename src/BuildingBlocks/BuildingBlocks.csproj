@@ -14,7 +14,6 @@
         <PackageReference Include="Serilog.AspNetCore"/>
         <PackageReference Include="Serilog.Extensions.Hosting"/>
         <PackageReference Include="Serilog.Sinks.Console"/>
-        <PackageReference Include="Serilog.Sinks.Seq"/>
         <PackageReference Include="Spectre.Console"/>
         <PackageReference Include="Spectre.Console.Cli"/>
         <PackageReference Include="Microsoft.ML.Tokenizers"/>

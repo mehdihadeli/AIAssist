@@ -1,10 +1,22 @@
 {
   "console": {
     "prompt": {
-      "foreground": ""
+      "foreground": "#bd93f9"  
     },
-    "text":{
-      "foreground": ""
+    "text": {
+      "foreground": "#f8f8f2"  
+    },
+    "information": {
+      "foreground": "#bd93f9"  
+    },
+    "success": {
+      "foreground": "#50fa7b"
+    },
+    "confirmation": {
+      "foreground": "#8be9fd" 
+    },
+    "error": {
+      "foreground": "#ff5555"
     }
   },
   "code": {

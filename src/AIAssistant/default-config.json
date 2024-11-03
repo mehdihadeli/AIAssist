@@ -1,8 +1,11 @@
 {
-  "Logging": {
-    "LogLevel": {
+  "Serilog": {
+    "MinimumLevel": {
       "Default": "Warning",
-      "System.Net.Http": "Warning" 
+      "Override": {
+        "Microsoft": "Warning",
+        "System": "Warning"
+      }
     }
   }
 }
