@@ -1,26 +1,41 @@
 namespace AIAssistant.Models;
 
-public class FileChange(string filePath, bool isNewFile = false, bool isDeletedFile = false)
+public class FileChange
 {
-    public string FilePath { get; set; } = filePath;
-    public bool IsNewFile { get; set; } = isNewFile;
-    public bool IsDeletedFile { get; set; } = isDeletedFile;
-    public IList<FileChangeLine> ChangeLines { get; set; } = new List<FileChangeLine>();
+    public string FilePath { get; set; }
+    public ChangeType FileChangeType { get; set; }
+    public IList<FileChangeLine> ChangeLines { get; set; }
 
-    // Constructor for full content updates (like FileSnipped diff)
-    public FileChange(string filePath, string fileContent)
-        : this(filePath, true, false)
+    public FileChange(string filePath, ChangeType fileChangeType, IList<FileChangeLine>? changeLines = null)
     {
+        FilePath = filePath;
+        FileChangeType = fileChangeType;
+        ChangeLines = changeLines ?? new List<FileChangeLine>();
+    }
+
+    // Constructor for new or deleted files
+    public FileChange(string filePath, string fileContent, ChangeType changeType)
+    {
+        FilePath = filePath;
+        FileChangeType = changeType;
+
         ChangeLines = fileContent
             .Split('\n')
-            .Select((line, index) => new FileChangeLine(index + 1, line, true))
+            .Select((line, index) => new FileChangeLine(index + 1, line, changeType))
             .ToList();
     }
 }
 
-public class FileChangeLine(int lineNumber, string content, bool isAddition)
+public class FileChangeLine(int lineNumber, string content, ChangeType lineChangeType)
 {
     public int LineNumber { get; set; } = lineNumber;
     public string Content { get; set; } = content;
-    public bool IsAddition { get; set; } = isAddition;
+    public ChangeType LineChangeType { get; set; } = lineChangeType;
+}
+
+public enum ChangeType
+{
+    Add,
+    Update,
+    Delete,
 }

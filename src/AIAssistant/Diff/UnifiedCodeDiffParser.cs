@@ -1,5 +1,4 @@
 using System.Text.RegularExpressions;
-using AIAssistant.Contracts;
 using AIAssistant.Contracts.Diff;
 using AIAssistant.Models;
 
@@ -7,7 +6,7 @@ namespace AIAssistant.Diff;
 
 public class UnifiedCodeDiffParser : ICodeDiffParser
 {
-    private static readonly Regex _diffHeaderRegex = new Regex(@"@@ -(\d+),?(\d+)? \+(\d+),?(\d+)? @@");
+    private static readonly Regex _diffHeaderRegex = new(@"@@ -(\d+),?(\d+)? \+(\d+),?(\d+)? @@");
 
     public IList<FileChange> ExtractFileChanges(string diff)
     {
@@ -43,24 +42,27 @@ public class UnifiedCodeDiffParser : ICodeDiffParser
             // Match the file header
             if (line.StartsWith("--- "))
             {
+                // If we already have an ongoing file change, add it to the list
                 if (currentFileChange != null)
                 {
                     fileChanges.Add(currentFileChange);
                 }
-                var filePath = line.Substring(4).Trim();
 
+                var filePath = line.Substring(4).Trim();
                 if (filePath == "/dev/null")
                 {
-                    currentFileChange = new FileChange(lines[i + 1].Substring(4).Trim()) { IsNewFile = true };
+                    // Treat as a deleted file if path is /dev/null
+                    currentFileChange = new FileChange(lines[i + 1].Substring(4).Trim(), ChangeType.Delete);
                 }
                 else
                 {
-                    currentFileChange = new FileChange(filePath);
+                    // New instance for a standard file path
+                    currentFileChange = new FileChange(filePath, ChangeType.Update);
                 }
             }
             else if (line.StartsWith("+++ "))
             {
-                continue; // Skip the "+++" line as it's handled in the previous step
+                continue; // Skip the "+++" line as it is part of the file header
             }
             // Match the diff headers with line numbers
             else if (line.StartsWith("@@"))
@@ -76,18 +78,27 @@ public class UnifiedCodeDiffParser : ICodeDiffParser
             else if (line.StartsWith("-"))
             {
                 currentFileChange?.ChangeLines.Add(
-                    new FileChangeLine(currentLineNumberOriginal++, line.Substring(1).Trim(), false)
+                    new FileChangeLine(currentLineNumberOriginal++, line.Substring(1).Trim(), ChangeType.Delete)
                 );
             }
             // Handle added lines
             else if (line.StartsWith("+"))
             {
                 currentFileChange?.ChangeLines.Add(
-                    new FileChangeLine(currentLineNumberNew++, line.Substring(1).Trim(), true)
+                    new FileChangeLine(currentLineNumberNew++, line.Substring(1).Trim(), ChangeType.Add)
                 );
+            }
+            // Handle unchanged lines, which are usually part of the context
+            else
+            {
+                currentFileChange?.ChangeLines.Add(
+                    new FileChangeLine(currentLineNumberOriginal++, line, ChangeType.Update)
+                );
+                currentLineNumberNew++; // Increment both line counters as line is unchanged
             }
         }
 
+        // Add the final file change, if any, to the list
         if (currentFileChange != null)
         {
             fileChanges.Add(currentFileChange);

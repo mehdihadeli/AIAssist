@@ -124,19 +124,13 @@ public class CodeAssistCommand(
                 if (confirmation)
                 {
                     codeAssistantManager.ApplyChangesToFiles([changesCodeBlock], options.Value.ContextWorkingDirectory);
-
-                    spectreConsoleUtilities.SuccessText(
-                        $"changes applied successfully on '{changesCodeBlock.FilePath}' file!"
-                    );
                 }
             }
 
-            var goNext = spectreConsoleUtilities.ConfirmationPrompt("Do you want to continue");
+            var goNext = spectreConsoleUtilities.ConfirmationPrompt("Do you want to continue?");
             if (goNext)
                 break;
         }
-
-        Console.ReadKey();
 
         return 0;
     }

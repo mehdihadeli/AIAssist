@@ -21,8 +21,7 @@ public class MergeConflictCodeDiffParser : ICodeDiffParser
         bool isNewVersion = false;
         int currentLineNumber = 1;
         int originalLineNumber = 1;
-        bool isNewFile = false;
-        bool isDeletedFile = false;
+        ChangeType fileChangeType = ChangeType.Update;
 
         var lines = diff.Split('\n');
 
@@ -30,23 +29,19 @@ public class MergeConflictCodeDiffParser : ICodeDiffParser
         {
             var trimmedLine = line.Trim();
 
-            // Detect the file path line
             if (_filePathRegex.IsMatch(trimmedLine))
             {
                 // Save the previous file change if applicable
                 if (currentFilePath != null && changeLines.Count != 0)
                 {
-                    changes.Add(
-                        new FileChange(currentFilePath, isNewFile, isDeletedFile) { ChangeLines = changeLines.ToList() }
-                    );
+                    changes.Add(new FileChange(currentFilePath, fileChangeType, changeLines.ToList()));
                     changeLines.Clear();
                 }
 
                 currentFilePath = trimmedLine;
                 currentLineNumber = 1;
                 originalLineNumber = 1;
-                isNewFile = false;
-                isDeletedFile = false;
+                fileChangeType = ChangeType.Update;
                 continue;
             }
 
@@ -55,6 +50,7 @@ public class MergeConflictCodeDiffParser : ICodeDiffParser
             {
                 isPreviousVersion = true;
                 isNewVersion = false;
+                fileChangeType = ChangeType.Delete; // Considered a deletion in conflicts
                 continue;
             }
 
@@ -63,6 +59,7 @@ public class MergeConflictCodeDiffParser : ICodeDiffParser
             {
                 isPreviousVersion = false;
                 isNewVersion = true;
+                fileChangeType = ChangeType.Add; // Considered an addition in conflicts
                 continue;
             }
 
@@ -76,24 +73,18 @@ public class MergeConflictCodeDiffParser : ICodeDiffParser
             // Accumulate lines as previous or new version changes
             if (isPreviousVersion)
             {
-                // Track if it's a deleted file
-                isDeletedFile = true;
-                changeLines.Add(new FileChangeLine(originalLineNumber++, trimmedLine, isAddition: false));
+                changeLines.Add(new FileChangeLine(originalLineNumber++, trimmedLine, ChangeType.Delete));
             }
             else if (isNewVersion)
             {
-                // Track if it's a new file
-                isNewFile = true;
-                changeLines.Add(new FileChangeLine(currentLineNumber++, trimmedLine, isAddition: true));
+                changeLines.Add(new FileChangeLine(currentLineNumber++, trimmedLine, ChangeType.Add));
             }
         }
 
         // Save the last file change if applicable
         if (currentFilePath != null && changeLines.Count != 0)
         {
-            changes.Add(
-                new FileChange(currentFilePath, isNewFile, isDeletedFile) { ChangeLines = changeLines.ToList() }
-            );
+            changes.Add(new FileChange(currentFilePath, fileChangeType, changeLines.ToList()));
         }
 
         return changes;

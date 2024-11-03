@@ -10,33 +10,32 @@ public class CodeDiffUpdater(ISpectreConsoleUtilities spectreConsoleUtilities) :
     {
         foreach (var change in changes)
         {
-            // Construct the absolute file path based on the context working directory
             var filePath = Path.Combine(contextWorkingDirectory, change.FilePath);
 
             try
             {
                 // Handle file creation if it's a new file
-                if (change.IsNewFile)
+                if (change.FileChangeType == ChangeType.Add)
                 {
                     HandleNewFile(change, contextWorkingDirectory);
                     continue;
                 }
 
-                // If the file is marked for deletion
-                if (change.IsDeletedFile)
+                // Handle file deletion
+                if (change.FileChangeType == ChangeType.Delete)
                 {
                     HandleFileDeletion(filePath);
                     continue;
                 }
 
-                // If no line-level changes are specified, assume a full content update
+                // Handle file updates based on line-level changes
                 if (IsFullContentUpdate(change))
                 {
                     UpdateFullFileContent(change, contextWorkingDirectory);
                 }
                 else
                 {
-                    UpdateLineBasedContent(change);
+                    UpdateLineBasedContent(change, filePath);
                 }
             }
             catch (Exception ex)
@@ -48,17 +47,22 @@ public class CodeDiffUpdater(ISpectreConsoleUtilities spectreConsoleUtilities) :
 
     private bool IsFullContentUpdate(FileChange change)
     {
-        // If the changes are continuous or cover the whole file content, consider it a full content update.
-        // Here, we assume if ChangeLines has additions for every line, it's a full update.
-        return change.ChangeLines.All(line => line.IsAddition);
+        // If all lines are additions or replacements, treat it as a full content update.
+        return change.ChangeLines.All(line =>
+            line.LineChangeType == ChangeType.Add || line.LineChangeType == ChangeType.Update
+        );
     }
 
     private void HandleNewFile(FileChange change, string contextWorkingDirectory)
     {
-        var newFileLines = change.ChangeLines.Where(c => c.IsAddition).Select(c => c.Content).ToList();
+        var newFileLines = change
+            .ChangeLines.Where(line => line.LineChangeType == ChangeType.Add)
+            .Select(line => line.Content)
+            .ToList();
 
         var directoryPath = Path.GetDirectoryName(change.FilePath)!;
         var fullDirectoryPath = Path.Combine(contextWorkingDirectory, directoryPath);
+
         if (!string.IsNullOrEmpty(fullDirectoryPath))
         {
             Directory.CreateDirectory(fullDirectoryPath);
@@ -79,7 +83,8 @@ public class CodeDiffUpdater(ISpectreConsoleUtilities spectreConsoleUtilities) :
 
     private void UpdateFullFileContent(FileChange change, string contextWorkingDirectory)
     {
-        var fullContent = change.ChangeLines.OrderBy(c => c.LineNumber).Select(c => c.Content).ToList();
+        var fullContent = change.ChangeLines.OrderBy(line => line.LineNumber).Select(line => line.Content).ToList();
+
         var directoryPath = Path.GetDirectoryName(change.FilePath)!;
         var fullDirectoryPath = Path.Combine(contextWorkingDirectory, directoryPath);
 
@@ -92,44 +97,50 @@ public class CodeDiffUpdater(ISpectreConsoleUtilities spectreConsoleUtilities) :
         spectreConsoleUtilities.SuccessText($"File updated: {change.FilePath}");
     }
 
-    private void UpdateLineBasedContent(FileChange change)
+    private void UpdateLineBasedContent(FileChange change, string filePath)
     {
-        if (!File.Exists(change.FilePath))
+        if (!File.Exists(filePath))
         {
-            spectreConsoleUtilities.ErrorText($"File not found: {change.FilePath}");
+            spectreConsoleUtilities.ErrorText($"File not found: {filePath}");
             return;
         }
 
-        var lines = File.ReadAllLines(change.FilePath).ToList();
+        var lines = File.ReadAllLines(filePath).ToList();
 
         // Process changes in reverse order for proper line indexing
-        foreach (var lineChange in change.ChangeLines.OrderByDescending(c => c.LineNumber))
+        foreach (var lineChange in change.ChangeLines.OrderByDescending(line => line.LineNumber))
         {
-            if (lineChange.IsAddition)
+            switch (lineChange.LineChangeType)
             {
-                // Insert the new line
-                if (lineChange.LineNumber <= lines.Count)
-                {
-                    lines.Insert(lineChange.LineNumber - 1, lineChange.Content);
-                }
-                else
-                {
-                    // If the line number is beyond the file, add it at the end
-                    lines.Add(lineChange.Content);
-                }
-            }
-            else
-            {
-                // Remove the line if it exists
-                if (lineChange.LineNumber - 1 < lines.Count)
-                {
-                    lines.RemoveAt(lineChange.LineNumber - 1);
-                }
+                case ChangeType.Add:
+                    if (lineChange.LineNumber <= lines.Count)
+                    {
+                        lines.Insert(lineChange.LineNumber - 1, lineChange.Content);
+                    }
+                    else
+                    {
+                        lines.Add(lineChange.Content);
+                    }
+                    break;
+
+                case ChangeType.Delete:
+                    if (lineChange.LineNumber - 1 < lines.Count)
+                    {
+                        lines.RemoveAt(lineChange.LineNumber - 1);
+                    }
+                    break;
+
+                case ChangeType.Update:
+                    if (lineChange.LineNumber - 1 < lines.Count)
+                    {
+                        lines[lineChange.LineNumber - 1] = lineChange.Content;
+                    }
+                    break;
             }
         }
 
         // Write the updated lines back to the file
-        File.WriteAllLines(change.FilePath, lines);
+        File.WriteAllLines(filePath, lines);
         spectreConsoleUtilities.SuccessText($"File updated: {change.FilePath}");
     }
 }

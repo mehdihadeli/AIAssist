@@ -7,7 +7,6 @@ namespace AIAssistant.Diff;
 
 public class CodeBlockCodeDiffParser : ICodeDiffParser
 {
-    // regex to match file paths with typical extensions like .cs, .js, etc.
     private static readonly Regex _filePathRegex = new(@"^[\w\-./\\]+?\.[\w]+$", RegexOptions.Compiled);
     private static readonly Regex _codeFenceStartRegex = new(@"^```csharp$", RegexOptions.Compiled);
     private static readonly Regex _codeFenceEndRegex = new(@"^```$", RegexOptions.Compiled);
@@ -25,40 +24,34 @@ public class CodeBlockCodeDiffParser : ICodeDiffParser
         {
             var trimmedLine = line.Trim();
 
-            // Detect the start of a new file path
             if (!insideCodeBlock && _filePathRegex.IsMatch(trimmedLine) && !trimmedLine.StartsWith("```"))
             {
                 if (currentFilePath != null)
                 {
-                    // Save the previous code block before starting a new one
-                    fileChanges.Add(new FileChange(currentFilePath, string.Join("\n", currentFileContent)));
+                    fileChanges.Add(
+                        new FileChange(currentFilePath, string.Join("\n", currentFileContent), ChangeType.Update)
+                    );
                 }
 
-                // Start a new file block
                 currentFilePath = trimmedLine;
                 currentFileContent.Clear();
             }
-            // Detect the start of a code block
             else if (_codeFenceStartRegex.IsMatch(trimmedLine))
             {
                 insideCodeBlock = true;
             }
-            // Detect the end of a code block
             else if (_codeFenceEndRegex.IsMatch(trimmedLine) && !string.IsNullOrEmpty(currentFilePath))
             {
                 if (insideCodeBlock)
                 {
                     insideCodeBlock = false;
-
-                    // Save the current code block
-                    fileChanges.Add(new FileChange(currentFilePath, string.Join("\n", currentFileContent)));
-
-                    // Reset for the next potential block
+                    fileChanges.Add(
+                        new FileChange(currentFilePath, string.Join("\n", currentFileContent), ChangeType.Update)
+                    );
                     currentFilePath = null;
                     currentFileContent.Clear();
                 }
             }
-            // Accumulate lines inside a code block
             else if (insideCodeBlock)
             {
                 currentFileContent.Add(line);
