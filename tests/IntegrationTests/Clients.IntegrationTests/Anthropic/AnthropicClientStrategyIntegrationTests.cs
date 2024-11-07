@@ -1,5 +1,5 @@
-using Clients.Chat.Models;
 using Clients.Contracts;
+using Clients.Dtos;
 using Clients.Models;
 using Clients.Options;
 using FluentAssertions;
@@ -38,30 +38,32 @@ public class AnthropicClientStrategyIntegrationTests(ApplicationFixture applicat
     public async Task GetCompletionAsync_ShouldReturnCompletion_WhenResponseIsSuccessful()
     {
         // Arrange
-        var chatItems = new List<ChatItem> { new(Role: RoleType.User, Prompt: "Hello, Claude!") };
+        var chatItems = new List<ChatCompletionRequestItem> { new(Role: RoleType.User, Prompt: "Hello, Claude!") };
 
         // Act
-        var result = await _illmClient.GetCompletionAsync(chatItems);
+        var result = await _illmClient.GetCompletionAsync(new ChatCompletionRequest(chatItems));
 
         // Assert
-        result.Should().NotBeNullOrEmpty();
+        result.Should().NotBeNull();
+        result?.ChatResponse.Should().NotBeNullOrEmpty();
     }
 
     [Fact]
     public async Task GetCompletionStreamAsync_ShouldReturnStreamedMessages()
     {
         // Arrange
-        var chatItems = new List<ChatItem> { new(Role: RoleType.User, Prompt: "Say hello") };
+        var chatItems = new List<ChatCompletionRequestItem> { new(Role: RoleType.User, Prompt: "Say hello") };
 
         var cancellationToken = CancellationToken.None;
 
         // Act
         var messages = await _illmClient
-            .GetCompletionStreamAsync(chatItems, cancellationToken)
+            .GetCompletionStreamAsync(new ChatCompletionRequest(chatItems), cancellationToken)
             .ToListAsync(cancellationToken: cancellationToken);
 
         // Assert
         messages.Should().NotBeNullOrEmpty();
-        messages[0].Should().NotBeNullOrEmpty();
+        messages.Should().HaveCountGreaterThan(0);
+        messages.First()?.ChatResponse.Should().NotBeNullOrEmpty();
     }
 }

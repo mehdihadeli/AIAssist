@@ -1,4 +1,14 @@
 {
+  "AppOptions": {
+    "ThemeName": "dracula",
+    "PrintCostEnabled": true
+  },
+  "LLMOptions": {
+    "BaseAddress": "http://localhost:11434",
+    "ApiKey": "your-api-key-here",
+    "ChatModel": "ollama/llama3.1",
+    "EmbeddingsModel": "ollama/nomic-embed-text"
+  },
   "Serilog": {
     "MinimumLevel": {
       "Default": "Warning",

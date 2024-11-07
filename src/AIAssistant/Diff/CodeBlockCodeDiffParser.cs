@@ -29,7 +29,7 @@ public class CodeBlockCodeDiffParser : ICodeDiffParser
                 if (currentFilePath != null)
                 {
                     fileChanges.Add(
-                        new FileChange(currentFilePath, string.Join("\n", currentFileContent), ChangeType.Update)
+                        new FileChange(currentFilePath, string.Join("\n", currentFileContent), CodeChangeType.Update)
                     );
                 }
 
@@ -46,7 +46,7 @@ public class CodeBlockCodeDiffParser : ICodeDiffParser
                 {
                     insideCodeBlock = false;
                     fileChanges.Add(
-                        new FileChange(currentFilePath, string.Join("\n", currentFileContent), ChangeType.Update)
+                        new FileChange(currentFilePath, string.Join("\n", currentFileContent), CodeChangeType.Update)
                     );
                     currentFilePath = null;
                     currentFileContent.Clear();

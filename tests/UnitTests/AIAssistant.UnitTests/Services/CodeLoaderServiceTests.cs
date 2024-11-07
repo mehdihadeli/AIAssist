@@ -1,5 +1,7 @@
+using AIAssistant.Models.Options;
 using AIAssistant.Services;
 using FluentAssertions;
+using Microsoft.Extensions.Options;
 
 namespace AIAssistant.UnitTests.Services;
 
@@ -7,6 +9,7 @@ public class CodeLoaderServiceTests : IAsyncLifetime
 {
     private string _appWorkingDir = default!;
     private string _originalWorkingDir = default!;
+    private IOptions<AppOptions> _codeAssistOptions;
 
     public async Task InitializeAsync()
     {
@@ -17,6 +20,8 @@ public class CodeLoaderServiceTests : IAsyncLifetime
 
         // Change the working directory to the new test directory
         Directory.SetCurrentDirectory(_appWorkingDir);
+
+        _codeAssistOptions = Options.Create(new AppOptions());
 
         await Task.CompletedTask;
     }
@@ -31,7 +36,7 @@ public class CodeLoaderServiceTests : IAsyncLifetime
     public void LoadApplicationCodes_ShouldLoadAllValidFiles()
     {
         // Arrange
-        var service = new CodeLoaderService();
+        var service = new CodeLoaderService(_codeAssistOptions);
 
         // Act
         var result = service.LoadTreeSitterCodeCaptures(_appWorkingDir).ToList();
@@ -51,7 +56,7 @@ public class CodeLoaderServiceTests : IAsyncLifetime
     public void LoadApplicationCodes_ShouldIgnoreIgnoredFiles()
     {
         // Arrange
-        var service = new CodeLoaderService();
+        var service = new CodeLoaderService(_codeAssistOptions);
 
         // Act
         var result = service.LoadTreeSitterCodeCaptures(_appWorkingDir).ToList();
@@ -66,7 +71,7 @@ public class CodeLoaderServiceTests : IAsyncLifetime
     public void LoadApplicationCodes_ShouldReturnEmpty_WhenNoValidFilesExist()
     {
         // Arrange
-        var service = new CodeLoaderService();
+        var service = new CodeLoaderService(_codeAssistOptions);
 
         // Act
         var result = service.LoadTreeSitterCodeCaptures(string.Empty).ToList();

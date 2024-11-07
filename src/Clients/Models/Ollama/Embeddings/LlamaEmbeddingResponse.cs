@@ -2,8 +2,8 @@ using System.Text.Json.Serialization;
 
 namespace Clients.Models.Ollama.Embeddings;
 
-public class LlamaEmbeddingResponse
+public class LlamaEmbeddingResponse : OllamaResponseBase
 {
-    [JsonPropertyName("data")]
-    public IList<LlamaEmbeddingData> Data { get; set; } = new List<LlamaEmbeddingData>();
+    [JsonPropertyName("embeddings")]
+    public IList<IList<double>> Embeddings { get; set; } = default!;
 }

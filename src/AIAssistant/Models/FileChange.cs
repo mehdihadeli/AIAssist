@@ -3,37 +3,37 @@ namespace AIAssistant.Models;
 public class FileChange
 {
     public string FilePath { get; set; }
-    public ChangeType FileChangeType { get; set; }
+    public CodeChangeType FileCodeChangeType { get; set; }
     public IList<FileChangeLine> ChangeLines { get; set; }
 
-    public FileChange(string filePath, ChangeType fileChangeType, IList<FileChangeLine>? changeLines = null)
+    public FileChange(string filePath, CodeChangeType fileCodeChangeType, IList<FileChangeLine>? changeLines = null)
     {
         FilePath = filePath;
-        FileChangeType = fileChangeType;
+        FileCodeChangeType = fileCodeChangeType;
         ChangeLines = changeLines ?? new List<FileChangeLine>();
     }
 
     // Constructor for new or deleted files
-    public FileChange(string filePath, string fileContent, ChangeType changeType)
+    public FileChange(string filePath, string fileContent, CodeChangeType codeChangeType)
     {
         FilePath = filePath;
-        FileChangeType = changeType;
+        FileCodeChangeType = codeChangeType;
 
         ChangeLines = fileContent
             .Split('\n')
-            .Select((line, index) => new FileChangeLine(index + 1, line, changeType))
+            .Select((line, index) => new FileChangeLine(index + 1, line, codeChangeType))
             .ToList();
     }
 }
 
-public class FileChangeLine(int lineNumber, string content, ChangeType lineChangeType)
+public class FileChangeLine(int lineNumber, string content, CodeChangeType lineCodeChangeType)
 {
     public int LineNumber { get; set; } = lineNumber;
     public string Content { get; set; } = content;
-    public ChangeType LineChangeType { get; set; } = lineChangeType;
+    public CodeChangeType LineCodeChangeType { get; set; } = lineCodeChangeType;
 }
 
-public enum ChangeType
+public enum CodeChangeType
 {
     Add,
     Update,

@@ -1,6 +1,7 @@
 using System.ComponentModel;
 using AIAssistant.Models;
 using Clients;
+using Clients.Models;
 using Spectre.Console;
 using Spectre.Console.Cli;
 
@@ -26,7 +27,7 @@ public class CodeExplanationCommand : Command<CodeExplanationCommand.Settings>
 
         [CommandOption("-t|--code-assist-type <DiffTool>")]
         [Description("[grey] the type of code assist. it can be `embedding` or `summary`.[/].")]
-        [DefaultValue(Models.CodeAssistType.Embedding)]
+        [DefaultValue(CodeAssistType.Embedding)]
         public CodeAssistType CodeAssistType { get; set; }
 
         [CommandOption("-e|--embedding-model <Embedding-Chat-Model>")]

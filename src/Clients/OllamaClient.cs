@@ -1,200 +1,267 @@
+using System.Diagnostics.CodeAnalysis;
+using System.Net;
 using System.Net.Http.Json;
 using System.Runtime.CompilerServices;
 using System.Text.Json;
+using BuildingBlocks.LLM;
 using BuildingBlocks.Serialization;
-using Clients.Chat.Models;
+using BuildingBlocks.Utils;
 using Clients.Contracts;
+using Clients.Dtos;
 using Clients.Models;
+using Clients.Models.Ollama;
 using Clients.Models.Ollama.Completion;
 using Clients.Models.Ollama.Embeddings;
-using Clients.Models.OpenAI.Completion;
 using Clients.Options;
 using Humanizer;
 using Microsoft.Extensions.Options;
 using Polly.Wrap;
-using Spectre.Console;
 
-namespace Clients.Ollama;
+namespace Clients;
 
 public class OllamaClient(
     IHttpClientFactory httpClientFactory,
     IOptions<LLMOptions> options,
+    ICacheModels cacheModels,
+    ITokenizer tokenizer,
     AsyncPolicyWrap<HttpResponseMessage> combinedPolicy
 ) : ILLMClient
 {
-    private readonly LLMOptions _options = options.Value;
+    private readonly Model _chatModel = cacheModels.GetModel(options.Value.ChatModel);
+    private readonly Model _embeddingModel = cacheModels.GetModel(options.Value.EmbeddingsModel);
 
-    public async Task<string?> GetCompletionAsync(
-        IReadOnlyList<ChatItem> chatItems,
+    public async Task<ChatCompletionResponse?> GetCompletionAsync(
+        ChatCompletionRequest chatCompletionRequest,
         CancellationToken cancellationToken = default
     )
     {
-        // https://platform.openai.com/docs/guides/text-generation/building-prompts
+        await ValidateMaxInputToken(chatCompletionRequest);
+
+        // https://github.com/ollama/ollama/blob/main/docs/api.md#generate-a-chat-completion
         var requestBody = new
         {
-            model = _options.ChatModel,
-            messages = chatItems.Select(x => new
+            model = _chatModel.Name,
+            messages = chatCompletionRequest.Items.Select(x => new
             {
                 role = x.Role.Humanize(LetterCasing.LowerCase),
                 content = x.Prompt,
             }),
-            // Temperature set to 0 to reduce the randomness of the response. Better for applications that expect consistent responses.
-            temperature = _options.Temperature,
-            max_tokens = _options.MaxTokenSize,
+            options = new { temperature = _chatModel.ModelOption.Temperature },
+            keep_alive = "15m",
+            stream = false,
         };
 
         var client = httpClientFactory.CreateClient("llm_client");
 
         // https://github.com/App-vNext/Polly#handing-return-values-and-policytresult
-        var httpResponse = await combinedPolicy.ExecuteAsync(async () =>
+        var httpResponseMessage = await combinedPolicy.ExecuteAsync(async () =>
         {
-            // https://ollama.com/blog/openai-compatibility
-            // https://www.youtube.com/watch?v=38jlvmBdBrU
-            // https://platform.openai.com/docs/api-reference/chat/create
-            // https://github.com/ollama/ollama/blob/main/docs/api.md#generate-a-chat-completion
-            var response = await client.PostAsJsonAsync(
-                "v1/chat/completions",
-                requestBody,
-                cancellationToken: cancellationToken
-            );
+            var response = await client.PostAsJsonAsync("api/chat", requestBody, cancellationToken: cancellationToken);
 
             return response;
         });
 
-        httpResponse.EnsureSuccessStatusCode();
-
-        var completionResponse = await httpResponse.Content.ReadFromJsonAsync<LlamaCompletionResponse>(
+        var completionResponse = await httpResponseMessage.Content.ReadFromJsonAsync<LlamaCompletionResponse>(
             options: JsonObjectSerializer.Options,
             cancellationToken: cancellationToken
         );
 
-        return completionResponse
-            ?.Choices.FirstOrDefault(x => x.Message.Role == RoleType.Assistant)
-            ?.Message.Content.Trim();
+        HandleException(httpResponseMessage, completionResponse);
+
+        var completionMessage = completionResponse.Message.Content;
+
+        var inputTokens = completionResponse.PromptEvalCount;
+        var outTokens = completionResponse.EvalCount;
+        var inputCostPerToken = _chatModel.ModelInformation.InputCostPerToken;
+        var outputCostPerToken = _chatModel.ModelInformation.OutputCostPerToken;
+
+        ValidateMaxToken(inputTokens + outTokens);
+
+        return new ChatCompletionResponse(
+            completionMessage,
+            new TokenUsageResponse(inputTokens, inputCostPerToken, outTokens, outputCostPerToken)
+        );
     }
 
-    public async IAsyncEnumerable<string?> GetCompletionStreamAsync(
-        IReadOnlyList<ChatItem> chatItems,
+    public async IAsyncEnumerable<ChatCompletionResponse?> GetCompletionStreamAsync(
+        ChatCompletionRequest chatCompletionRequest,
         [EnumeratorCancellation] CancellationToken cancellationToken = default
     )
     {
-        AnsiConsole.Write(
-            new Text(
-                chatItems.SingleOrDefault(x => x.Role == RoleType.User)?.Prompt,
-                new Style(foreground: Color.Green)
-            )
-        );
-        AnsiConsole.WriteLine();
-        AnsiConsole.Write(new Rule());
-        AnsiConsole.Write(
-            new Text(
-                chatItems.SingleOrDefault(x => x.Role == RoleType.System).Prompt,
-                new Style(foreground: Color.LightSkyBlue3_1)
-            )
-        );
-        AnsiConsole.Write(new Rule());
+        await ValidateMaxInputToken(chatCompletionRequest);
 
+        // https://github.com/ollama/ollama/blob/main/docs/api.md#generate-a-chat-completion
+        // https://github.com/ollama/ollama/pull/6784
+        // for now doesn't support `include_usage` for open ai compatibility apis
         var requestBody = new
         {
-            model = _options.ChatModel,
-            messages = chatItems.Select(x => new
+            model = _chatModel.Name,
+            messages = chatCompletionRequest.Items.Select(x => new
             {
                 role = x.Role.Humanize(LetterCasing.LowerCase),
                 content = x.Prompt,
             }),
-            temperature = _options.Temperature,
-            max_tokens = _options.MaxTokenSize,
+            options = new { temperature = _chatModel.ModelOption.Temperature },
             stream = true,
+            keep_alive = "15m",
         };
 
         var client = httpClientFactory.CreateClient("llm_client");
 
         // Execute the policy with streaming support
-        var httpResponse = await combinedPolicy.ExecuteAsync(async () =>
+        var httpResponseMessage = await combinedPolicy.ExecuteAsync(async () =>
         {
-            var request = new HttpRequestMessage(HttpMethod.Post, "v1/chat/completions")
+            var request = new HttpRequestMessage(HttpMethod.Post, "api/chat")
             {
                 Content = JsonContent.Create(requestBody),
             };
 
             // Send the request and get the response
             var response = await client.SendAsync(request, HttpCompletionOption.ResponseHeadersRead, cancellationToken);
+
             return response;
         });
-
-        // Ensure the response is successful
-        httpResponse.EnsureSuccessStatusCode();
 
         // https://platform.openai.com/docs/api-reference/chat/create#chat-create-stream
         // https://cookbook.openai.com/examples/how_to_stream_completions
         // Read the response stream
-        await using var responseStream = await httpResponse.Content.ReadAsStreamAsync(cancellationToken);
+        await using var responseStream = await httpResponseMessage.Content.ReadAsStreamAsync(cancellationToken);
+
         using var streamReader = new StreamReader(responseStream);
 
         while (!streamReader.EndOfStream)
         {
-            var line = await streamReader.ReadLineAsync(cancellationToken);
+            var jsonData = await streamReader.ReadLineAsync(cancellationToken);
 
-            if (string.IsNullOrEmpty(line) || string.IsNullOrWhiteSpace(line))
+            if (string.IsNullOrEmpty(jsonData) || string.IsNullOrWhiteSpace(jsonData))
                 continue;
 
-            // when we reached to the end of the streams
-            if (line.StartsWith("data: [DONE]"))
-                break;
+            var completionResponse = JsonSerializer.Deserialize<LlamaCompletionResponse>(
+                jsonData,
+                options: JsonObjectSerializer.Options
+            );
 
-            // Parse the streaming data (assume JSON format)
-            if (line.StartsWith("data: "))
+            HandleException(httpResponseMessage, completionResponse);
+
+            var completionMessage = completionResponse.Message.Content;
+
+            if (completionResponse.Done)
             {
-                var jsonData = line.Substring("data: ".Length);
-                if (string.IsNullOrEmpty(jsonData))
-                    continue;
+                // https://github.com/ollama/ollama/blob/main/docs/api.md#response-9
+                var inputTokens = completionResponse.PromptEvalCount;
+                var outTokens = completionResponse.EvalCount;
+                var inputCostPerToken = _chatModel.ModelInformation.InputCostPerToken;
+                var outputCostPerToken = _chatModel.ModelInformation.OutputCostPerToken;
 
-                var streamResponse = JsonSerializer.Deserialize<OpenAICompletionStreamResponse>(
-                    jsonData,
-                    options: JsonObjectSerializer.Options
+                ValidateMaxToken(inputTokens + outTokens);
+
+                yield return new ChatCompletionResponse(
+                    completionMessage,
+                    new TokenUsageResponse(inputTokens, inputCostPerToken, outTokens, outputCostPerToken)
                 );
-
-                if (streamResponse?.Choices != null)
-                {
-                    var content = streamResponse
-                        .Choices.FirstOrDefault(x => x.Delta.Role == RoleType.Assistant)
-                        ?.Delta.Content;
-
-                    // Yield the content to the async stream
-                    yield return content;
-                }
+            }
+            else
+            {
+                yield return new ChatCompletionResponse(completionMessage, null);
             }
         }
     }
 
-    public async Task<IList<double>> GetEmbeddingAsync(string input, CancellationToken cancellationToken = default)
+    public async Task<EmbeddingsResponse?> GetEmbeddingAsync(
+        string input,
+        CancellationToken cancellationToken = default
+    )
     {
-        var requestBody = new { input = new[] { input }, model = _options.EmbeddingsModel };
+        await ValidateMaxInputToken(input);
+
+        // https://github.com/ollama/ollama/blob/main/docs/api.md#generate-embeddings
+        var requestBody = new
+        {
+            input = new[] { input },
+            model = _embeddingModel.Name,
+            options = new { temperature = _embeddingModel.ModelOption.Temperature },
+            keep_alive = "15m",
+        };
 
         var client = httpClientFactory.CreateClient("llm_client");
 
         // https://github.com/App-vNext/Polly#handing-return-values-and-policytresult
-        var httpResponse = await combinedPolicy.ExecuteAsync(async () =>
+        var httpResponseMessage = await combinedPolicy.ExecuteAsync(async () =>
         {
             // https://github.com/ollama/ollama/blob/main/docs/api.md#generate-embeddings
             // https://platform.openai.com/docs/api-reference/embeddings
             // https://ollama.com/blog/embedding-models
-            var response = await client.PostAsJsonAsync(
-                "v1/embeddings",
-                requestBody,
-                cancellationToken: cancellationToken
-            );
+            var response = await client.PostAsJsonAsync("api/embed", requestBody, cancellationToken: cancellationToken);
 
             return response;
         });
 
-        httpResponse.EnsureSuccessStatusCode();
-
-        var embeddingResponse = await httpResponse.Content.ReadFromJsonAsync<LlamaEmbeddingResponse>(
+        var embeddingResponse = await httpResponseMessage.Content.ReadFromJsonAsync<LlamaEmbeddingResponse>(
             options: JsonObjectSerializer.Options,
             cancellationToken: cancellationToken
         );
 
-        return embeddingResponse?.Data.FirstOrDefault()?.Embedding ?? new List<double>();
+        HandleException(httpResponseMessage, embeddingResponse);
+
+        var embedding = embeddingResponse.Embeddings.FirstOrDefault() ?? new List<double>();
+
+        var inputTokens = embeddingResponse.PromptEvalCount;
+        var outTokens = embeddingResponse.EvalCount;
+        var inputCostPerToken = _embeddingModel.ModelInformation.InputCostPerToken;
+        var outputCostPerToken = _embeddingModel.ModelInformation.OutputCostPerToken;
+
+        ValidateMaxToken(inputTokens + outTokens);
+
+        return new EmbeddingsResponse(
+            embedding,
+            new TokenUsageResponse(inputTokens, inputCostPerToken, outTokens, outputCostPerToken)
+        );
+    }
+
+    private void HandleException(HttpResponseMessage httpResponse, [NotNull] OllamaResponseBase? opneaiBaseResponse)
+    {
+        if (opneaiBaseResponse is null)
+        {
+            httpResponse.EnsureSuccessStatusCode();
+        }
+
+        if (!httpResponse.IsSuccessStatusCode && string.IsNullOrEmpty(opneaiBaseResponse!.Error))
+        {
+            opneaiBaseResponse.Error = httpResponse.ReasonPhrase ?? httpResponse.StatusCode.ToString();
+        }
+
+        if (opneaiBaseResponse!.Error is not null)
+        {
+            throw new OllamaException(opneaiBaseResponse.Error, httpResponse.StatusCode);
+        }
+    }
+
+    private Task ValidateMaxInputToken(ChatCompletionRequest chatCompletionRequest)
+    {
+        return ValidateMaxInputToken(string.Concat(chatCompletionRequest.Items.Select(x => x.Prompt)));
+    }
+
+    private async Task ValidateMaxInputToken(string input)
+    {
+        var inputTokenCount = await tokenizer.GetTokenCount(input);
+
+        if (inputTokenCount > _chatModel.ModelInformation.MaxInputTokens)
+        {
+            throw new OllamaException(
+                $"'max_input_token' count: {inputTokenCount.FormatCommas()} is larger than configured 'max_input_token' count: {_chatModel.ModelInformation.MaxInputTokens.FormatCommas()}, if you need more token change the configuration.",
+                HttpStatusCode.BadRequest
+            );
+        }
+    }
+
+    private void ValidateMaxToken(int maxTokenCount)
+    {
+        if (maxTokenCount > _chatModel.ModelInformation.MaxTokens)
+        {
+            throw new OllamaException(
+                $"'max_token' count: {maxTokenCount.FormatCommas()} is larger than configured 'max_token' count: {_chatModel.ModelInformation.MaxTokens.FormatCommas()}, if you need more token change the configuration.",
+                HttpStatusCode.BadRequest
+            );
+        }
     }
 }

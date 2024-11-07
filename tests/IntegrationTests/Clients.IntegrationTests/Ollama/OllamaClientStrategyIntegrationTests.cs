@@ -1,5 +1,6 @@
-using Clients.Chat.Models;
+using AIAssistant.Chat.Models;
 using Clients.Contracts;
+using Clients.Dtos;
 using Clients.Models;
 using Clients.Options;
 using FluentAssertions;
@@ -38,8 +39,8 @@ public class OllamaClientStrategyIntegrationTests(ApplicationFixture application
     public async Task GetCompletionAsync_ShouldReturnCompletion_WhenResponseIsSuccessful()
     {
         // Act
-        var chatItems = new List<ChatItem> { new(Role: RoleType.User, Prompt: "Hello") };
-        var result = await _illmClient.GetCompletionAsync(chatItems);
+        var chatItems = new List<ChatCompletionRequestItem> { new(Role: RoleType.User, Prompt: "Hello") };
+        var result = await _illmClient.GetCompletionAsync(new ChatCompletionRequest(chatItems));
 
         // Assert
         result.Should().NotBeNull();
@@ -56,20 +57,22 @@ public class OllamaClientStrategyIntegrationTests(ApplicationFixture application
 
         // Assert
         result.Should().NotBeNull();
-        result.Should().NotBeEmpty();
+        result.Embeddings.Should().NotBeNull();
+        result.Embeddings.Should().HaveCountGreaterThan(0);
     }
 
     [Fact]
     public async Task GetCompletionStreamAsync_ShouldReturnMessages()
     {
         // Arrange
-        var chatItems = new List<ChatItem> { new(Role: RoleType.User, Prompt: "Hello, how are you?") };
+        var chatItems = new List<ChatCompletionRequestItem> { new(Role: RoleType.User, Prompt: "Hello, how are you?") };
 
         // Act
-        var messages = await _illmClient.GetCompletionStreamAsync(chatItems).ToListAsync();
+        var messages = await _illmClient.GetCompletionStreamAsync(new ChatCompletionRequest(chatItems)).ToListAsync();
 
         // Assert
         messages.Should().NotBeEmpty();
-        messages[0].Should().NotBeNullOrEmpty();
+        messages.Should().HaveCountGreaterThan(0);
+        messages[0]?.ChatResponse.Should().NotBeNullOrEmpty();
     }
 }

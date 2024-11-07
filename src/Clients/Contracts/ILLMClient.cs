@@ -1,14 +1,17 @@
-using Clients.Chat.Models;
+using Clients.Dtos;
 using Clients.Models;
 
 namespace Clients.Contracts;
 
 public interface ILLMClient
 {
-    Task<string?> GetCompletionAsync(IReadOnlyList<ChatItem> chatItems, CancellationToken cancellationToken = default);
-    IAsyncEnumerable<string?> GetCompletionStreamAsync(
-        IReadOnlyList<ChatItem> chatItems,
+    Task<ChatCompletionResponse?> GetCompletionAsync(
+        ChatCompletionRequest chatCompletionRequest,
         CancellationToken cancellationToken = default
     );
-    Task<IList<double>> GetEmbeddingAsync(string input, CancellationToken cancellationToken = default);
+    IAsyncEnumerable<ChatCompletionResponse?> GetCompletionStreamAsync(
+        ChatCompletionRequest chatCompletionRequest,
+        CancellationToken cancellationToken = default
+    );
+    Task<EmbeddingsResponse?> GetEmbeddingAsync(string input, CancellationToken cancellationToken = default);
 }

@@ -2,7 +2,6 @@ using System.Net;
 using System.Net.Http.Json;
 using System.Text;
 using BuildingBlocks.Serialization;
-using Clients.Anthropic;
 using Clients.Chat.Models;
 using Clients.Models;
 using Clients.Models.Anthropic;
@@ -32,7 +31,6 @@ public class AnthropicClientStrategyTests : IAsyncLifetime
         var llmOptionsValue = new LLMOptions
         {
             ChatModel = "claude-v1",
-            MaxTokenSize = 256,
             EmbeddingsModel = "voyage-embed",
             BaseAddress = "http://localhost",
         };

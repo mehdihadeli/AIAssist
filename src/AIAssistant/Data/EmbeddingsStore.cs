@@ -40,7 +40,7 @@ public class EmbeddingsStore(VectorDatabase vectorDatabase)
     public IEnumerable<CodeEmbedding> Query(
         IList<double> userEmbeddingQuery,
         Guid sessionId,
-        double threshold,
+        decimal threshold,
         int nResults = 0
     )
     {

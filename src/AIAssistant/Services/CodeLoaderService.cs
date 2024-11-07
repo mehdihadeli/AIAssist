@@ -6,9 +6,9 @@ using TreeSitter.Bindings.Utilities;
 
 namespace AIAssistant.Services;
 
-public class CodeLoaderService(IOptions<CodeAssistOptions> codeAssistOptions)
+public class CodeLoaderService(IOptions<AppOptions> codeAssistOptions)
 {
-    private readonly CodeAssistOptions _codeAssistOptions = codeAssistOptions.Value;
+    private readonly AppOptions _appOptions = codeAssistOptions.Value;
 
     public IReadOnlyList<DefinitionCaptureItem> LoadTreeSitterCodeCaptures(
         string contextWorkingDir,
@@ -30,7 +30,7 @@ public class CodeLoaderService(IOptions<CodeAssistOptions> codeAssistOptions)
     {
         List<string> allFiles = new List<string>();
 
-        if (!string.IsNullOrEmpty(contextWorkingDir) && _codeAssistOptions.AutoContextEnabled)
+        if (!string.IsNullOrEmpty(contextWorkingDir) && _appOptions.AutoContextEnabled)
         {
             allFiles.AddRange(Directory.GetFiles(contextWorkingDir, "*", SearchOption.AllDirectories));
         }

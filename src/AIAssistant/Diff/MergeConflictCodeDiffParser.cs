@@ -21,7 +21,7 @@ public class MergeConflictCodeDiffParser : ICodeDiffParser
         bool isNewVersion = false;
         int currentLineNumber = 1;
         int originalLineNumber = 1;
-        ChangeType fileChangeType = ChangeType.Update;
+        CodeChangeType fileCodeChangeType = CodeChangeType.Update;
 
         var lines = diff.Split('\n');
 
@@ -34,14 +34,14 @@ public class MergeConflictCodeDiffParser : ICodeDiffParser
                 // Save the previous file change if applicable
                 if (currentFilePath != null && changeLines.Count != 0)
                 {
-                    changes.Add(new FileChange(currentFilePath, fileChangeType, changeLines.ToList()));
+                    changes.Add(new FileChange(currentFilePath, fileCodeChangeType, changeLines.ToList()));
                     changeLines.Clear();
                 }
 
                 currentFilePath = trimmedLine;
                 currentLineNumber = 1;
                 originalLineNumber = 1;
-                fileChangeType = ChangeType.Update;
+                fileCodeChangeType = CodeChangeType.Update;
                 continue;
             }
 
@@ -50,7 +50,7 @@ public class MergeConflictCodeDiffParser : ICodeDiffParser
             {
                 isPreviousVersion = true;
                 isNewVersion = false;
-                fileChangeType = ChangeType.Delete; // Considered a deletion in conflicts
+                fileCodeChangeType = CodeChangeType.Delete; // Considered a deletion in conflicts
                 continue;
             }
 
@@ -59,7 +59,7 @@ public class MergeConflictCodeDiffParser : ICodeDiffParser
             {
                 isPreviousVersion = false;
                 isNewVersion = true;
-                fileChangeType = ChangeType.Add; // Considered an addition in conflicts
+                fileCodeChangeType = CodeChangeType.Add; // Considered an addition in conflicts
                 continue;
             }
 
@@ -73,18 +73,18 @@ public class MergeConflictCodeDiffParser : ICodeDiffParser
             // Accumulate lines as previous or new version changes
             if (isPreviousVersion)
             {
-                changeLines.Add(new FileChangeLine(originalLineNumber++, trimmedLine, ChangeType.Delete));
+                changeLines.Add(new FileChangeLine(originalLineNumber++, trimmedLine, CodeChangeType.Delete));
             }
             else if (isNewVersion)
             {
-                changeLines.Add(new FileChangeLine(currentLineNumber++, trimmedLine, ChangeType.Add));
+                changeLines.Add(new FileChangeLine(currentLineNumber++, trimmedLine, CodeChangeType.Add));
             }
         }
 
         // Save the last file change if applicable
         if (currentFilePath != null && changeLines.Count != 0)
         {
-            changes.Add(new FileChange(currentFilePath, fileChangeType, changeLines.ToList()));
+            changes.Add(new FileChange(currentFilePath, fileCodeChangeType, changeLines.ToList()));
         }
 
         return changes;

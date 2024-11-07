@@ -59,7 +59,7 @@ public class StreamPrinter(IAnsiConsole console, bool useMarkdown)
 
     private Task UpdateLiveDisplay(string? text, LiveDisplayContext ctx)
     {
-        if (string.IsNullOrEmpty(text))
+        if (text is null)
             return Task.CompletedTask;
 
         _completeResponse.Append(text);

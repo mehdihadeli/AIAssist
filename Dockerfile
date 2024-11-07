@@ -18,4 +18,4 @@ WORKDIR /app
 COPY --from=build /app/publish .
 
 # Set the entry point for the container
-ENTRYPOINT ["dotnet", "AIRefactorAssistant.dll"]
+ENTRYPOINT ["dotnet", "AIAssist.dll"]

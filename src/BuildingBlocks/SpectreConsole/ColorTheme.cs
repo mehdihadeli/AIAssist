@@ -5,6 +5,8 @@ namespace BuildingBlocks.SpectreConsole;
 
 public class ColorTheme
 {
+    public string Name { get; set; } = default!;
+
     [JsonPropertyName("console")]
     public ConsoleStyle ConsoleStyle { get; set; } = default!;
 

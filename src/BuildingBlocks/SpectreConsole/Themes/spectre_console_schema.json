@@ -1,0 +1,121 @@
+{
+  "$schema": "http://json-schema.org/draft-07/schema#",
+  "title": "Theme Configuration Schema",
+  "type": "object",
+  "properties": {
+    "name": {
+      "type": "string"
+    },
+    "console": {
+      "type": "object",
+      "properties": {
+        "prompt": { "$ref": "#/definitions/foregroundColor" },
+        "text": { "$ref": "#/definitions/foregroundColor" },
+        "information": { "$ref": "#/definitions/foregroundColor" },
+        "success": { "$ref": "#/definitions/foregroundColor" },
+        "confirmation": { "$ref": "#/definitions/foregroundColor" },
+        "error": { "$ref": "#/definitions/foregroundColor" },
+        "warning": { "$ref": "#/definitions/foregroundColor" },
+        "cursor": { "$ref": "#/definitions/foregroundColor" },
+        "tree": {
+          "type": "object",
+          "properties": {
+            "foreground": { "type": "string", "pattern": "^#[0-9a-fA-F]{6}$" },
+            "bold": { "type": "boolean" }
+          },
+          "required": ["foreground"]
+        }
+      },
+      "required": ["prompt", "text", "information", "success", "confirmation", "error", "warning", "cursor", "tree"]
+    },
+    "code": {
+      "type": "object",
+      "properties": {
+        "background": { "type": "string", "pattern": "^#[0-9a-fA-F]{6}$" },
+        "foreground": { "type": "string", "pattern": "^#[0-9a-fA-F]{6}$" },
+        "bold": { "type": "boolean" }
+      },
+      "required": ["background", "foreground"]
+    },
+    "block_quote": {
+      "type": "object",
+      "properties": {
+        "foreground": { "type": "string", "pattern": "^#[0-9a-fA-F]{6}$" },
+        "prefix_foreground": { "type": "string", "pattern": "^#[0-9a-fA-F]{6}$" },
+        "italic": { "type": "boolean" }
+      },
+      "required": ["foreground", "prefix_foreground"]
+    },
+    "list": {
+      "type": "object",
+      "properties": {
+        "foreground": { "type": "string", "pattern": "^#[0-9a-fA-F]{6}$" },
+        "prefix_foreground": { "type": "string", "pattern": "^#[0-9a-fA-F]{6}$" },
+        "block_prefix": { "type": "string" },
+        "margin": { "type": "integer", "minimum": 0 }
+      },
+      "required": ["foreground", "prefix_foreground", "block_prefix", "margin"]
+    },
+    "head": {
+      "type": "object",
+      "properties": {
+        "foreground": { "type": "string", "pattern": "^#[0-9a-fA-F]{6}$" },
+        "bold": { "type": "boolean" },
+        "margin": { "type": "integer", "minimum": 0 }
+      },
+      "required": ["foreground", "bold", "margin"]
+    },
+    "paragraph": {
+      "type": "object",
+      "properties": {
+        "foreground": { "type": "string", "pattern": "^#[0-9a-fA-F]{6}$" },
+        "margin": { "type": "integer", "minimum": 0 }
+      },
+      "required": ["foreground", "margin"]
+    },
+    "emph": {
+      "type": "object",
+      "properties": {
+        "foreground": { "type": "string", "pattern": "^#[0-9a-fA-F]{6}$" }
+      },
+      "required": ["foreground"]
+    },
+    "task": {
+      "type": "object",
+      "properties": {
+        "ticked": { "type": "string" },
+        "unticked": { "type": "string" },
+        "prefix_foreground": { "type": "string", "pattern": "^#[0-9a-fA-F]{6}$" },
+        "foreground": { "type": "string", "pattern": "^#[0-9a-fA-F]{6}$" }
+      },
+      "required": ["ticked", "unticked", "prefix_foreground", "foreground"]
+    },
+    "link": {
+      "type": "object",
+      "properties": {
+        "underline": { "type": "boolean" },
+        "link_foreground": { "type": "string", "pattern": "^#[0-9a-fA-F]{6}$" },
+        "link_text_foreground": { "type": "string", "pattern": "^#[0-9a-fA-F]{6}$" }
+      },
+      "required": ["underline", "link_foreground", "link_text_foreground"]
+    },
+    "code_block": {
+      "type": "object",
+      "properties": {
+        "theme_name": { "type": "string" },
+        "margin": { "type": "integer", "minimum": 0 }
+      },
+      "required": ["theme_name", "margin"]
+    }
+  },
+  "required": ["console", "code", "block_quote", "list", "head", "paragraph", "emph", "task", "link", "code_block"],
+  "definitions": {
+    "foregroundColor": {
+      "type": "object",
+      "properties": {
+        "foreground": { "type": "string", "pattern": "^#[0-9a-fA-F]{6}$" }
+      },
+      "required": ["foreground"]
+    }
+  }
+}

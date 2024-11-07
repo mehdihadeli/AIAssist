@@ -1,8 +1,9 @@
 {
+  "$schema": "./markdown_theme_schema.json",
   "background": "#EDEDED",
   "foreground": "#383A42",
   "margin": 2,
-  "code_elements": {
+  "token_types": {
     "plain_text": {
       "foreground": "#383A42",
       "background": "#EDEDED",

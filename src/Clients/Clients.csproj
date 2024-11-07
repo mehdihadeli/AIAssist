@@ -9,4 +9,14 @@
     <ProjectReference Include="..\BuildingBlocks\BuildingBlocks.csproj" />
   </ItemGroup>
 
+  <ItemGroup>
+    <None Remove="LLMs\models_information_list.json" />
+    <None Remove="LLMs\models_options.json" />
+  </ItemGroup>
+  
+  <ItemGroup>
+    <EmbeddedResource Include="LLMs\models_information_list.json" />
+    <EmbeddedResource Include="LLMs\models_options.json" />
+  </ItemGroup>
+
 </Project>

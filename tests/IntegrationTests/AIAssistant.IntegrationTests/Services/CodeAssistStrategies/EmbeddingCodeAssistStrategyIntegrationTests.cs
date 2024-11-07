@@ -1,7 +1,6 @@
 using AIAssistant.Contracts;
 using AIAssistant.Contracts.CodeAssist;
-using AIAssistant.Models;
-using Clients.Chat.Models;
+using Clients.Models;
 using FluentAssertions;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Hosting;
@@ -16,16 +15,17 @@ public class EmbeddingCodeAssistStrategyIntegrationTests(ApplicationFixture appl
     private ICodeAssist _codeAssist = default!;
     private string _appWorkingDir = default!;
     private string _originalWorkingDir = default!;
+    private IChatSessionManager _chatSessionManager = default!;
 
     [Fact]
     public async Task QueryAsync_With_A_ContextWorkingDirectory_ShouldReturnResponsesFromLLM()
     {
         // Arrange
         var userQuery = "can you remove all comments in Add.cs file?";
-        await _codeAssist.LoadCodeFiles(new ChatSession(), contextWorkingDirectory: _appWorkingDir, codeFiles: null);
+        await _codeAssist.LoadCodeFiles(contextWorkingDirectory: _appWorkingDir, codeFiles: null);
 
         // Act
-        IAsyncEnumerable<string?> responseStream = _codeAssist.QueryAsync(userQuery);
+        IAsyncEnumerable<string?> responseStream = _codeAssist.QueryChatCompletionAsync(userQuery);
         var response = await responseStream.ToListAsync();
 
         // Assert
@@ -46,10 +46,10 @@ public class EmbeddingCodeAssistStrategyIntegrationTests(ApplicationFixture appl
             TestDataConstants.CalculatorApp.DivideRelativeFilePath,
             TestDataConstants.CalculatorApp.MultiplyRelativeFilePath,
         ];
-        await _codeAssist.LoadCodeFiles(new ChatSession(), contextWorkingDirectory: null, codeFiles: files);
+        await _codeAssist.LoadCodeFiles(contextWorkingDirectory: null, codeFiles: files);
 
         // Act
-        IAsyncEnumerable<string?> responseStream = _codeAssist.QueryAsync(userQuery);
+        IAsyncEnumerable<string?> responseStream = _codeAssist.QueryChatCompletionAsync(userQuery);
         var response = await responseStream.ToListAsync();
 
         // Assert
@@ -72,11 +72,16 @@ public class EmbeddingCodeAssistStrategyIntegrationTests(ApplicationFixture appl
         var codeAssistStrategyFactory = _app.Services.GetRequiredService<ICodeAssistFactory>();
         _codeAssist = codeAssistStrategyFactory.Create(CodeAssistType.Embedding);
 
+        _chatSessionManager = _app.Services.GetRequiredService<IChatSessionManager>();
+        var session = _chatSessionManager.CreateNewSession();
+        _chatSessionManager.SetCurrentActiveSession(session);
+
         return Task.CompletedTask;
     }
 
     public Task DisposeAsync()
     {
+        _chatSessionManager.SetCurrentActiveSession(null);
         Directory.SetCurrentDirectory(_originalWorkingDir);
 
         return Task.CompletedTask;

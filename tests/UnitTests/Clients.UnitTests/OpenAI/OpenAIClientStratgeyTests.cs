@@ -6,7 +6,6 @@ using Clients.Chat.Models;
 using Clients.Models;
 using Clients.Models.Ollama.Embeddings;
 using Clients.Models.OpenAI.Completion;
-using Clients.OpenAI;
 using Clients.Options;
 using FluentAssertions;
 using Microsoft.Extensions.Options;
@@ -86,17 +85,13 @@ public class OpenAIClientStrategyTests : IAsyncLifetime
         // Arrange
         var chatItems = new List<ChatItem> { new(Role: RoleType.User, Prompt: "Hello") };
 
-        var responseContent = new OpenAiCompletionResponse
+        var responseContent = new OpenAIChatResponse
         {
-            Choices = new List<OpenAICompletionChoice>
+            Choices = new List<OpenAIChoice>
             {
                 new()
                 {
-                    Message = new OpenAICompletionMessage
-                    {
-                        Content = "Hello, how can I assist you?",
-                        Role = RoleType.Assistant,
-                    },
+                    Message = new OpenAIMessage { Content = "Hello, how can I assist you?", Role = RoleType.Assistant },
                 },
             },
         };

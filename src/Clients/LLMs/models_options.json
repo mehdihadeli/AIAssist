@@ -1,0 +1,408 @@
+{
+  "$schema": "./models_options_spec.json",
+  "gpt-4": {
+    "code_diff_type": "CodeBlockDiff",
+    "code_assist_type": "Embedding",
+    "temperature": 0.2
+  },
+  "gpt-4o": {
+    "code_diff_type": "CodeBlockDiff",
+    "code_assist_type": "Embedding",
+    "temperature": 0.2
+  },
+  "gpt-4o-mini": {
+    "code_diff_type": "CodeBlockDiff",
+    "code_assist_type": "Embedding",
+    "temperature": 0.2
+  },
+  "gpt-4o-mini-2024-07-18": {
+    "code_diff_type": "CodeBlockDiff",
+    "code_assist_type": "Embedding",
+    "temperature": 0.2
+  },
+  "o1-mini": {
+    "code_diff_type": "CodeBlockDiff",
+    "code_assist_type": "Embedding",
+    "temperature": 0.2
+  },
+  "o1-mini-2024-09-12": {
+    "code_diff_type": "CodeBlockDiff",
+    "code_assist_type": "Embedding",
+    "temperature": 0.2
+  },
+  "o1-preview": {
+    "code_diff_type": "CodeBlockDiff",
+    "code_assist_type": "Embedding",
+    "temperature": 0.2
+  },
+  "o1-preview-2024-09-12": {
+    "code_diff_type": "CodeBlockDiff",
+    "code_assist_type": "Embedding",
+    "temperature": 0.2
+  },
+  "chatgpt-4o-latest": {
+    "code_diff_type": "CodeBlockDiff",
+    "code_assist_type": "Embedding",
+    "temperature": 0.2
+  },
+  "gpt-4o-2024-05-13": {
+    "code_diff_type": "CodeBlockDiff",
+    "code_assist_type": "Embedding",
+    "temperature": 0.2
+  },
+  "gpt-4o-2024-08-06": {
+    "code_diff_type": "CodeBlockDiff",
+    "code_assist_type": "Embedding",
+    "temperature": 0.2
+  },
+  "gpt-4-turbo-preview": {
+    "code_diff_type": "CodeBlockDiff",
+    "code_assist_type": "Embedding",
+    "temperature": 0.2
+  },
+  "gpt-4-0314": {
+    "code_diff_type": "CodeBlockDiff",
+    "code_assist_type": "Embedding",
+    "temperature": 0.2
+  },
+  "gpt-4-0613": {
+    "code_diff_type": "CodeBlockDiff",
+    "code_assist_type": "Embedding",
+    "temperature": 0.2
+  },
+  "gpt-4-32k": {
+    "code_diff_type": "CodeBlockDiff",
+    "code_assist_type": "Embedding",
+    "temperature": 0.2
+  },
+  "gpt-4-32k-0314": {
+    "code_diff_type": "CodeBlockDiff",
+    "code_assist_type": "Embedding",
+    "temperature": 0.2
+  },
+  "gpt-4-32k-0613": {
+    "code_diff_type": "CodeBlockDiff",
+    "code_assist_type": "Embedding",
+    "temperature": 0.2
+  },
+  "gpt-4-turbo": {
+    "code_diff_type": "CodeBlockDiff",
+    "code_assist_type": "Embedding",
+    "temperature": 0.2
+  },
+  "gpt-4-turbo-2024-04-09": {
+    "code_diff_type": "CodeBlockDiff",
+    "code_assist_type": "Embedding",
+    "temperature": 0.2
+  },
+  "gpt-4-1106-preview": {
+    "code_diff_type": "CodeBlockDiff",
+    "code_assist_type": "Embedding",
+    "temperature": 0.2
+  },
+  "gpt-4-0125-preview": {
+    "code_diff_type": "CodeBlockDiff",
+    "code_assist_type": "Embedding",
+    "temperature": 0.2
+  },
+  "gpt-4-vision-preview": {
+    "code_diff_type": "CodeBlockDiff",
+    "code_assist_type": "Embedding",
+    "temperature": 0.2
+  },
+  "gpt-4-1106-vision-preview": {
+    "code_diff_type": "CodeBlockDiff",
+    "code_assist_type": "Embedding",
+    "temperature": 0.2
+  },
+  "gpt-3.5-turbo": {
+    "code_diff_type": "CodeBlockDiff",
+    "code_assist_type": "Embedding",
+    "temperature": 0.2
+  },
+  "gpt-3.5-turbo-0301": {
+    "code_diff_type": "CodeBlockDiff",
+    "code_assist_type": "Embedding",
+    "temperature": 0.2
+  },
+  "gpt-3.5-turbo-0613": {
+    "code_diff_type": "CodeBlockDiff",
+    "code_assist_type": "Embedding",
+    "temperature": 0.2
+  },
+  "gpt-3.5-turbo-1106": {
+    "code_diff_type": "CodeBlockDiff",
+    "code_assist_type": "Embedding",
+    "temperature": 0.2
+  },
+  "gpt-3.5-turbo-0125": {
+    "code_diff_type": "CodeBlockDiff",
+    "code_assist_type": "Embedding",
+    "temperature": 0.2
+  },
+  "gpt-3.5-turbo-16k": {
+    "code_diff_type": "CodeBlockDiff",
+    "code_assist_type": "Embedding",
+    "temperature": 0.2
+  },
+  "gpt-3.5-turbo-16k-0613": {
+    "code_diff_type": "CodeBlockDiff",
+    "code_assist_type": "Embedding",
+    "temperature": 0.2
+  },
+  "text-embedding-3-large": {
+    "threshold": 0.5,
+    "temperature": 0.2
+  },
+  "text-embedding-3-small": {
+    "threshold": 0.5,
+    "temperature": 0.2
+  },
+  "text-embedding-ada-002": {
+    "threshold": 0.5,
+    "temperature": 0.2
+  },
+  "text-embedding-ada-002-v2": {
+    "threshold": 0.5,
+    "temperature": 0.2
+  },
+  "azure/o1-mini": {
+    "code_diff_type": "CodeBlockDiff",
+    "code_assist_type": "Embedding",
+    "temperature": 0.2
+  },
+  "azure/o1-mini-2024-09-12": {
+    "code_diff_type": "CodeBlockDiff",
+    "code_assist_type": "Embedding",
+    "temperature": 0.2
+  },
+  "azure/o1-preview": {
+    "code_diff_type": "CodeBlockDiff",
+    "code_assist_type": "Embedding",
+    "temperature": 0.2
+  },
+  "azure/o1-preview-2024-09-12": {
+    "code_diff_type": "CodeBlockDiff",
+    "code_assist_type": "Embedding",
+    "temperature": 0.2
+  },
+  "azure/gpt-4o": {
+    "code_diff_type": "CodeBlockDiff",
+    "code_assist_type": "Embedding",
+    "temperature": 0.2
+  },
+  "azure/gpt-4o-2024-08-06": {
+    "code_diff_type": "CodeBlockDiff",
+    "code_assist_type": "Embedding",
+    "temperature": 0.2
+  },
+  "azure/gpt-4o-2024-05-13": {
+    "code_diff_type": "CodeBlockDiff",
+    "code_assist_type": "Embedding",
+    "temperature": 0.2
+  },
+  "azure/global-standard/gpt-4o-2024-08-06": {
+    "code_diff_type": "CodeBlockDiff",
+    "code_assist_type": "Embedding",
+    "temperature": 0.2
+  },
+  "azure/global-standard/gpt-4o-mini": {
+    "code_diff_type": "CodeBlockDiff",
+    "code_assist_type": "Embedding",
+    "temperature": 0.2
+  },
+  "azure/gpt-4o-mini": {
+    "code_diff_type": "CodeBlockDiff",
+    "code_assist_type": "Embedding",
+    "temperature": 0.2
+  },
+  "azure/gpt-4o-mini-2024-07-18": {
+    "code_diff_type": "CodeBlockDiff",
+    "code_assist_type": "Embedding",
+    "temperature": 0.2
+  },
+  "azure/gpt-4-turbo-2024-04-09": {
+    "code_diff_type": "CodeBlockDiff",
+    "code_assist_type": "Embedding",
+    "temperature": 0.2
+  },
+  "azure/gpt-4-0125-preview": {
+    "code_diff_type": "CodeBlockDiff",
+    "code_assist_type": "Embedding",
+    "temperature": 0.2
+  },
+  "azure/gpt-4-1106-preview": {
+    "code_diff_type": "CodeBlockDiff",
+    "code_assist_type": "Embedding",
+    "temperature": 0.2
+  },
+  "azure/gpt-4-0613": {
+    "code_diff_type": "CodeBlockDiff",
+    "code_assist_type": "Embedding",
+    "temperature": 0.2
+  },
+  "azure/gpt-4-32k-0613": {
+    "code_diff_type": "CodeBlockDiff",
+    "code_assist_type": "Embedding",
+    "temperature": 0.2
+  },
+  "azure/gpt-4-32k": {
+    "code_diff_type": "CodeBlockDiff",
+    "code_assist_type": "Embedding",
+    "temperature": 0.2
+  },
+  "azure/gpt-4": {
+    "code_diff_type": "CodeBlockDiff",
+    "code_assist_type": "Embedding",
+    "temperature": 0.2
+  },
+  "azure/gpt-4-turbo": {
+    "code_diff_type": "CodeBlockDiff",
+    "code_assist_type": "Embedding",
+    "temperature": 0.2
+  },
+  "azure/gpt-4-turbo-vision-preview": {
+    "code_diff_type": "CodeBlockDiff",
+    "code_assist_type": "Embedding",
+    "temperature": 0.2
+  },
+  "azure/gpt-35-turbo-16k-0613": {
+    "code_diff_type": "CodeBlockDiff",
+    "code_assist_type": "Embedding",
+    "temperature": 0.2
+  },
+  "azure/gpt-35-turbo-1106": {
+    "code_diff_type": "CodeBlockDiff",
+    "code_assist_type": "Embedding",
+    "temperature": 0.2
+  },
+  "azure/gpt-35-turbo-0613": {
+    "code_diff_type": "CodeBlockDiff",
+    "code_assist_type": "Embedding",
+    "temperature": 0.2
+  },
+  "azure/gpt-35-turbo-0301": {
+    "code_diff_type": "CodeBlockDiff",
+    "code_assist_type": "Embedding",
+    "temperature": 0.2
+  },
+  "azure/gpt-35-turbo-0125": {
+    "code_diff_type": "CodeBlockDiff",
+    "code_assist_type": "Embedding",
+    "temperature": 0.2
+  },
+  "azure/gpt-35-turbo-16k": {
+    "code_diff_type": "CodeBlockDiff",
+    "code_assist_type": "Embedding",
+    "temperature": 0.2
+  },
+  "azure/gpt-35-turbo": {
+    "code_diff_type": "CodeBlockDiff",
+    "code_assist_type": "Embedding",
+    "temperature": 0.2
+  },
+  "azure/ada": {
+    "threshold": 0.5,
+    "temperature": 0.2
+  },
+  "azure/text-embedding-ada-002": {
+    "threshold": 0.5,
+    "temperature": 0.2
+  },
+  "azure/text-embedding-3-large": {
+    "threshold": 0.5,
+    "temperature": 0.2
+  },
+  "azure/text-embedding-3-small": {
+    "threshold": 0.5,
+    "temperature": 0.2
+  },
+  "claude-3-haiku-20240307": {
+    "code_diff_type": "CodeBlockDiff",
+    "code_assist_type": "Embedding",
+    "temperature": 0.2
+  },
+  "claude-3-5-haiku-20241022": {
+    "code_diff_type": "CodeBlockDiff",
+    "code_assist_type": "Embedding",
+    "temperature": 0.2
+  },
+  "claude-3-opus-20240229": {
+    "code_diff_type": "CodeBlockDiff",
+    "code_assist_type": "Embedding",
+    "temperature": 0.2
+  },
+  "claude-3-sonnet-20240229": {
+    "code_diff_type": "CodeBlockDiff",
+    "code_assist_type": "Embedding",
+    "temperature": 0.2
+  },
+  "claude-3-5-sonnet-20240620": {
+    "code_diff_type": "CodeBlockDiff",
+    "code_assist_type": "Embedding",
+    "temperature": 0.2
+  },
+  "claude-3-5-sonnet-20241022": {
+    "code_diff_type": "CodeBlockDiff",
+    "code_assist_type": "Embedding",
+    "temperature": 0.2
+  },
+  "ollama/codegeex4": {
+    "code_diff_type": "CodeBlockDiff",
+    "code_assist_type": "Embedding",
+    "temperature": 0.2
+  },
+  "ollama/deepseek-coder-v2-instruct": {
+    "code_diff_type": "CodeBlockDiff",
+    "code_assist_type": "Embedding",
+    "temperature": 0.2
+  },
+  "ollama/deepseek-coder-v2-lite-instruct": {
+    "code_diff_type": "CodeBlockDiff",
+    "code_assist_type": "Embedding",
+    "temperature": 0.2
+  },
+  "ollama/deepseek-coder-v2-lite-base": {
+    "code_diff_type": "CodeBlockDiff",
+    "code_assist_type": "Embedding",
+    "temperature": 0.2
+  },
+  "ollama/llama3.1": {
+    "code_diff_type": "CodeBlockDiff",
+    "code_assist_type": "Embedding",
+    "temperature": 0.2
+  },
+  "ollama/nomic-embed-text": {
+    "threshold": 0.4,
+    "temperature": 0.2
+  },
+  "ollama/mxbai-embed-large": {
+    "threshold": 0.5,
+    "temperature": 0.2
+  },
+  "ollama/llama3": {
+    "code_diff_type": "CodeBlockDiff",
+    "code_assist_type": "Embedding",
+    "temperature": 0.2
+  },
+  "ollama/llama3:8b": {
+    "code_diff_type": "CodeBlockDiff",
+    "code_assist_type": "Embedding",
+    "temperature": 0.2
+  },
+  "ollama/llama3:70b": {
+    "code_diff_type": "CodeBlockDiff",
+    "code_assist_type": "Embedding",
+    "temperature": 0.2
+  },
+  "ollama/llama3.2": {
+    "code_diff_type": "CodeBlockDiff",
+    "code_assist_type": "Embedding",
+    "temperature": 0.2
+  },
+  "ollama/codellama": {
+    "code_diff_type": "CodeBlockDiff",
+    "code_assist_type": "Embedding",
+    "temperature": 0.2
+  }
+}

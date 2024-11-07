@@ -1,0 +1,161 @@
+{
+  "$schema": "http://json-schema.org/draft-07/schema#",
+  "type": "object",
+  "properties": {
+    "background": {
+      "type": "string",
+      "pattern": "^#([A-Fa-f0-9]{6}|[A-Fa-f0-9]{3})$"
+    },
+    "foreground": {
+      "type": "string",
+      "pattern": "^#([A-Fa-f0-9]{6}|[A-Fa-f0-9]{3})$"
+    },
+    "margin": {
+      "type": "integer"
+    },
+    "token_types": {
+      "type": "object",
+      "properties": {
+        "plain_text": {
+          "$ref": "#/definitions/tokenType"
+        },
+        "comment": {
+          "$ref": "#/definitions/tokenType"
+        },
+        "string": {
+          "$ref": "#/definitions/tokenType"
+        },
+        "keyword": {
+          "$ref": "#/definitions/tokenType"
+        },
+        "type": {
+          "$ref": "#/definitions/tokenType"
+        },
+        "operator": {
+          "$ref": "#/definitions/tokenType"
+        },
+        "number": {
+          "$ref": "#/definitions/tokenType"
+        },
+        "html_element_name": {
+          "$ref": "#/definitions/tokenType"
+        },
+        "html_attribute_name": {
+          "$ref": "#/definitions/tokenType"
+        },
+        "html_attribute_value": {
+          "$ref": "#/definitions/tokenType"
+        },
+        "html_comment": {
+          "$ref": "#/definitions/tokenType"
+        },
+        "html_tag_delimiter": {
+          "$ref": "#/definitions/tokenType"
+        },
+        "json_key": {
+          "$ref": "#/definitions/tokenType"
+        },
+        "json_string": {
+          "$ref": "#/definitions/tokenType"
+        },
+        "json_number": {
+          "$ref": "#/definitions/tokenType"
+        },
+        "json_const": {
+          "$ref": "#/definitions/tokenType"
+        },
+        "markdown_header": {
+          "$ref": "#/definitions/tokenTypeWithOptionalBold"
+        },
+        "markdown_code": {
+          "$ref": "#/definitions/tokenType"
+        },
+        "markdown_emph": {
+          "$ref": "#/definitions/tokenTypeWithOptionalItalic"
+        },
+        "markdown_bold": {
+          "$ref": "#/definitions/tokenTypeWithOptionalBold"
+        },
+        "builtin_function": {
+          "$ref": "#/definitions/tokenTypeWithOptionalBold"
+        },
+        "builtin_value": {
+          "$ref": "#/definitions/tokenTypeWithOptionalBold"
+        },
+        "control_keyword": {
+          "$ref": "#/definitions/tokenType"
+        },
+        "class_name": {
+          "$ref": "#/definitions/tokenType"
+        },
+        "type_variable": {
+          "$ref": "#/definitions/tokenTypeWithOptionalItalic"
+        },
+        "namespace": {
+          "$ref": "#/definitions/tokenType"
+        },
+        "constructor": {
+          "$ref": "#/definitions/tokenType"
+        },
+        "string_escape": {
+          "$ref": "#/definitions/tokenType"
+        },
+        "xml_name": {
+          "$ref": "#/definitions/tokenType"
+        },
+        "xml_attribute": {
+          "$ref": "#/definitions/tokenType"
+        },
+        "xml_cdata_section": {
+          "$ref": "#/definitions/tokenType"
+        },
+        "html_entity": {
+          "$ref": "#/definitions/tokenType"
+        }
+      },
+      "additionalProperties": false
+    }
+  },
+  "required": ["background", "foreground", "margin", "token_types"],
+  "additionalProperties": false,
+  "definitions": {
+    "tokenType": {
+      "type": "object",
+      "properties": {
+        "foreground": {
+          "type": "string",
+          "pattern": "^#([A-Fa-f0-9]{6}|[A-Fa-f0-9]{3})$"
+        },
+        "background": {
+          "type": "string",
+          "pattern": "^#([A-Fa-f0-9]{6}|[A-Fa-f0-9]{3})$"
+        },
+        "reference_name": {
+          "type": "string"
+        }
+      },
+      "required": ["foreground", "reference_name"],
+      "additionalProperties": false
+    },
+    "tokenTypeWithOptionalBold": {
+      "allOf": [
+        { "$ref": "#/definitions/tokenType" },
+        {
+          "properties": {
+            "bold": { "type": "boolean" }
+          }
+        }
+      ]
+    },
+    "tokenTypeWithOptionalItalic": {
+      "allOf": [
+        { "$ref": "#/definitions/tokenType" },
+        {
+          "properties": {
+            "italic": { "type": "boolean" }
+          }
+        }
+      ]
+    }
+  }
+}

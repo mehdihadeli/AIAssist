@@ -2,8 +2,10 @@ using AIAssistant.Contracts;
 using AIAssistant.Contracts.CodeAssist;
 using AIAssistant.Models;
 using AIAssistant.Models.Options;
-using Clients.Chat.Models;
+using BuildingBlocks.SpectreConsole.Contracts;
+using BuildingBlocks.Utils;
 using Microsoft.Extensions.Options;
+using Spectre.Console;
 
 namespace AIAssistant.Services.CodeAssistStrategies;
 
@@ -12,16 +14,13 @@ public class EmbeddingCodeAssist(
     EmbeddingService embeddingService,
     ICodeFileMapService codeFileMapService,
     ILLMClientManager llmClientManager,
-    IPromptStorage promptStorage,
-    IOptions<CodeAssistOptions> options
+    ISpectreUtilities spectreUtilities,
+    IOptions<AppOptions> appOptions,
+    IPromptCache promptCache
 ) : ICodeAssist
 {
-    private ChatSession _chatSession = default!;
-
-    public async Task LoadCodeFiles(ChatSession chatSession, string contextWorkingDirectory, IList<string>? codeFiles)
+    public async Task LoadCodeFiles(string contextWorkingDirectory, IList<string>? codeFiles)
     {
-        _chatSession = chatSession;
-
         var treeSitterCodeCaptures = codeLoaderService.LoadTreeSitterCodeCaptures(contextWorkingDirectory, codeFiles);
 
         if (!treeSitterCodeCaptures.Any())
@@ -33,25 +32,31 @@ public class EmbeddingCodeAssist(
         // https://ollama.com/blog/embedding-models
         // https://github.com/microsoft/semantic-kernel/blob/main/dotnet/notebooks/06-memory-and-embeddings.ipynb
         // https://github.com/chroma-core/chroma
-        await embeddingService.AddEmbeddingsForFiles(codeFilesMap, chatSession.SessionId);
+        var relatedEmbeddingsResult = await embeddingService.AddEmbeddingsForFiles(codeFilesMap);
+
+        PrintEmbeddingCost(relatedEmbeddingsResult.TotalTokensCount, relatedEmbeddingsResult.TotalCost);
     }
 
-    public async IAsyncEnumerable<string?> QueryAsync(string userQuery)
+    public async IAsyncEnumerable<string?> QueryChatCompletionAsync(string userQuery)
     {
-        var relatedEmbeddings = await embeddingService.GetRelatedEmbeddings(userQuery, _chatSession.SessionId);
+        var relatedEmbeddingsResult = await embeddingService.GetRelatedEmbeddings(userQuery);
+
+        if (appOptions.Value.PrintCostEnabled)
+        {
+            PrintEmbeddingCost(relatedEmbeddingsResult.TotalTokensCount, relatedEmbeddingsResult.TotalCost);
+        }
 
         // Prepare context from relevant code snippets
-        var codeContext = embeddingService.CreateLLMContext(relatedEmbeddings);
+        var codeContext = embeddingService.CreateLLMContext(relatedEmbeddingsResult.CodeEmbeddings);
 
-        var systemCodeAssistPrompt = promptStorage.GetPrompt(
+        var systemCodeAssistPrompt = promptCache.GetPrompt(
             CommandType.Code,
-            options.Value.CodeDiffType,
+            llmClientManager.ChatModel.ModelOption.CodeDiffType,
             new { codeContext = codeContext }
         );
 
         // Generate a response from the language model (e.g., OpenAI or Llama)
         var completionStreams = llmClientManager.GetCompletionStreamAsync(
-            _chatSession,
             userQuery: userQuery,
             systemContext: systemCodeAssistPrompt
         );
@@ -60,5 +65,13 @@ public class EmbeddingCodeAssist(
         {
             yield return streamItem;
         }
+    }
+
+    private void PrintEmbeddingCost(int totalCount, decimal totalCost)
+    {
+        spectreUtilities.InformationText(
+            message: $"Total Embedding Tokens: {totalCount.FormatCommas()} | Total Embedding Cost: ${totalCost.FormatCommas()}",
+            justify: Justify.Right
+        );
     }
 }

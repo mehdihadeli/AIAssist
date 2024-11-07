@@ -1,4 +1,6 @@
 {
+  "$schema": "./spectre_console_schema.json",
+  "name": "dracula",
   "console": {
     "prompt": {
       "foreground": "#bd93f9"  
@@ -17,6 +19,16 @@
     },
     "error": {
       "foreground": "#ff5555"
+    },
+    "warning": {
+      "foreground": "#f1fa8c"
+    },
+    "cursor": {
+      "foreground": "#ff79c6"
+    },
+    "tree": {
+      "foreground": "#8be9fd",
+      "bold": true
     }
   },
   "code": {

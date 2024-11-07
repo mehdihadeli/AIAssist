@@ -12,16 +12,16 @@ using AIAssistant.Services;
 using AIAssistant.Services.CodeAssistStrategies;
 using BuildingBlocks.Extensions;
 using BuildingBlocks.InMemoryVectorDatabase;
+using BuildingBlocks.LLM;
+using BuildingBlocks.LLM.Tokenizers;
 using BuildingBlocks.Serialization;
 using BuildingBlocks.SpectreConsole;
 using BuildingBlocks.SpectreConsole.Contracts;
 using Clients;
-using Clients.Anthropic;
 using Clients.Contracts;
 using Clients.Models;
-using Clients.Ollama;
-using Clients.OpenAI;
 using Clients.Options;
+using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.DependencyInjection.Extensions;
 using Microsoft.Extensions.Hosting;
@@ -57,21 +57,35 @@ public static class DependencyInjectionExtensions
 
         AddPromptDependencies(builder);
 
-        AddModelStorageDependencies(builder);
+        AddCacheModelsDependencies(builder);
 
         AddCommandsDependencies(builder);
+
+        AddChatDependencies(builder);
+
+        AddTokenizersDependencies(builder);
 
         return builder;
     }
 
+    private static void AddTokenizersDependencies(HostApplicationBuilder builder)
+    {
+        builder.Services.AddSingleton<ITokenizer, GptTokenizer>();
+    }
+
+    private static void AddChatDependencies(HostApplicationBuilder builder)
+    {
+        builder.Services.AddSingleton<IChatSessionManager, ChatSessionManager>();
+    }
+
     private static void AddSpectreConsoleDependencies(HostApplicationBuilder builder)
     {
-        builder.Services.AddSingleton<IAnsiConsole>(AnsiConsole.Console);
-        builder.Services.AddSingleton<ISpectreConsoleUtilities>(sp =>
+        builder.Services.AddSingleton(AnsiConsole.Console);
+        builder.Services.AddSingleton<ISpectreUtilities>(sp =>
         {
-            var appOptions = sp.GetRequiredService<IOptions<AppOptions>>();
+            var appOptions = sp.GetRequiredService<AppOptions>();
             var console = sp.GetRequiredService<IAnsiConsole>();
-            return new SpectreConsoleUtilities(ThemeLoader.LoadTheme(appOptions.Value.ThemeName)!, console);
+            return new SpectreUtilities(ThemeLoader.LoadTheme(appOptions.ThemeName)!, console);
         });
     }
 
@@ -125,79 +139,17 @@ public static class DependencyInjectionExtensions
         builder.Services.AddSingleton<IJsonSerializer, JsonObjectSerializer>();
     }
 
-    private static void AddModelStorageDependencies(HostApplicationBuilder builder)
+    private static void AddCacheModelsDependencies(HostApplicationBuilder builder)
     {
-        builder.Services.AddSingleton<IModelsStorageService, ModelsStorageService>(_ =>
-        {
-            var modelStorage = new ModelsStorageService();
-
-            modelStorage.AddChatModel(
-                new ChatModelStorage(ClientsConstants.Ollama.ChatModels.Llama3_1, AIProvider.Ollama)
-            );
-            modelStorage.AddChatModel(
-                new ChatModelStorage(ClientsConstants.Ollama.ChatModels.Deepseek_Coder_V2, AIProvider.Ollama)
-            );
-
-            modelStorage.AddEmbeddingModel(
-                new EmbeddingModelStorage(
-                    ClientsConstants.Ollama.EmbeddingsModels.Mxbai_Embed_Large,
-                    AIProvider.Ollama,
-                    0.5
-                )
-            );
-
-            modelStorage.AddEmbeddingModel(
-                new EmbeddingModelStorage(
-                    ClientsConstants.Ollama.EmbeddingsModels.Nomic_EmbedText,
-                    AIProvider.Ollama,
-                    0.4
-                )
-            );
-
-            modelStorage.AddChatModel(
-                new ChatModelStorage(ClientsConstants.OpenAI.ChatModels.GPT3_5Turbo, AIProvider.OpenAI)
-            );
-
-            modelStorage.AddChatModel(
-                new ChatModelStorage(ClientsConstants.OpenAI.ChatModels.GPT4Mini, AIProvider.OpenAI)
-            );
-
-            modelStorage.AddEmbeddingModel(
-                new EmbeddingModelStorage(
-                    ClientsConstants.OpenAI.EmbeddingsModels.TextEmbedding3Large,
-                    AIProvider.OpenAI,
-                    0.3
-                )
-            );
-
-            modelStorage.AddEmbeddingModel(
-                new EmbeddingModelStorage(
-                    ClientsConstants.OpenAI.EmbeddingsModels.TextEmbedding3Small,
-                    AIProvider.OpenAI,
-                    0.2
-                )
-            );
-
-            modelStorage.AddEmbeddingModel(
-                new EmbeddingModelStorage(
-                    ClientsConstants.OpenAI.EmbeddingsModels.TextEmbeddingAda_002,
-                    AIProvider.OpenAI,
-                    0.3
-                )
-            );
-
-            modelStorage.AddChatModel(
-                new ChatModelStorage(ClientsConstants.Anthropic.ChatModels.Claude_3_5_Sonnet, AIProvider.Anthropic)
-            );
-
-            return modelStorage;
-        });
+        builder.Services.AddSingleton<ICacheModels, CacheModels>();
     }
 
     private static void AddOptionsDependencies(HostApplicationBuilder builder)
     {
-        builder.AddConfigurationOptions<CodeAssistOptions>(nameof(CodeAssistOptions));
         builder.AddConfigurationOptions<AppOptions>(nameof(AppOptions));
+        builder.AddConfigurationOptions<ModelsOptions>(nameof(ModelsOptions));
+        builder.AddConfigurationOptions<ModelsInformationOptions>(nameof(ModelsInformationOptions));
+        builder.AddConfigurationOptions<LLMOptions>(nameof(LLMOptions));
         builder.AddConfigurationOptions<PolicyOptions>(nameof(PolicyOptions));
     }
 
@@ -230,10 +182,13 @@ public static class DependencyInjectionExtensions
         builder.Services.AddSingleton<ICodeAssistantManager, CodeAssistantManager>(sp =>
         {
             var factory = sp.GetRequiredService<ICodeAssistFactory>();
-            var options = sp.GetRequiredService<IOptions<CodeAssistOptions>>();
+            var llmOptions = sp.GetRequiredService<IOptions<LLMOptions>>();
             var codeDiffManager = sp.GetRequiredService<ICodeDiffManager>();
+            var cacheModels = sp.GetRequiredService<ICacheModels>();
 
-            ICodeAssist codeAssist = factory.Create(options.Value.CodeAssistType);
+            var chatModel = cacheModels.GetModel(llmOptions.Value.ChatModel);
+
+            ICodeAssist codeAssist = factory.Create(chatModel.ModelOption.CodeAssistType);
 
             return new CodeAssistantManager(codeAssist, codeDiffManager);
         });
@@ -241,9 +196,9 @@ public static class DependencyInjectionExtensions
 
     private static void AddPromptDependencies(HostApplicationBuilder builder)
     {
-        builder.Services.AddSingleton<IPromptStorage, PromptStorage>(_ =>
+        builder.Services.AddSingleton<IPromptCache, PromptCache>(_ =>
         {
-            var promptStorage = new PromptStorage();
+            var promptStorage = new PromptCache();
 
             promptStorage.AddPrompt(
                 AIAssistantConstants.Prompts.CodeAssistantUnifiedDiffTemplate,
@@ -272,21 +227,21 @@ public static class DependencyInjectionExtensions
         builder.AddConfigurationOptions<LLMOptions>(nameof(LLMOptions));
 
         builder.Services.AddKeyedSingleton<ILLMClient, OllamaClient>(AIProvider.Ollama);
-        builder.Services.AddKeyedSingleton<ILLMClient, OpenAiClient>(AIProvider.OpenAI);
-        builder.Services.AddKeyedSingleton<ILLMClient, AnthropicClient>(AIProvider.Anthropic);
+        builder.Services.AddKeyedSingleton<ILLMClient, OpenAiClient>(AIProvider.Openai);
+        //builder.Services.AddKeyedSingleton<ILLMClient, AnthropicClient>(AIProvider.Anthropic);
         builder.Services.AddSingleton<ILLMClientManager, LLMClientManager>();
 
         builder.Services.AddSingleton<ILLMClientFactory, LLMClientFactory>(sp =>
         {
             var ollamaClient = sp.GetRequiredKeyedService<ILLMClient>(AIProvider.Ollama);
-            var openAIClient = sp.GetRequiredKeyedService<ILLMClient>(AIProvider.OpenAI);
-            var anthropicClient = sp.GetRequiredKeyedService<ILLMClient>(AIProvider.Anthropic);
+            var openAIClient = sp.GetRequiredKeyedService<ILLMClient>(AIProvider.Openai);
+            //var anthropicClient = sp.GetRequiredKeyedService<ILLMClient>(AIProvider.Anthropic);
 
             IDictionary<AIProvider, ILLMClient> clientStrategies = new Dictionary<AIProvider, ILLMClient>
             {
                 { AIProvider.Ollama, ollamaClient },
-                { AIProvider.OpenAI, openAIClient },
-                { AIProvider.Anthropic, anthropicClient },
+                { AIProvider.Openai, openAIClient },
+                //{ AIProvider.Anthropic, anthropicClient },
             };
 
             return new LLMClientFactory(clientStrategies);
@@ -300,7 +255,8 @@ public static class DependencyInjectionExtensions
             {
                 var options = sp.GetRequiredService<IOptions<LLMOptions>>().Value;
                 var policyOptions = sp.GetRequiredService<IOptions<PolicyOptions>>().Value;
-                var modelStorage = sp.GetRequiredService<IModelsStorageService>();
+
+                var cacheModels = sp.GetRequiredService<ICacheModels>();
 
                 ArgumentException.ThrowIfNullOrEmpty(options.BaseAddress);
                 ArgumentException.ThrowIfNullOrEmpty(options.ChatModel);
@@ -308,16 +264,16 @@ public static class DependencyInjectionExtensions
                 client.BaseAddress = new Uri(options.BaseAddress);
                 client.Timeout = TimeSpan.FromSeconds(policyOptions.TimeoutSeconds);
 
-                var providerType = modelStorage.GetAIProviderFromModel(options.ChatModel, ModelType.ChatModel);
+                var model = cacheModels.GetModel(options.ChatModel);
 
-                switch (providerType)
+                switch (model.ModelInformation.AIProvider)
                 {
-                    case AIProvider.Anthropic:
-                        ArgumentException.ThrowIfNullOrEmpty(options.ApiKey);
-                        client.DefaultRequestHeaders.Add("x-api-key", options.ApiKey);
-                        // client.DefaultRequestHeaders.Add("anthropic-version", options.Version);
-                        break;
-                    case AIProvider.OpenAI:
+                    // case AIProvider.Anthropic:
+                    //     ArgumentException.ThrowIfNullOrEmpty(options.ApiKey);
+                    //     client.DefaultRequestHeaders.Add("x-api-key", options.ApiKey);
+                    //     // client.DefaultRequestHeaders.Add("anthropic-version", options.Version);
+                    //     break;
+                    case AIProvider.Openai:
                         ArgumentException.ThrowIfNullOrEmpty(options.ApiKey);
                         client.DefaultRequestHeaders.Authorization = new AuthenticationHeaderValue(
                             "Bearer",
@@ -374,9 +330,12 @@ public static class DependencyInjectionExtensions
 
         builder.Services.AddSingleton<ICodeDiffManager, CodeDiffManager>(sp =>
         {
-            var options = sp.GetRequiredService<IOptions<CodeAssistOptions>>();
+            var options = sp.GetRequiredService<IOptions<LLMOptions>>();
             var factory = sp.GetRequiredService<ICodeDiffParserFactory>();
-            var codeDiffParser = factory.Create(options.Value.CodeDiffType);
+            var cacheModels = sp.GetRequiredService<ICacheModels>();
+            var chatModel = cacheModels.GetModel(options.Value.ChatModel);
+
+            var codeDiffParser = factory.Create(chatModel.ModelOption.CodeDiffType);
 
             var codeDiffUpdater = sp.GetRequiredService<ICodeDiffUpdater>();
 

@@ -1,4 +1,5 @@
 {
+  "$schema": "./spectre_console_schema.json",
   "code": {
     "background": "#282C34",
     "foreground": "#ABB2BF",

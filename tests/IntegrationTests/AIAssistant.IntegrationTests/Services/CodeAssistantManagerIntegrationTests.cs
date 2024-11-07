@@ -1,7 +1,7 @@
 using System.Text;
+using AIAssistant.Chat.Models;
 using AIAssistant.Contracts;
 using AIAssistant.Contracts.CodeAssist;
-using Clients.Chat.Models;
 using FluentAssertions;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Hosting;
@@ -15,6 +15,7 @@ public class CodeAssistantManagerIntegrationTests(ApplicationFixture application
 {
     private IHost _app = default!;
     private ICodeAssistantManager _codeAssistantManager = default!;
+    private IChatSessionManager _chatSessionManager = default!;
     private string _appWorkingDir = default!;
     private string _originalWorkingDir = default!;
 
@@ -23,11 +24,7 @@ public class CodeAssistantManagerIntegrationTests(ApplicationFixture application
     {
         // Arrange
         var userQuery = "can you remove all comments in Add.cs and Add class?";
-        await _codeAssistantManager.LoadCodeFiles(
-            new ChatSession(),
-            contextWorkingDirectory: _appWorkingDir,
-            codeFiles: null
-        );
+        await _codeAssistantManager.LoadCodeFiles(contextWorkingDirectory: _appWorkingDir, codeFiles: null);
 
         // Act
         IAsyncEnumerable<string?> responseStream = _codeAssistantManager.QueryAsync(userQuery);
@@ -57,7 +54,7 @@ public class CodeAssistantManagerIntegrationTests(ApplicationFixture application
             TestDataConstants.CalculatorApp.DivideRelativeFilePath,
             TestDataConstants.CalculatorApp.MultiplyRelativeFilePath,
         ];
-        await _codeAssistantManager.LoadCodeFiles(new ChatSession(), contextWorkingDirectory: null, codeFiles: files);
+        await _codeAssistantManager.LoadCodeFiles(contextWorkingDirectory: null, codeFiles: files);
 
         // Act
         IAsyncEnumerable<string?> responseStream = _codeAssistantManager.QueryAsync(userQuery);
@@ -73,11 +70,7 @@ public class CodeAssistantManagerIntegrationTests(ApplicationFixture application
     {
         // Arrange
         var userQuery = "can you remove all comments in Add.cs file?";
-        await _codeAssistantManager.LoadCodeFiles(
-            new ChatSession(),
-            contextWorkingDirectory: _appWorkingDir,
-            codeFiles: null
-        );
+        await _codeAssistantManager.LoadCodeFiles(contextWorkingDirectory: _appWorkingDir, codeFiles: null);
 
         // Act
         IAsyncEnumerable<string?> responseStream = _codeAssistantManager.QueryAsync(userQuery);
@@ -101,12 +94,17 @@ public class CodeAssistantManagerIntegrationTests(ApplicationFixture application
         Directory.SetCurrentDirectory(_appWorkingDir);
 
         _codeAssistantManager = _app.Services.GetRequiredService<ICodeAssistantManager>();
+        _chatSessionManager = _app.Services.GetRequiredService<IChatSessionManager>();
+        var session = _chatSessionManager.CreateNewSession();
+        _chatSessionManager.SetCurrentActiveSession(session);
 
         return Task.CompletedTask;
     }
 
     public Task DisposeAsync()
     {
+        _chatSessionManager.SetCurrentActiveSession(null);
+
         Directory.SetCurrentDirectory(_originalWorkingDir);
 
         return Task.CompletedTask;

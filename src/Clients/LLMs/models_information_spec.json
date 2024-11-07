@@ -1,0 +1,111 @@
+{
+  "$schema": "http://json-schema.org/draft-07/schema#",
+  "title": "Provider Configuration Schema",
+  "type": "object",
+  "additionalProperties": {
+    "type": "object",
+    "description": "A fully qualified model name with AI provider type and '/' prefix (e.g., 'ollama/llama3.1').",
+    "properties": {
+      "enabled": {
+        "type": "boolean",
+        "description": "Indicates whether the model is enabled (true) or disabled (false).",
+        "default": true
+      },
+      "max_tokens": {
+        "type": "integer",
+        "description": "The maximum number of tokens for the provider",
+        "default": 8192
+      },
+      "max_input_tokens": {
+        "type": "integer",
+        "description": "Maximum input tokens allowed by the provider; defaults to max_tokens",
+        "default": 8192
+      },
+      "max_output_tokens": {
+        "type": "integer",
+        "description": "Maximum output tokens allowed by the provider; defaults to max_tokens",
+        "default": 8192
+      },
+      "input_cost_per_token": {
+        "type": "number",
+        "minimum": 0,
+        "description": "Cost per input token",
+        "default": 0.0
+      },
+      "output_cost_per_token": {
+        "type": "number",
+        "minimum": 0,
+        "description": "Cost per output token",
+        "default": 0.0
+      },
+      "output_vector_size": {
+        "type": "number",
+        "minimum": 0,
+        "description": "Output vector size",
+        "default": 0.0
+      },
+      "provider": {
+        "type": "string",
+        "description": "Name of the provider, must match a known provider (e.g., 'ollama')",
+        "enum": ["ollama", "openai", "azure", "azure_ai", "anthropic", "google"]
+      },
+      "mode": {
+        "type": "string",
+        "enum": [
+          "chat",
+          "embedding",
+          "completion",
+          "image_generation",
+          "audio_transcription",
+          "audio_speech"
+        ],
+        "description": "Operational mode for the provider (e.g., chat, completion)"
+      },
+      "supports_function_calling": {
+        "type": "boolean",
+        "description": "Indicates if the provider supports function calling",
+        "default": false
+      },
+      "supports_parallel_function_calling": {
+        "type": "boolean",
+        "description": "Indicates if parallel function calling is supported",
+        "default": false
+      },
+      "supports_vision": {
+        "type": "boolean",
+        "description": "Indicates if vision input/output is supported",
+        "default": false
+      },
+      "embedding_dimensions": {
+        "type": "integer",
+        "minimum": 1,
+        "description": "Dimensions of the output embedding vector, applicable only for embedding mode",
+        "default": 512
+      },
+      "supports_audio_input": {
+        "type": "boolean",
+        "description": "Indicates if audio input is supported",
+        "default": false
+      },
+      "supports_audio_output": {
+        "type": "boolean",
+        "description": "Indicates if audio output is supported",
+        "default": false
+      },
+      "supports_prompt_caching": {
+        "type": "boolean",
+        "description": "Indicates if prompt caching is supported",
+        "default": false
+      }
+    },
+    "required": [
+      "max_tokens",
+      "max_input_tokens",
+      "input_cost_per_token",
+      "output_cost_per_token",
+      "provider",
+      "mode"
+    ],
+    "additionalProperties": false
+  }
+}

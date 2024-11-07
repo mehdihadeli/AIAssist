@@ -4,7 +4,7 @@ using BuildingBlocks.SpectreConsole.Contracts;
 
 namespace AIAssistant.Diff;
 
-public class CodeDiffUpdater(ISpectreConsoleUtilities spectreConsoleUtilities) : ICodeDiffUpdater
+public class CodeDiffUpdater(ISpectreUtilities spectreUtilities) : ICodeDiffUpdater
 {
     public void ApplyChanges(IEnumerable<FileChange> changes, string contextWorkingDirectory)
     {
@@ -15,14 +15,14 @@ public class CodeDiffUpdater(ISpectreConsoleUtilities spectreConsoleUtilities) :
             try
             {
                 // Handle file creation if it's a new file
-                if (change.FileChangeType == ChangeType.Add)
+                if (change.FileCodeChangeType == CodeChangeType.Add)
                 {
                     HandleNewFile(change, contextWorkingDirectory);
                     continue;
                 }
 
                 // Handle file deletion
-                if (change.FileChangeType == ChangeType.Delete)
+                if (change.FileCodeChangeType == CodeChangeType.Delete)
                 {
                     HandleFileDeletion(filePath);
                     continue;
@@ -40,7 +40,7 @@ public class CodeDiffUpdater(ISpectreConsoleUtilities spectreConsoleUtilities) :
             }
             catch (Exception ex)
             {
-                spectreConsoleUtilities.Exception($"Failed to update file {filePath}", ex);
+                spectreUtilities.Exception($"Failed to update file {filePath}", ex);
             }
         }
     }
@@ -49,14 +49,14 @@ public class CodeDiffUpdater(ISpectreConsoleUtilities spectreConsoleUtilities) :
     {
         // If all lines are additions or replacements, treat it as a full content update.
         return change.ChangeLines.All(line =>
-            line.LineChangeType == ChangeType.Add || line.LineChangeType == ChangeType.Update
+            line.LineCodeChangeType == CodeChangeType.Add || line.LineCodeChangeType == CodeChangeType.Update
         );
     }
 
     private void HandleNewFile(FileChange change, string contextWorkingDirectory)
     {
         var newFileLines = change
-            .ChangeLines.Where(line => line.LineChangeType == ChangeType.Add)
+            .ChangeLines.Where(line => line.LineCodeChangeType == CodeChangeType.Add)
             .Select(line => line.Content)
             .ToList();
 
@@ -69,7 +69,7 @@ public class CodeDiffUpdater(ISpectreConsoleUtilities spectreConsoleUtilities) :
         }
 
         File.WriteAllLines(Path.Combine(contextWorkingDirectory, change.FilePath), newFileLines);
-        spectreConsoleUtilities.SuccessText($"File created: {change.FilePath}");
+        spectreUtilities.SuccessText($"File created: {change.FilePath}");
     }
 
     private void HandleFileDeletion(string filePath)
@@ -77,7 +77,7 @@ public class CodeDiffUpdater(ISpectreConsoleUtilities spectreConsoleUtilities) :
         if (File.Exists(filePath))
         {
             File.Delete(filePath);
-            spectreConsoleUtilities.SuccessText($"File deleted: {filePath}");
+            spectreUtilities.SuccessText($"File deleted: {filePath}");
         }
     }
 
@@ -94,14 +94,14 @@ public class CodeDiffUpdater(ISpectreConsoleUtilities spectreConsoleUtilities) :
         }
 
         File.WriteAllLines(Path.Combine(contextWorkingDirectory, change.FilePath), fullContent);
-        spectreConsoleUtilities.SuccessText($"File updated: {change.FilePath}");
+        spectreUtilities.SuccessText($"File updated: {change.FilePath}");
     }
 
     private void UpdateLineBasedContent(FileChange change, string filePath)
     {
         if (!File.Exists(filePath))
         {
-            spectreConsoleUtilities.ErrorText($"File not found: {filePath}");
+            spectreUtilities.ErrorText($"File not found: {filePath}");
             return;
         }
 
@@ -110,9 +110,9 @@ public class CodeDiffUpdater(ISpectreConsoleUtilities spectreConsoleUtilities) :
         // Process changes in reverse order for proper line indexing
         foreach (var lineChange in change.ChangeLines.OrderByDescending(line => line.LineNumber))
         {
-            switch (lineChange.LineChangeType)
+            switch (lineChange.LineCodeChangeType)
             {
-                case ChangeType.Add:
+                case CodeChangeType.Add:
                     if (lineChange.LineNumber <= lines.Count)
                     {
                         lines.Insert(lineChange.LineNumber - 1, lineChange.Content);
@@ -123,14 +123,14 @@ public class CodeDiffUpdater(ISpectreConsoleUtilities spectreConsoleUtilities) :
                     }
                     break;
 
-                case ChangeType.Delete:
+                case CodeChangeType.Delete:
                     if (lineChange.LineNumber - 1 < lines.Count)
                     {
                         lines.RemoveAt(lineChange.LineNumber - 1);
                     }
                     break;
 
-                case ChangeType.Update:
+                case CodeChangeType.Update:
                     if (lineChange.LineNumber - 1 < lines.Count)
                     {
                         lines[lineChange.LineNumber - 1] = lineChange.Content;
@@ -141,6 +141,6 @@ public class CodeDiffUpdater(ISpectreConsoleUtilities spectreConsoleUtilities) :
 
         // Write the updated lines back to the file
         File.WriteAllLines(filePath, lines);
-        spectreConsoleUtilities.SuccessText($"File updated: {change.FilePath}");
+        spectreUtilities.SuccessText($"File updated: {change.FilePath}");
     }
 }

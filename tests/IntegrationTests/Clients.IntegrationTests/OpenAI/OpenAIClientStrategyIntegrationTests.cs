@@ -1,5 +1,6 @@
-using Clients.Chat.Models;
+using AIAssistant.Chat.Models;
 using Clients.Contracts;
+using Clients.Dtos;
 using Clients.Models;
 using Clients.Options;
 using FluentAssertions;
@@ -24,7 +25,7 @@ public class OpenAIClientStrategyIntegrationTests(ApplicationFixture application
         llmOptions.Value.EmbeddingsModel = ClientsConstants.OpenAI.EmbeddingsModels.TextEmbedding3Small;
 
         var clientFactory = _app.Services.GetRequiredService<ILLMClientFactory>();
-        _illmClient = clientFactory.CreateClient(AIProvider.OpenAI);
+        _illmClient = clientFactory.CreateClient(AIProvider.Openai);
 
         return Task.CompletedTask;
     }
@@ -38,13 +39,14 @@ public class OpenAIClientStrategyIntegrationTests(ApplicationFixture application
     public async Task GetCompletionAsync_ShouldReturnCompletion_WhenResponseIsSuccessful()
     {
         // Arrange
-        var chatItems = new List<ChatItem> { new(Role: RoleType.User, Prompt: "Hello") };
+        var chatItems = new List<ChatCompletionRequestItem> { new(Role: RoleType.User, Prompt: "Hello") };
 
         // Act
-        var result = await _illmClient.GetCompletionAsync(chatItems);
+        var result = await _illmClient.GetCompletionAsync(new ChatCompletionRequest(chatItems));
 
         // Assert
         result.Should().NotBeNull();
+        result?.ChatResponse.Should().NotBeNullOrEmpty();
     }
 
     [Fact]
@@ -58,21 +60,22 @@ public class OpenAIClientStrategyIntegrationTests(ApplicationFixture application
 
         // Assert
         result.Should().NotBeNull();
-        result.Should().NotBeEmpty();
+        result?.Embeddings.Should().NotBeNull();
+        result?.Embeddings.Should().NotBeEmpty();
     }
 
     [Fact]
     public async Task GetCompletionStreamAsync_ShouldReturnMessages()
     {
         // Arrange
-        var chatItems = new List<ChatItem> { new(Role: RoleType.User, Prompt: "Hello, how are you?") };
+        var chatItems = new List<ChatCompletionRequestItem> { new(Role: RoleType.User, Prompt: "Hello, how are you?") };
 
         // Act
-        var messages = await _illmClient.GetCompletionStreamAsync(chatItems).ToListAsync();
+        var messages = await _illmClient.GetCompletionStreamAsync(new ChatCompletionRequest(chatItems)).ToListAsync();
 
         // Assert
         messages.Should().NotBeNull();
-        messages.Should().NotBeEmpty();
-        messages[0].Should().NotBeNullOrEmpty();
+        messages.Should().HaveCountGreaterThan(0);
+        messages[0]?.ChatResponse.Should().NotBeNullOrEmpty();
     }
 }

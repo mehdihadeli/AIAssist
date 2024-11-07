@@ -52,12 +52,12 @@ public class UnifiedCodeDiffParser : ICodeDiffParser
                 if (filePath == "/dev/null")
                 {
                     // Treat as a deleted file if path is /dev/null
-                    currentFileChange = new FileChange(lines[i + 1].Substring(4).Trim(), ChangeType.Delete);
+                    currentFileChange = new FileChange(lines[i + 1].Substring(4).Trim(), CodeChangeType.Delete);
                 }
                 else
                 {
                     // New instance for a standard file path
-                    currentFileChange = new FileChange(filePath, ChangeType.Update);
+                    currentFileChange = new FileChange(filePath, CodeChangeType.Update);
                 }
             }
             else if (line.StartsWith("+++ "))
@@ -78,21 +78,21 @@ public class UnifiedCodeDiffParser : ICodeDiffParser
             else if (line.StartsWith("-"))
             {
                 currentFileChange?.ChangeLines.Add(
-                    new FileChangeLine(currentLineNumberOriginal++, line.Substring(1).Trim(), ChangeType.Delete)
+                    new FileChangeLine(currentLineNumberOriginal++, line.Substring(1).Trim(), CodeChangeType.Delete)
                 );
             }
             // Handle added lines
             else if (line.StartsWith("+"))
             {
                 currentFileChange?.ChangeLines.Add(
-                    new FileChangeLine(currentLineNumberNew++, line.Substring(1).Trim(), ChangeType.Add)
+                    new FileChangeLine(currentLineNumberNew++, line.Substring(1).Trim(), CodeChangeType.Add)
                 );
             }
             // Handle unchanged lines, which are usually part of the context
             else
             {
                 currentFileChange?.ChangeLines.Add(
-                    new FileChangeLine(currentLineNumberOriginal++, line, ChangeType.Update)
+                    new FileChangeLine(currentLineNumberOriginal++, line, CodeChangeType.Update)
                 );
                 currentLineNumberNew++; // Increment both line counters as line is unchanged
             }

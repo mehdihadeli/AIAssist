@@ -13,7 +13,7 @@ public class ChatSessionTests
         var userPrompt = "Hello, how are you?";
 
         // Act
-        var userChatItem = chatSession.CreateUserChatItem(userPrompt);
+        var userChatItem = chatSession.AddUserChatItem(userPrompt);
 
         // Assert
         Assert.NotNull(userChatItem);
@@ -33,7 +33,7 @@ public class ChatSessionTests
         var context = "Some context";
 
         // Act
-        var systemChatItem = chatSession.CreateSystemChatItem(systemPrompt);
+        var systemChatItem = chatSession.AddSystemChatItem(systemPrompt);
 
         // Assert
         Assert.NotNull(systemChatItem);
@@ -52,7 +52,7 @@ public class ChatSessionTests
         var assistantPrompt = "Here is the information you requested.";
 
         // Act
-        var assistantChatItem = chatSession.CreateAssistantChatItem(assistantPrompt);
+        var assistantChatItem = chatSession.AddAssistantChatItem(assistantPrompt);
 
         // Assert
         Assert.NotNull(assistantChatItem);
@@ -85,9 +85,9 @@ public class ChatSessionTests
         var assistantPrompt = "Assistant response";
 
         // Act
-        chatSession.CreateUserChatItem(userPrompt);
-        chatSession.CreateSystemChatItem(systemPrompt);
-        chatSession.CreateAssistantChatItem(assistantPrompt);
+        chatSession.AddUserChatItem(userPrompt);
+        chatSession.AddSystemChatItem(systemPrompt);
+        chatSession.AddAssistantChatItem(assistantPrompt);
 
         var history = chatSession.ChatHistory.HistoryItems;
 

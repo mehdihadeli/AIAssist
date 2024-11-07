@@ -1,5 +1,3 @@
-using BuildingBlocks.LLM;
-
 namespace BuildingBlocks.InMemoryVectorDatabase;
 
 public class Collection(string name)
@@ -26,44 +24,6 @@ public class Collection(string name)
     /// <summary>
     /// Query documents by text similarity with optional metadata filter
     /// </summary>
-    /// <param name="queryText"></param>
-    /// <param name="nResults"></param>
-    /// <param name="metadataFilter"></param>
-    /// <param name="threshold"></param>
-    /// <returns></returns>
-    public IEnumerable<Document> QueryDocuments(
-        string queryText,
-        IDictionary<string, string>? metadataFilter = null,
-        int nResults = 0,
-        double threshold = 0.3
-    )
-    {
-        var queryEmbedding = TokenizerHelper.GPT4VectorTokens(queryText);
-
-        var query = _documents
-            .Values.Select(doc => new
-            {
-                Document = doc,
-                SimilarityScore = CosineSimilarity(doc.Embeddings, queryEmbedding, doc),
-            })
-            .Where(doc => metadataFilter == null || MetadataMatches(doc.Document.Metadata, metadataFilter))
-            .Where(x => x.SimilarityScore >= threshold)
-            .OrderByDescending(result => result.SimilarityScore)
-            .ToList();
-
-        var averageRank = query.Select(x => x.SimilarityScore).Average();
-
-        var result =
-            nResults > 0
-                ? query.Where(x => x.SimilarityScore >= averageRank).Take(nResults).Select(result => result.Document)
-                : query.Where(x => x.SimilarityScore >= averageRank).Select(result => result.Document);
-
-        return result;
-    }
-
-    /// <summary>
-    /// Query documents by text similarity with optional metadata filter
-    /// </summary>
     /// <param name="queryEmbedding"></param>
     /// <param name="nResults"></param>
     /// <param name="metadataFilter"></param>
@@ -73,7 +33,7 @@ public class Collection(string name)
         IList<double> queryEmbedding,
         IDictionary<string, string>? metadataFilter = null,
         int nResults = 0,
-        double threshold = 0.3
+        decimal threshold = 0.3m
     )
     {
         var query = _documents

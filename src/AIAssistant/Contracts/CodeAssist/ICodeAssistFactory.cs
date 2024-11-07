@@ -1,4 +1,5 @@
 using AIAssistant.Models;
+using Clients.Models;
 
 namespace AIAssistant.Contracts.CodeAssist;
 

@@ -6,7 +6,6 @@ using Clients.Chat.Models;
 using Clients.Models;
 using Clients.Models.Ollama.Completion;
 using Clients.Models.Ollama.Embeddings;
-using Clients.Ollama;
 using Clients.Options;
 using FluentAssertions;
 using Microsoft.Extensions.Options;

@@ -10,6 +10,7 @@ public class ApplicationFixture : IAsyncLifetime
     public Task InitializeAsync()
     {
         var builder = Host.CreateApplicationBuilder();
+        builder.AddDefaultConfigurations(); // Reusing the extension method to register configurations
         builder.AddDependencies(); // Reusing the extension method to register services
         App = builder.Build();
 

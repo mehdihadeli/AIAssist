@@ -1,20 +1,28 @@
 using AIAssistant.Contracts;
 using AIAssistant.Data;
+using AIAssistant.Dtos;
 using AIAssistant.Models;
 using AIAssistant.Prompts;
 using TreeSitter.Bindings.CustomTypes.TreeParser;
 
 namespace AIAssistant.Services;
 
-public class EmbeddingService(ILLMClientManager llmClientManager, EmbeddingsStore embeddingsStore)
+public class EmbeddingService(
+    ILLMClientManager llmClientManager,
+    EmbeddingsStore embeddingsStore,
+    IChatSessionManager chatSessionManager
+)
 {
-    public async Task AddEmbeddingsForFiles(IEnumerable<CodeFileMap> codeFilesMap, Guid sessionId)
+    public async Task<AddEmbeddingsForFilesResult> AddEmbeddingsForFiles(IEnumerable<CodeFileMap> codeFilesMap)
     {
+        int totalTokens = 0;
+        decimal totalCost = 0;
+
         IList<CodeEmbedding> codeEmbeddings = new List<CodeEmbedding>();
         foreach (var codeFileMap in codeFilesMap)
         {
             var input = GenerateEmbeddingInputString(codeFileMap.TreeSitterFullCode);
-            var embeddingData = await llmClientManager.GetEmbeddingAsync(input);
+            var embeddingResult = await llmClientManager.GetEmbeddingAsync(input);
 
             codeEmbeddings.Add(
                 new CodeEmbedding
@@ -23,28 +31,41 @@ public class EmbeddingService(ILLMClientManager llmClientManager, EmbeddingsStor
                     TreeSitterFullCode = codeFileMap.TreeSitterFullCode,
                     TreeOriginalCode = codeFileMap.TreeOriginalCode,
                     Code = codeFileMap.OriginalCode,
-                    SessionId = sessionId,
-                    Embeddings = embeddingData,
+                    SessionId = chatSessionManager.GetCurrentActiveSession().SessionId,
+                    Embeddings = embeddingResult.Embeddings,
                 }
             );
+
+            totalTokens += embeddingResult.TotalTokensCount;
+            totalCost += embeddingResult.TotalCost;
         }
 
         // we can replace it with an embedded database like `chromadb`, it can give us n of most similarity items
         await embeddingsStore.AddCodeEmbeddings(codeEmbeddings);
+
+        return new AddEmbeddingsForFilesResult(totalTokens, totalCost);
     }
 
-    public async Task<IEnumerable<CodeEmbedding>> GetRelatedEmbeddings(string userQuery, Guid sessionId)
+    public async Task<GetRelatedEmbeddingsResult> GetRelatedEmbeddings(string userQuery)
     {
         // Generate embedding for user input based on LLM apis
-        var userEmbedding = await GenerateEmbeddingForUserInput(userQuery);
+        var embeddingsResult = await GenerateEmbeddingForUserInput(userQuery);
 
         // Find relevant code based on the user query
-        var relevantCodes = embeddingsStore.Query(userEmbedding, sessionId, llmClientManager.EmbeddingThreshold);
+        var relevantCodes = embeddingsStore.Query(
+            embeddingsResult.Embeddings,
+            chatSessionManager.GetCurrentActiveSession().SessionId,
+            llmClientManager.EmbeddingThreshold
+        );
 
-        return relevantCodes;
+        return new GetRelatedEmbeddingsResult(
+            relevantCodes,
+            embeddingsResult.TotalTokensCount,
+            embeddingsResult.TotalCost
+        );
     }
 
-    public async Task<IList<double>> GenerateEmbeddingForUserInput(string userInput)
+    public async Task<GetEmbeddingResult> GenerateEmbeddingForUserInput(string userInput)
     {
         return await llmClientManager.GetEmbeddingAsync(userInput);
     }

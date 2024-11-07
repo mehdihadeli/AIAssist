@@ -1,20 +1,19 @@
 using AIAssistant.Contracts;
 using AIAssistant.Contracts.CodeAssist;
-using Clients.Chat.Models;
 
 namespace AIAssistant.Services.CodeAssistStrategies;
 
 public class TreeSitterCodeAssistSummary(CodeLoaderService codeLoaderService, ICodeFileMapService codeFileMapService)
     : ICodeAssist
 {
-    public Task LoadCodeFiles(ChatSession chatSession, string contextWorkingDirectory, IList<string>? codeFiles)
+    public Task LoadCodeFiles(string contextWorkingDirectory, IList<string>? codeFiles)
     {
         var codeCaptures = codeLoaderService.LoadTreeSitterCodeCaptures(contextWorkingDirectory);
 
         return Task.CompletedTask;
     }
 
-    public IAsyncEnumerable<string> QueryAsync(string userQuery)
+    public IAsyncEnumerable<string> QueryChatCompletionAsync(string userQuery)
     {
         throw new NotImplementedException();
     }

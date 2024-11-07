@@ -1,7 +1,10 @@
+using System.Text;
+using AIAssistant.Chat.Models;
 using AIAssistant.Contracts;
-using AIAssistant.Models;
-using Clients.Chat.Models;
+using AIAssistant.Dtos;
+using BuildingBlocks.LLM;
 using Clients.Contracts;
+using Clients.Dtos;
 using Clients.Models;
 using Clients.Options;
 using Microsoft.Extensions.Options;
@@ -11,62 +14,86 @@ namespace AIAssistant.Services;
 public class LLMClientManager : ILLMClientManager
 {
     private readonly ILLMClientFactory _clientFactory;
-    private readonly LLMOptions _llmOptions;
+    private readonly IChatSessionManager _chatSessionManager;
+    private readonly ITokenizer _tokenizer;
 
     public LLMClientManager(
         ILLMClientFactory clientFactory,
         IOptions<LLMOptions> llmOptions,
-        IModelsStorageService modelsStorageService
+        IChatSessionManager chatSessionManager,
+        ITokenizer tokenizer,
+        ICacheModels cacheModels
     )
     {
         _clientFactory = clientFactory;
-        _llmOptions = llmOptions.Value;
-        EmbeddingThreshold =
-            modelsStorageService.GetEmbeddingModelByName(_llmOptions.EmbeddingsModel)?.Threshold ?? 0.3;
-        AIProvider = modelsStorageService.GetAIProviderFromModel(llmOptions.Value.ChatModel, ModelType.ChatModel);
+        _chatSessionManager = chatSessionManager;
+        _tokenizer = tokenizer;
+
+        EmbeddingModel = cacheModels.GetModel(llmOptions.Value.EmbeddingsModel);
+        ChatModel = cacheModels.GetModel(llmOptions.Value.ChatModel);
+        EmbeddingThreshold = EmbeddingModel.ModelOption.Threshold;
     }
 
-    public string ChatModel => _llmOptions.ChatModel;
-    public string EmbeddingModel => _llmOptions.EmbeddingsModel;
-    public double EmbeddingThreshold { get; }
-    public AIProvider AIProvider { get; }
+    public Model ChatModel { get; }
+    public Model EmbeddingModel { get; }
+    public decimal EmbeddingThreshold { get; }
 
-    public IAsyncEnumerable<string?> GetCompletionStreamAsync(
-        ChatSession chatSession,
+    public async IAsyncEnumerable<string?> GetCompletionStreamAsync(
         string userQuery,
         string systemContext,
         CancellationToken cancellationToken = default
     )
     {
-        var chatItems = new List<ChatItem>();
+        var chatSession = _chatSessionManager.GetCurrentActiveSession();
 
-        var chatHistoryItems = chatSession.ChatHistory.HistoryItems;
+        chatSession.TrySetSystemContext(systemContext);
+        chatSession.AddUserChatItem(userQuery);
 
-        if (chatHistoryItems.Any())
+        var chatItems = chatSession.GetChatItemsFromHistory();
+
+        var llmClientStratgey = _clientFactory.CreateClient(ChatModel.ModelInformation.AIProvider);
+
+        var chatCompletionResponseStreams = llmClientStratgey.GetCompletionStreamAsync(
+            new ChatCompletionRequest(chatItems.Select(x => new ChatCompletionRequestItem(x.Role, x.Prompt))),
+            cancellationToken
+        );
+
+        StringBuilder chatOutputResponseStringBuilder = new StringBuilder();
+        TokenUsageResponse? tokenUsageResponse = null;
+
+        await foreach (var chatCompletionStream in chatCompletionResponseStreams)
         {
-            var historyItem = chatHistoryItems.Select(x => new ChatItem(x.Role, x.Prompt));
-            chatItems.AddRange(historyItem);
+            chatOutputResponseStringBuilder.Append(chatCompletionStream?.ChatResponse);
+
+            if (chatCompletionStream?.TokenUsage is not null)
+            {
+                tokenUsageResponse = chatCompletionStream.TokenUsage;
+            }
+
+            yield return chatCompletionStream?.ChatResponse;
         }
 
-        // if we don't have a `system` prompt in our chat history we should send it for llm otherwise we will read it from history
-        if (chatSession.ChatHistory.HistoryItems.All(x => x.Role != RoleType.System))
-        {
-            var systemChatItem = chatSession.CreateSystemChatItem(systemContext);
-            chatItems.Add(systemChatItem);
-        }
-
-        var userChatItem = chatSession.CreateUserChatItem(userQuery);
-        chatItems.Add(userChatItem);
-
-        var llmClientStratgey = _clientFactory.CreateClient(AIProvider);
-
-        return llmClientStratgey.GetCompletionStreamAsync(chatItems, cancellationToken);
+        chatSession.AddAssistantChatItem(
+            prompt: chatOutputResponseStringBuilder.ToString(),
+            inputTokenCount: tokenUsageResponse?.InputTokens
+                ?? await _tokenizer.GetTokenCount(string.Concat(chatItems.Select(x => x.Prompt))),
+            inputCostPerToken: tokenUsageResponse?.InputCostPerToken ?? 0,
+            outputTokenCount: tokenUsageResponse?.OutputTokens
+                ?? await _tokenizer.GetTokenCount(chatOutputResponseStringBuilder.ToString()),
+            outputCostPerToken: tokenUsageResponse?.OutputCostPerToken ?? 0
+        );
     }
 
-    public Task<IList<double>> GetEmbeddingAsync(string input, CancellationToken cancellationToken = default)
+    public async Task<GetEmbeddingResult> GetEmbeddingAsync(string input, CancellationToken cancellationToken = default)
     {
-        var llmClientStratgey = _clientFactory.CreateClient(AIProvider);
+        var llmClientStratgey = _clientFactory.CreateClient(EmbeddingModel.ModelInformation.AIProvider);
 
-        return llmClientStratgey.GetEmbeddingAsync(input, cancellationToken);
+        var embeddingResponse = await llmClientStratgey.GetEmbeddingAsync(input, cancellationToken);
+
+        // in embedding output tokens and its cost is 0
+        var inputTokens = embeddingResponse?.TokenUsage?.InputTokens ?? await _tokenizer.GetTokenCount(input);
+        var cost = inputTokens * EmbeddingModel.ModelInformation.InputCostPerToken;
+
+        return new GetEmbeddingResult(embeddingResponse?.Embeddings ?? new List<double>(), inputTokens, cost);
     }
 }
