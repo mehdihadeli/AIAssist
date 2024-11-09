@@ -1,35 +1,48 @@
+using BuildingBlocks.InMemoryVectorDatabase.Contracts;
+
 namespace BuildingBlocks.InMemoryVectorDatabase;
 
-public class Collection(string name)
+public class VectorCollection<T>(string name) : IVectorCollection<T>
+    where T : Document
 {
-    private readonly Dictionary<Guid, Document> _documents = new();
+    private readonly Dictionary<Guid, T> _documents = new();
 
     public string Name { get; private set; } = name;
 
-    // Add documents to the collection
-    public void AddDocuments(string text, IList<double> embeddings, Guid id, IDictionary<string, string> metadata)
+    public void AddOrUpdateDocument(T document)
     {
-        ArgumentException.ThrowIfNullOrEmpty(text);
+        ArgumentException.ThrowIfNullOrEmpty(document.Text);
 
-        var document = new Document
-        {
-            Id = id,
-            Text = text,
-            Metadata = metadata,
-            Embeddings = embeddings,
-        };
-        _documents[id] = document;
+        _documents[document.Id] = document;
     }
 
-    /// <summary>
-    /// Query documents by text similarity with optional metadata filter
-    /// </summary>
-    /// <param name="queryEmbedding"></param>
-    /// <param name="nResults"></param>
-    /// <param name="metadataFilter"></param>
-    /// <param name="threshold"></param>
-    /// <returns></returns>
-    public IEnumerable<Document> QueryDocuments(
+    public void AddOrUpdateDocuments(IEnumerable<T> documents)
+    {
+        foreach (var document in documents)
+        {
+            AddOrUpdateDocument(document);
+        }
+    }
+
+    public IEnumerable<T> QueryByFilter(IDictionary<string, string> metadataFilter)
+    {
+        return _documents.Values.Where(doc => MetadataMatches(doc.Metadata, metadataFilter)).ToList();
+    }
+
+    public IEnumerable<T> QueryByDocumentFilter(
+        Func<T, bool>? documentFilter = null,
+        IDictionary<string, string>? metadataFilter = null
+    )
+    {
+        return _documents
+            .Values.Where(doc =>
+                (metadataFilter == null || MetadataMatches(doc.Metadata, metadataFilter))
+                && (documentFilter == null || documentFilter(doc))
+            )
+            .ToList();
+    }
+
+    public IEnumerable<T> QueryDocuments(
         IList<double> queryEmbedding,
         IDictionary<string, string>? metadataFilter = null,
         int nResults = 0,
@@ -74,7 +87,7 @@ public class Collection(string name)
         return filter.All(kvp => documentMetadata.ContainsKey(kvp.Key) && documentMetadata[kvp.Key] == kvp.Value);
     }
 
-    private double CosineSimilarity(IList<double> vec1, IList<double> vec2, Document document)
+    private double CosineSimilarity(IList<double> vec1, IList<double> vec2, T document)
     {
         var dotProduct = vec1.Zip(vec2, (a, b) => a * b).Sum();
         var magnitude1 = Math.Sqrt(vec1.Sum(v => v * v));

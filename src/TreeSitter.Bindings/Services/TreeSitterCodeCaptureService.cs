@@ -1,15 +1,16 @@
 using System.Text;
 using BuildingBlocks.Extensions;
 using BuildingBlocks.Types;
+using TreeSitter.Bindings.Contracts;
 using TreeSitter.Bindings.CustomTypes.TreeParser;
+using TreeSitter.Bindings.Utilities;
 using static TreeSitter.Bindings.TSBindingsParser;
-using static TreeSitter.Bindings.Utilities.TreeSitterParser;
 
-namespace TreeSitter.Bindings.Utilities;
+namespace TreeSitter.Bindings.Services;
 
 // ref: https://tree-sitter.github.io/tree-sitter/using-parsers
 
-public class TreeSitterCodeCaptures
+public class TreeSitterCodeCaptureService(ITreeSitterParser treeSitterParser) : ITreeSitterCodeCaptureService
 {
     public IReadOnlyList<DefinitionCaptureItem> CreateTreeSitterMap(IEnumerable<CodeFile> codeFiles)
     {
@@ -50,11 +51,11 @@ public class TreeSitterCodeCaptures
 
             unsafe
             {
-                var parser = GetParser(language.Value);
-                var tree = GetCodeTree(parser, codeFile.Code);
-                var defaultQuery = GetLanguageDefaultQuery(language.Value);
+                var parser = treeSitterParser.GetParser(language.Value);
+                var tree = treeSitterParser.GetCodeTree(parser, codeFile.Code);
+                var defaultQuery = treeSitterParser.GetLanguageDefaultQuery(language.Value);
 
-                var rootNode = GetRootNode(tree);
+                var rootNode = treeSitterParser.GetRootNode(tree);
                 var queryCursor = query_cursor_new();
                 query_cursor_exec(queryCursor, defaultQuery, rootNode);
 

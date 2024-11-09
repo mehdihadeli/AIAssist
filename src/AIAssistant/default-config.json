@@ -2,7 +2,11 @@
   "ModelsOptions": {
     "ollama/llama3.1": {
       "CodeDiffType": "CodeBlockDiff",
-      "CodeAssistType": "Summary",
+      "CodeAssistType": "Embedding",
+      "Temperature": 0.2
+    },
+    "ollama/nomic-embed-text": {
+      "Threshold": 0.4,
       "Temperature": 0.2
     }
   },

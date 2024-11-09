@@ -3,8 +3,9 @@ using Microsoft.ML.Tokenizers;
 namespace BuildingBlocks.LLM.Tokenizers;
 
 // https://learn.microsoft.com/en-us/dotnet/machine-learning/whats-new/overview
+// https://platform.openai.com/docs/models
 
-public class GptTokenizer(string modelName = "gpt-4") : ITokenizer
+public class GptTokenizer(string modelName = "GPT-4o") : ITokenizer
 {
     public Task<double[]> GetVectorTokens(string prompt)
     {

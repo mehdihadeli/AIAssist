@@ -1,3 +1,4 @@
+using AIAssistant.Chat.Models;
 using AIAssistant.Contracts;
 using AIAssistant.Contracts.CodeAssist;
 using AIAssistant.Models;
@@ -5,52 +6,75 @@ using AIAssistant.Models.Options;
 using AIAssistant.Prompts;
 using BuildingBlocks.SpectreConsole.Contracts;
 using BuildingBlocks.Utils;
+using Humanizer;
 using Microsoft.Extensions.Options;
 using Spectre.Console;
+using TreeSitter.Bindings.CustomTypes.TreeParser;
 
 namespace AIAssistant.Services.CodeAssistStrategies;
 
 public class EmbeddingCodeAssist(
-    ICodeLoaderService codeLoaderService,
     IEmbeddingService embeddingService,
-    ICodeFileMapService codeFileMapService,
+    ICodeFileTreeGeneratorService codeFileTreeGeneratorService,
     ILLMClientManager llmClientManager,
     ISpectreUtilities spectreUtilities,
+    IChatSessionManager chatSessionManager,
     IOptions<AppOptions> appOptions,
     IPromptCache promptCache
 ) : ICodeAssist
 {
     public async Task LoadInitCodeFiles(string contextWorkingDirectory, IList<string>? codeFiles)
     {
-        var treeSitterCodeCaptures = codeLoaderService.LoadTreeSitterCodeCaptures(contextWorkingDirectory, codeFiles);
+        var codeFilesMap = codeFileTreeGeneratorService
+            .GetOrAddCodeTreeMapFromFiles(contextWorkingDirectory, codeFiles)
+            .ToList();
 
-        if (!treeSitterCodeCaptures.Any())
+        if (codeFilesMap is null || codeFilesMap.Count == 0)
             throw new Exception("Not found any files to load.");
 
-        var codeFilesMap = codeFileMapService.GenerateCodeFileMaps(treeSitterCodeCaptures);
+        var session = chatSessionManager.GetCurrentActiveSession();
 
-        // generate embeddings data with using llms embeddings apis
-        // https://ollama.com/blog/embedding-models
-        // https://github.com/microsoft/semantic-kernel/blob/main/dotnet/notebooks/06-memory-and-embeddings.ipynb
-        // https://github.com/chroma-core/chroma
-        var relatedEmbeddingsResult = await embeddingService.AddEmbeddingsForFiles(codeFilesMap);
-
-        PrintEmbeddingCost(relatedEmbeddingsResult.TotalTokensCount, relatedEmbeddingsResult.TotalCost);
+        await AddOrUpdateCodeFilesToCache(codeFilesMap, session);
     }
 
-    public Task AddOrUpdateCodeFilesToCache(string contextWorkingDirectory, IList<string>? codeFiles)
+    public async Task AddOrUpdateCodeFilesToCache(IList<string>? codeFiles)
     {
-        throw new NotImplementedException();
+        if (codeFiles is null || !codeFiles.Any())
+            return;
+
+        var session = chatSessionManager.GetCurrentActiveSession();
+
+        // Update tree code map
+        var updatedCodeFilesMap = codeFileTreeGeneratorService.AddOrUpdateCodeTreeMapFromFiles(codeFiles).ToList();
+
+        await AddOrUpdateCodeFilesToCache(updatedCodeFilesMap, session);
     }
 
-    public Task<IEnumerable<string>> GetCodeFilesFromCache(string contextWorkingDirectory, IList<string>? codeFiles)
+    public Task<IEnumerable<string>> GetCodeTreeContentsFromCache(IList<string>? codeFiles)
     {
-        throw new NotImplementedException();
+        if (codeFiles is null || !codeFiles.Any())
+            return Task.FromResult(Enumerable.Empty<string>());
+
+        var session = chatSessionManager.GetCurrentActiveSession();
+
+        var filesTreeToUpdate = embeddingService
+            .QueryByFilter(
+                session,
+                doc =>
+                    codeFiles
+                        .Select(FilesUtilities.NormalizePath)
+                        .Contains(doc.Metadata[nameof(CodeEmbedding.RelativeFilePath).Camelize()].NormalizePath())
+            )
+            .Select(x => x.TreeOriginalCode)
+            .Select(x => SharedPrompts.AddCodeBlock(x));
+
+        return Task.FromResult(filesTreeToUpdate);
     }
 
     public async IAsyncEnumerable<string?> QueryChatCompletionAsync(string userQuery)
     {
-        var relatedEmbeddingsResult = await embeddingService.GetRelatedEmbeddings(userQuery);
+        var session = chatSessionManager.GetCurrentActiveSession();
+        var relatedEmbeddingsResult = await embeddingService.GetRelatedEmbeddings(userQuery, session);
 
         if (appOptions.Value.PrintCostEnabled)
         {
@@ -58,7 +82,7 @@ public class EmbeddingCodeAssist(
         }
 
         // Prepare context from relevant code snippets
-        var codeContext = CreateLLMContext(relatedEmbeddingsResult.CodeEmbeddings);
+        var codeContext = SharedPrompts.CreateLLMContext(relatedEmbeddingsResult.CodeEmbeddings);
 
         var systemCodeAssistPrompt = promptCache.GetPrompt(
             CommandType.Code,
@@ -78,17 +102,15 @@ public class EmbeddingCodeAssist(
         }
     }
 
-    private string CreateLLMContext(IEnumerable<CodeEmbedding> relevantCode)
+    private async Task AddOrUpdateCodeFilesToCache(IList<CodeFileMap> codeFileMaps, ChatSession chatSession)
     {
-        return string.Join(
-            Environment.NewLine,
-            relevantCode.Select(rc =>
-                PromptManager.RenderPromptTemplate(
-                    AIAssistantConstants.Prompts.CodeBlockTemplate,
-                    new { treeSitterCode = rc.TreeOriginalCode }
-                )
-            )
-        );
+        // generate embeddings data with using llms embeddings apis
+        // https://ollama.com/blog/embedding-models
+        // https://github.com/microsoft/semantic-kernel/blob/main/dotnet/notebooks/06-memory-and-embeddings.ipynb
+        // https://github.com/chroma-core/chroma
+        var relatedEmbeddingsResult = await embeddingService.AddOrUpdateEmbeddingsForFiles(codeFileMaps, chatSession);
+
+        PrintEmbeddingCost(relatedEmbeddingsResult.TotalTokensCount, relatedEmbeddingsResult.TotalCost);
     }
 
     private void PrintEmbeddingCost(int totalCount, decimal totalCost)

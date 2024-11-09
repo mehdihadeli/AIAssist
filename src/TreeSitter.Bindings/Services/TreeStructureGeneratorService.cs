@@ -1,11 +1,12 @@
 using System.Text;
+using TreeSitter.Bindings.Contracts;
 using TreeSitter.Bindings.CustomTypes.TreeParser;
 
-namespace TreeSitter.Bindings.Utilities;
+namespace TreeSitter.Bindings.Services;
 
-public static class TreeGenerator
+public class TreeStructureGeneratorService : ITreeStructureGeneratorService
 {
-    public static string GenerateOriginalCodeTree(string originalCode, string relativePath)
+    public string GenerateOriginalCodeTree(string originalCode, string relativePath)
     {
         var sb = new StringBuilder();
 
@@ -15,7 +16,7 @@ public static class TreeGenerator
         return sb.ToString();
     }
 
-    public static string GenerateTreeSitter(IList<DefinitionCaptureItem> definitionItems, bool isFull)
+    public string GenerateTreeSitter(IList<DefinitionCaptureItem> definitionItems, bool isFull)
     {
         var sb = new StringBuilder();
 
@@ -23,7 +24,7 @@ public static class TreeGenerator
 
         // Add the relative path as the root node with "⋮..." to indicate omitted content
         sb.AppendLine($"{relativePath}:");
-        sb.AppendLine("⋮...");
+        sb.AppendLine("│");
 
         var groupedItems = definitionItems
             .GroupBy(item => item.CaptureKey)
@@ -66,7 +67,7 @@ public static class TreeGenerator
         }
     }
 
-    public static string GetNormalizedKeyName(string input)
+    private static string GetNormalizedKeyName(string input)
     {
         string[] prefixes = { "name.", "reference.", "definition.", "reference_name" };
 

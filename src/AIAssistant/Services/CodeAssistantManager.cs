@@ -17,14 +17,14 @@ public class CodeAssistantManager(ICodeAssist codeAssist, ICodeDiffManager diffM
         return codeAssist.QueryChatCompletionAsync(userQuery);
     }
 
-    public Task AddOrUpdateCodeFilesToCache(string contextWorkingDirectory, IList<string>? codeFiles)
+    public Task AddOrUpdateCodeFilesToCache(IList<string>? codeFiles)
     {
-        return codeAssist.AddOrUpdateCodeFilesToCache(contextWorkingDirectory, codeFiles);
+        return codeAssist.AddOrUpdateCodeFilesToCache(codeFiles);
     }
 
-    public Task<IEnumerable<string>> GetCodeFilesFromCache(string contextWorkingDirectory, IList<string>? codeFiles)
+    public Task<IEnumerable<string>> GetCodeTreeContentsFromCache(IList<string>? codeFiles)
     {
-        return codeAssist.GetCodeFilesFromCache(contextWorkingDirectory, codeFiles);
+        return codeAssist.GetCodeTreeContentsFromCache(codeFiles);
     }
 
     public bool CheckExtraContextForResponse(string response, out IList<string> requiredFiles)

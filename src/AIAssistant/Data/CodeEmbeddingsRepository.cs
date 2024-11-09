@@ -1,19 +1,19 @@
 using AIAssistant.Models;
-using BuildingBlocks.InMemoryVectorDatabase;
+using BuildingBlocks.InMemoryVectorDatabase.Contracts;
 using Humanizer;
 
 namespace AIAssistant.Data;
 
-public class EmbeddingsStore(VectorDatabase vectorDatabase)
+public class CodeEmbeddingsRepository(IVectorContext vectorDatabase) : ICodeEmbeddingsRepository
 {
-    //private readonly List<CodeEmbedding> _codeEmbeddings = new();
-    private readonly Collection _collection = vectorDatabase.CreateOrGetCollection("code-embeddings");
+    private readonly IVectorCollection<CodeEmbeddingDocument> _codeEmbeddingsCollection =
+        vectorDatabase.GetCollection<CodeEmbeddingDocument>("code-embeddings");
 
-    public Task AddCodeEmbeddings(IEnumerable<CodeEmbedding> codeEmbeddings)
+    public Task AddOrUpdateCodeEmbeddings(IEnumerable<CodeEmbedding> codeEmbeddings)
     {
-        foreach (var codeEmbedding in codeEmbeddings)
+        var codeEmbeddingsDocument = codeEmbeddings.Select(codeEmbedding =>
         {
-            IDictionary<string, string> metadata = new Dictionary<string, string>
+            var metadata = new Dictionary<string, string>
             {
                 { nameof(CodeEmbedding.SessionId).Camelize(), codeEmbedding.SessionId.ToString() },
                 { nameof(CodeEmbedding.RelativeFilePath).Camelize(), codeEmbedding.RelativeFilePath },
@@ -22,10 +22,43 @@ public class EmbeddingsStore(VectorDatabase vectorDatabase)
                 { nameof(CodeEmbedding.TreeOriginalCode).Camelize(), codeEmbedding.TreeOriginalCode },
             };
 
-            _collection.AddDocuments(codeEmbedding.Code, codeEmbedding.Embeddings, codeEmbedding.Id, metadata);
-        }
+            return new CodeEmbeddingDocument
+            {
+                Id = codeEmbedding.Id,
+                Text = codeEmbedding.Code,
+                Embeddings = codeEmbedding.Embeddings,
+                Metadata = metadata,
+            };
+        });
+
+        _codeEmbeddingsCollection.AddOrUpdateDocuments(codeEmbeddingsDocument);
 
         return Task.CompletedTask;
+    }
+
+    public IEnumerable<CodeEmbedding> QueryByDocumentFilter(
+        Guid sessionId,
+        Func<CodeEmbeddingDocument, bool>? documentFilter = null,
+        IDictionary<string, string>? metadataFilter = null
+    )
+    {
+        var filteredDocuments = _codeEmbeddingsCollection.QueryByDocumentFilter(
+            documentFilter: documentFilter,
+            metadataFilter: metadataFilter
+        );
+
+        var codeEmbeddings = filteredDocuments.Select(doc => new CodeEmbedding
+        {
+            Id = doc.Id,
+            Code = doc.Text,
+            Embeddings = doc.Embeddings,
+            SessionId = sessionId,
+            RelativeFilePath = doc.Metadata[nameof(CodeEmbedding.RelativeFilePath).Camelize()],
+            TreeSitterFullCode = doc.Metadata[nameof(CodeEmbedding.TreeSitterFullCode).Camelize()],
+            TreeOriginalCode = doc.Metadata[nameof(CodeEmbedding.TreeOriginalCode).Camelize()],
+        });
+
+        return codeEmbeddings;
     }
 
     /// <summary>
@@ -45,7 +78,7 @@ public class EmbeddingsStore(VectorDatabase vectorDatabase)
     {
         // https://ollama.com/blog/embedding-models
         // https://github.com/chroma-core/chroma
-        var res = _collection
+        var res = _codeEmbeddingsCollection
             .QueryDocuments(
                 userEmbeddingQuery,
                 new Dictionary<string, string> { { nameof(sessionId), sessionId.ToString() } },

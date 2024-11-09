@@ -1,4 +1,5 @@
 using BuildingBlocks.Types;
+using TreeSitter.Bindings.Contracts;
 using TreeSitter.Bindings.Csharp;
 using TreeSitter.Bindings.CustomTypes;
 using TreeSitter.Bindings.Go;
@@ -11,9 +12,9 @@ using static TreeSitter.Bindings.TSBindingsParser;
 
 namespace TreeSitter.Bindings.Utilities;
 
-public unsafe class TreeSitterParser
+public unsafe class TreeSitterParser : ITreeSitterParser
 {
-    public static string GetRootNodeExpression(ProgrammingLanguage language, string code)
+    public string GetRootNodeExpression(ProgrammingLanguage language, string code)
     {
         var parser = GetParser(language);
 
@@ -26,7 +27,7 @@ public unsafe class TreeSitterParser
         return expression;
     }
 
-    public static TSNode GetRootNode(ProgrammingLanguage language, string code)
+    public TSNode GetRootNode(ProgrammingLanguage language, string code)
     {
         var parser = GetParser(language);
 
@@ -37,7 +38,7 @@ public unsafe class TreeSitterParser
         return rootNode;
     }
 
-    public static TSParser* GetParser(ProgrammingLanguage language)
+    public TSParser* GetParser(ProgrammingLanguage language)
     {
         var parser = parser_new();
 
@@ -47,7 +48,7 @@ public unsafe class TreeSitterParser
         return parser;
     }
 
-    public static TSTree* GetCodeTree(TSParser* parser, string code)
+    public TSTree* GetCodeTree(TSParser* parser, string code)
     {
         GeneratedCString sourceCode = new GeneratedCString(code);
         TSTree* tree = parser_parse_string(parser, null, sourceCode, (uint)code.Length);
@@ -55,12 +56,12 @@ public unsafe class TreeSitterParser
         return tree;
     }
 
-    public static TSNode GetRootNode(TSTree* tree)
+    public TSNode GetRootNode(TSTree* tree)
     {
         return tree_root_node(tree);
     }
 
-    public static TSLanguage* GetLanguage(ProgrammingLanguage programmingLanguage)
+    public TSLanguage* GetLanguage(ProgrammingLanguage programmingLanguage)
     {
         switch (programmingLanguage)
         {
@@ -81,7 +82,7 @@ public unsafe class TreeSitterParser
         }
     }
 
-    public static TSQuery* GetLanguageDefaultQuery(ProgrammingLanguage programmingLanguage)
+    public TSQuery* GetLanguageDefaultQuery(ProgrammingLanguage programmingLanguage)
     {
         var language = GetLanguage(programmingLanguage);
         var defaultLanguageQuery = QueryManager.GetDefaultLanguageQuery(programmingLanguage);

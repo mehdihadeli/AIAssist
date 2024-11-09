@@ -9,6 +9,7 @@ using BuildingBlocks.SpectreConsole.Contracts;
 using Clients.Contracts;
 using Clients.Models;
 using Clients.Options;
+using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.FileSystemGlobbing;
 using Microsoft.Extensions.FileSystemGlobbing.Abstractions;
 using Microsoft.Extensions.Options;
@@ -19,7 +20,7 @@ namespace AIAssistant.Commands;
 
 [Description("Provide code assistance or enhance existing code or add some new features to our application context.")]
 public class CodeAssistCommand(
-    ICodeAssistantManager codeAssistantManager,
+    IServiceScopeFactory serviceScopeFactory,
     ISpectreUtilities spectreUtilities,
     IAnsiConsole console,
     IChatSessionManager chatSessionManager,
@@ -83,6 +84,8 @@ public class CodeAssistCommand(
     {
         var chatSession = chatSessionManager.CreateNewSession();
         chatSessionManager.SetCurrentActiveSession(chatSession);
+        using var scope = serviceScopeFactory.CreateScope();
+        var codeAssistantManager = scope.ServiceProvider.GetRequiredService<ICodeAssistantManager>();
 
         spectreUtilities.InformationText("Code assist mode is activated!");
         spectreUtilities.InformationText("Please 'Shift+H' to see all available commands in the code assist mode.");
@@ -142,7 +145,7 @@ public class CodeAssistCommand(
             // console.Write(new Rule());
 
             var userInput = spectreUtilities.UserPrompt();
-            await HandleSpecialCommands(userInput, chatSession);
+            await HandleSpecialCommands(userInput, chatSession, codeAssistantManager);
         }
 
         chatSessionManager.SetCurrentActiveSession(null);
@@ -208,7 +211,11 @@ public class CodeAssistCommand(
         }
     }
 
-    private async Task HandleSpecialCommands(string userInput, ChatSession chatSession)
+    private async Task HandleSpecialCommands(
+        string userInput,
+        ChatSession chatSession,
+        ICodeAssistantManager codeAssistantManager
+    )
     {
         switch (userInput)
         {
@@ -230,12 +237,12 @@ public class CodeAssistCommand(
             default:
                 var userRequest = "can you remove all comments in Add.cs file?";
                 //var userRequest = spectreConsoleUtilities.UserPrompt("Please enter your request to apply on your code base:");
-                await RunCommand(userRequest, chatSession);
+                await RunCommand(userRequest, chatSession, codeAssistantManager);
                 break;
         }
     }
 
-    private async Task RunCommand(string userInput, ChatSession chatSession)
+    private async Task RunCommand(string userInput, ChatSession chatSession, ICodeAssistantManager codeAssistantManager)
     {
         var responseStreams = codeAssistantManager.QueryAsync(userInput);
         var streamPrinter = new StreamPrinter(console, useMarkdown: true);
@@ -255,21 +262,15 @@ public class CodeAssistCommand(
 
             if (confirmation)
             {
-                await codeAssistantManager.AddOrUpdateCodeFilesToCache(
-                    _appOptions.ContextWorkingDirectory,
-                    requiredFiles
-                );
-                var fullFilesContentForContext = await codeAssistantManager.GetCodeFilesFromCache(
-                    _appOptions.ContextWorkingDirectory,
-                    requiredFiles
-                );
+                await codeAssistantManager.AddOrUpdateCodeFilesToCache(requiredFiles);
+                var fullFilesContentForContext = await codeAssistantManager.GetCodeTreeContentsFromCache(requiredFiles);
 
                 var newQueryWithAddedFiles = SharedPrompts.FilesAddedToChat(fullFilesContentForContext);
                 spectreUtilities.SuccessText(
                     $"{string.Join(",", requiredFiles.Select(file => $"'{file}'"))} added to the context."
                 );
 
-                await RunCommand(newQueryWithAddedFiles, chatSession);
+                await RunCommand(newQueryWithAddedFiles, chatSession, codeAssistantManager);
             }
         }
 
@@ -284,10 +285,7 @@ public class CodeAssistCommand(
             if (confirmation)
             {
                 codeAssistantManager.ApplyChangesToFiles([changesCodeBlock], _appOptions.ContextWorkingDirectory);
-                await codeAssistantManager.AddOrUpdateCodeFilesToCache(
-                    _appOptions.ContextWorkingDirectory,
-                    [changesCodeBlock.FilePath]
-                );
+                await codeAssistantManager.AddOrUpdateCodeFilesToCache([changesCodeBlock.FilePath]);
             }
         }
     }

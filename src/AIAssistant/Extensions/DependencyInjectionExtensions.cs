@@ -12,6 +12,7 @@ using AIAssistant.Services;
 using AIAssistant.Services.CodeAssistStrategies;
 using BuildingBlocks.Extensions;
 using BuildingBlocks.InMemoryVectorDatabase;
+using BuildingBlocks.InMemoryVectorDatabase.Contracts;
 using BuildingBlocks.LLM;
 using BuildingBlocks.LLM.Tokenizers;
 using BuildingBlocks.Serialization;
@@ -21,7 +22,6 @@ using Clients;
 using Clients.Contracts;
 using Clients.Models;
 using Clients.Options;
-using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.DependencyInjection.Extensions;
 using Microsoft.Extensions.Hosting;
@@ -30,6 +30,9 @@ using Polly;
 using Polly.Timeout;
 using Polly.Wrap;
 using Spectre.Console;
+using TreeSitter.Bindings.Contracts;
+using TreeSitter.Bindings.Services;
+using TreeSitter.Bindings.Utilities;
 
 namespace AIAssistant.Extensions;
 
@@ -39,11 +42,13 @@ public static class DependencyInjectionExtensions
     {
         AddSpectreConsoleDependencies(builder);
 
-        AddCodeLoaderDependencies(builder);
+        AddCodeTreeMappingDependencies(builder);
 
         AddResiliencyDependencies(builder);
 
         AddJsonSerializerDependencies(builder);
+
+        AddInMemoryCache(builder);
 
         AddOptionsDependencies(builder);
 
@@ -68,6 +73,11 @@ public static class DependencyInjectionExtensions
         return builder;
     }
 
+    private static void AddInMemoryCache(HostApplicationBuilder builder)
+    {
+        builder.Services.AddMemoryCache();
+    }
+
     private static void AddTokenizersDependencies(HostApplicationBuilder builder)
     {
         builder.Services.AddSingleton<ITokenizer, GptTokenizer>();
@@ -90,10 +100,12 @@ public static class DependencyInjectionExtensions
         });
     }
 
-    private static void AddCodeLoaderDependencies(HostApplicationBuilder builder)
+    private static void AddCodeTreeMappingDependencies(HostApplicationBuilder builder)
     {
-        builder.Services.AddSingleton<ICodeFileMapService, CodeFileMapService>();
-        builder.Services.AddSingleton<ICodeLoaderService, CodeLoaderService>();
+        builder.Services.AddSingleton<ICodeFileTreeGeneratorService, CodeFilesTreeGeneratorService>();
+        builder.Services.AddSingleton<ITreeSitterParser, TreeSitterParser>();
+        builder.Services.AddSingleton<ITreeSitterCodeCaptureService, TreeSitterCodeCaptureService>();
+        builder.Services.AddSingleton<ITreeStructureGeneratorService, TreeStructureGeneratorService>();
     }
 
     private static void AddResiliencyDependencies(HostApplicationBuilder builder)
@@ -158,15 +170,15 @@ public static class DependencyInjectionExtensions
     private static void AddEmbeddingDependencies(HostApplicationBuilder builder)
     {
         builder.Services.AddSingleton<IEmbeddingService, EmbeddingService>();
-        builder.Services.AddSingleton<EmbeddingsStore>();
-        builder.Services.AddSingleton<VectorDatabase>();
+        builder.Services.AddSingleton<ICodeEmbeddingsRepository, CodeEmbeddingsRepository>();
+        builder.Services.AddSingleton<IVectorContext, VectorContext>();
     }
 
     private static void AddCodeAssistDependencies(HostApplicationBuilder builder)
     {
-        builder.Services.TryAddKeyedSingleton<ICodeAssist, EmbeddingCodeAssist>(CodeAssistType.Embedding);
+        builder.Services.TryAddKeyedScoped<ICodeAssist, EmbeddingCodeAssist>(CodeAssistType.Embedding);
 
-        builder.Services.TryAddKeyedSingleton<ICodeAssist, TreeSitterCodeAssistSummary>(CodeAssistType.Summary);
+        builder.Services.TryAddKeyedScoped<ICodeAssist, TreeSitterCodeAssistSummary>(CodeAssistType.Summary);
 
         builder.Services.AddSingleton<ICodeAssistFactory>(sp =>
         {
@@ -183,7 +195,7 @@ public static class DependencyInjectionExtensions
             return new CodeAssistFactory(codeStrategies);
         });
 
-        builder.Services.AddSingleton<ICodeAssistantManager, CodeAssistantManager>(sp =>
+        builder.Services.AddScoped<ICodeAssistantManager, CodeAssistantManager>(sp =>
         {
             var factory = sp.GetRequiredService<ICodeAssistFactory>();
             var llmOptions = sp.GetRequiredService<IOptions<LLMOptions>>();

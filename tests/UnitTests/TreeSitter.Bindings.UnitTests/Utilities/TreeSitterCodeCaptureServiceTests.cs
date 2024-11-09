@@ -1,13 +1,14 @@
 using FluentAssertions;
 using TreeSitter.Bindings.CustomTypes.TreeParser;
+using TreeSitter.Bindings.Services;
 using TreeSitter.Bindings.UnitTests.TestData;
 using TreeSitter.Bindings.Utilities;
 
 namespace TreeSitter.Bindings.UnitTests.Utilities;
 
-public class TreeSitterCodeCapturesTests
+public class TreeSitterCodeCaptureServiceTests
 {
-    private readonly TreeSitterCodeCaptures _treeSitterCodeCaptures = new();
+    private readonly TreeSitterCodeCaptureService _treeSitterCodeCaptureService = new();
 
     [Fact]
     public void CreateTreeSitterMap_WithValidCSharpFiles_ShouldReturnCodeFileMaps()
@@ -26,7 +27,7 @@ public class TreeSitterCodeCapturesTests
         };
 
         // Act
-        var result = _treeSitterCodeCaptures.CreateTreeSitterMap(codeFiles);
+        var result = _treeSitterCodeCaptureService.CreateTreeSitterMap(codeFiles);
 
         // Assert
         result.Should().NotBeNull();
@@ -189,7 +190,7 @@ public class TreeSitterCodeCapturesTests
     public void CreateTreeSitterMap_WithEmptyCodeFiles_ShouldReturnEmptyResult()
     {
         // Act
-        var result = _treeSitterCodeCaptures.CreateTreeSitterMap(new List<CodeFile>());
+        var result = _treeSitterCodeCaptureService.CreateTreeSitterMap(new List<CodeFile>());
 
         // Assert
         result.Should().NotBeNull();
@@ -206,7 +207,7 @@ public class TreeSitterCodeCapturesTests
         };
 
         // Act
-        var result = _treeSitterCodeCaptures.CreateTreeSitterMap(codeFiles);
+        var result = _treeSitterCodeCaptureService.CreateTreeSitterMap(codeFiles);
 
         // Assert
         result.Should().NotBeNull();
@@ -252,7 +253,7 @@ public class TreeSitterCodeCapturesTests
         };
 
         // Act
-        var result = _treeSitterCodeCaptures.CreateTreeSitterMap(codeFiles);
+        var result = _treeSitterCodeCaptureService.CreateTreeSitterMap(codeFiles);
 
         // Assert
         result.Should().NotBeNull();
@@ -283,7 +284,7 @@ public class TreeSitterCodeCapturesTests
         };
 
         // Act
-        var result = _treeSitterCodeCaptures.CreateTreeSitterMap(codeFiles);
+        var result = _treeSitterCodeCaptureService.CreateTreeSitterMap(codeFiles);
 
         // Assert
         result.Should().NotBeNull();
@@ -336,7 +337,7 @@ public class TreeSitterCodeCapturesTests
         };
 
         // Act
-        var result = _treeSitterCodeCaptures.CreateTreeSitterMap(codeFiles);
+        var result = _treeSitterCodeCaptureService.CreateTreeSitterMap(codeFiles);
 
         // Assert
         result.Should().NotBeNull();

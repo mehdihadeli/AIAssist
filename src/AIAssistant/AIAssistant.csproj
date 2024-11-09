@@ -41,4 +41,8 @@
         <EmbeddedResource Include="default-config.json" />
     </ItemGroup>
 
+    <ItemGroup>
+      <Folder Include="Contracts\Data\" />
+    </ItemGroup>
+
 </Project>
