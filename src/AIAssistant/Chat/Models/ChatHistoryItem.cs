@@ -2,10 +2,20 @@ using Clients.Models;
 
 namespace AIAssistant.Chat.Models;
 
-public record ChatHistoryItem
+public record ChatHistoryItem(string Prompt, RoleType Role, ChatCost? ChatCost)
 {
-    public RoleType Role { get; set; }
-    public string Prompt { get; set; } = default!;
-    public ChatCost? ChatCost { get; set; } = default!;
+    public RoleType Role { get; } = Role;
+    public string Prompt { get; private set; } = Prompt;
+    public ChatCost? ChatCost { get; private set; } = ChatCost;
     public DateTime Created { get; } = DateTime.Now;
+
+    public void ChangeCost(ChatCost? chatCost)
+    {
+        ChatCost = chatCost;
+    }
+
+    public void ChangePrompt(string prompt)
+    {
+        Prompt = prompt;
+    }
 }

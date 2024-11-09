@@ -5,7 +5,7 @@ using Microsoft.Extensions.FileSystemGlobbing;
 
 namespace BuildingBlocks.Utils;
 
-public class FilesUtilities
+public static class FilesUtilities
 {
     private static readonly IList<string> _gitignorePatterns;
 
@@ -125,6 +125,11 @@ public class FilesUtilities
         var content = reader.ReadToEnd();
 
         return content;
+    }
+
+    public static string NormalizePath(this string path)
+    {
+        return path.Replace("\\", "/", StringComparison.Ordinal);
     }
 
     private static bool MatchPattern(string path, IList<string> ignorePatterns)

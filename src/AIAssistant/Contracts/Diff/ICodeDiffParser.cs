@@ -4,5 +4,5 @@ namespace AIAssistant.Contracts.Diff;
 
 public interface ICodeDiffParser
 {
-    IList<FileChange> ExtractFileChanges(string diff);
+    IList<FileChange> GetFileChanges(string diff);
 }

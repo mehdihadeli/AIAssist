@@ -1,3 +1,4 @@
+using System.Text.RegularExpressions;
 using AIAssistant.Contracts.CodeAssist;
 using AIAssistant.Contracts.Diff;
 using AIAssistant.Models;
@@ -8,7 +9,7 @@ public class CodeAssistantManager(ICodeAssist codeAssist, ICodeDiffManager diffM
 {
     public Task LoadCodeFiles(string contextWorkingDirectory, IList<string>? codeFiles)
     {
-        return codeAssist.LoadCodeFiles(contextWorkingDirectory, codeFiles);
+        return codeAssist.LoadInitCodeFiles(contextWorkingDirectory, codeFiles);
     }
 
     public IAsyncEnumerable<string?> QueryAsync(string userQuery)
@@ -16,9 +17,55 @@ public class CodeAssistantManager(ICodeAssist codeAssist, ICodeDiffManager diffM
         return codeAssist.QueryChatCompletionAsync(userQuery);
     }
 
+    public Task AddOrUpdateCodeFilesToCache(string contextWorkingDirectory, IList<string>? codeFiles)
+    {
+        return codeAssist.AddOrUpdateCodeFilesToCache(contextWorkingDirectory, codeFiles);
+    }
+
+    public Task<IEnumerable<string>> GetCodeFilesFromCache(string contextWorkingDirectory, IList<string>? codeFiles)
+    {
+        return codeAssist.GetCodeFilesFromCache(contextWorkingDirectory, codeFiles);
+    }
+
+    public bool CheckExtraContextForResponse(string response, out IList<string> requiredFiles)
+    {
+        requiredFiles = new List<string>();
+        var pattern = @"Required Files for Context:\s*(?:```[\w]*\s*([\s\S]*?)\s*```|((?:- .*\r?\n?)+))";
+
+        var match = Regex.Match(response, pattern);
+        if (match.Success)
+        {
+            // Check for code block content first
+            var codeBlockContent = match.Groups[1].Value;
+            if (!string.IsNullOrEmpty(codeBlockContent))
+            {
+                var lines = codeBlockContent.Split(new[] { '\n', '\r' }, StringSplitOptions.RemoveEmptyEntries);
+                foreach (var line in lines)
+                {
+                    requiredFiles.Add(line.TrimStart('-').Trim());
+                }
+                return true;
+            }
+
+            // If no code block content, check for inline list
+            var inlineListContent = match.Groups[2].Value;
+            if (!string.IsNullOrEmpty(inlineListContent))
+            {
+                var lines = inlineListContent.Split(new[] { '\n', '\r' }, StringSplitOptions.RemoveEmptyEntries);
+                foreach (var line in lines)
+                {
+                    requiredFiles.Add(line.TrimStart('-').Trim());
+                }
+                return true;
+            }
+        }
+
+        return false;
+    }
+
     public IList<FileChange> ParseResponseCodeBlocks(string response)
     {
-        var codeBlocks = diffManager.ExtractFileChanges(response);
+        var codeBlocks = diffManager.GetFileChanges(response);
 
         return codeBlocks;
     }

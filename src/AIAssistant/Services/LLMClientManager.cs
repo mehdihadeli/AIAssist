@@ -1,5 +1,4 @@
 using System.Text;
-using AIAssistant.Chat.Models;
 using AIAssistant.Contracts;
 using AIAssistant.Dtos;
 using BuildingBlocks.LLM;
@@ -40,7 +39,7 @@ public class LLMClientManager : ILLMClientManager
 
     public async IAsyncEnumerable<string?> GetCompletionStreamAsync(
         string userQuery,
-        string systemContext,
+        string? systemContext,
         CancellationToken cancellationToken = default
     )
     {

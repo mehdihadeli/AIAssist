@@ -14,7 +14,7 @@ public static class ThemeLoader
             $"{nameof(BuildingBlocks)}.{nameof(SpectreConsole)}.Themes.{theme ?? "vscode_light"}.json"
         );
 
-        var themeObject = JsonSerializer.Deserialize<ColorTheme>(jsonTheme, JsonObjectSerializer.Options);
+        var themeObject = JsonSerializer.Deserialize<ColorTheme>(jsonTheme, JsonObjectSerializer.SnakeCaseOptions);
 
         return themeObject;
     }

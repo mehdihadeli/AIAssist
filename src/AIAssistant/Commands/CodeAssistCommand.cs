@@ -2,12 +2,10 @@ using System.ComponentModel;
 using AIAssistant.Chat.Models;
 using AIAssistant.Contracts;
 using AIAssistant.Contracts.CodeAssist;
-using AIAssistant.Models;
 using AIAssistant.Models.Options;
+using AIAssistant.Prompts;
 using BuildingBlocks.SpectreConsole;
 using BuildingBlocks.SpectreConsole.Contracts;
-using BuildingBlocks.Utils;
-using Clients;
 using Clients.Contracts;
 using Clients.Models;
 using Clients.Options;
@@ -230,17 +228,16 @@ public class CodeAssistCommand(
                 ShowTokenCommand();
                 break;
             default:
-                await RunCommand(userInput, chatSession);
+                var userRequest = "can you remove all comments in Add.cs file?";
+                //var userRequest = spectreConsoleUtilities.UserPrompt("Please enter your request to apply on your code base:");
+                await RunCommand(userRequest, chatSession);
                 break;
         }
     }
 
     private async Task RunCommand(string userInput, ChatSession chatSession)
     {
-        //var userRequest = spectreConsoleUtilities.UserPrompt("Please enter your request to apply on your code base:");
-        var userRequest = "can you remove all comments in Add.cs file?";
-
-        var responseStreams = codeAssistantManager.QueryAsync(userRequest);
+        var responseStreams = codeAssistantManager.QueryAsync(userInput);
         var streamPrinter = new StreamPrinter(console, useMarkdown: true);
         var responseContent = await streamPrinter.PrintAsync(responseStreams);
 
@@ -249,17 +246,48 @@ public class CodeAssistCommand(
             PrintChatCost(chatSession.ChatHistory.HistoryItems.Last());
         }
 
+        // Check if more context is needed
+        if (codeAssistantManager.CheckExtraContextForResponse(responseContent, out var requiredFiles))
+        {
+            var confirmation = spectreUtilities.ConfirmationPrompt(
+                $"Do you want to add ${string.Join(", ", requiredFiles.Select(file => $"'{file}'"))} to the context?"
+            );
+
+            if (confirmation)
+            {
+                await codeAssistantManager.AddOrUpdateCodeFilesToCache(
+                    _appOptions.ContextWorkingDirectory,
+                    requiredFiles
+                );
+                var fullFilesContentForContext = await codeAssistantManager.GetCodeFilesFromCache(
+                    _appOptions.ContextWorkingDirectory,
+                    requiredFiles
+                );
+
+                var newQueryWithAddedFiles = SharedPrompts.FilesAddedToChat(fullFilesContentForContext);
+                spectreUtilities.SuccessText(
+                    $"{string.Join(",", requiredFiles.Select(file => $"'{file}'"))} added to the context."
+                );
+
+                await RunCommand(newQueryWithAddedFiles, chatSession);
+            }
+        }
+
         var changesCodeBlocks = codeAssistantManager.ParseResponseCodeBlocks(responseContent);
 
         foreach (var changesCodeBlock in changesCodeBlocks)
         {
             var confirmation = spectreUtilities.ConfirmationPrompt(
-                $"Do you accept the changes for `{changesCodeBlock.FilePath}`?"
+                $"Do you accept the changes for '{changesCodeBlock.FilePath}'?"
             );
 
             if (confirmation)
             {
                 codeAssistantManager.ApplyChangesToFiles([changesCodeBlock], _appOptions.ContextWorkingDirectory);
+                await codeAssistantManager.AddOrUpdateCodeFilesToCache(
+                    _appOptions.ContextWorkingDirectory,
+                    [changesCodeBlock.FilePath]
+                );
             }
         }
     }

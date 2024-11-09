@@ -1,3 +1,4 @@
+using AIAssistant.Contracts;
 using AIAssistant.Models.Options;
 using BuildingBlocks.Utils;
 using Microsoft.Extensions.Options;
@@ -6,7 +7,7 @@ using TreeSitter.Bindings.Utilities;
 
 namespace AIAssistant.Services;
 
-public class CodeLoaderService(IOptions<AppOptions> codeAssistOptions)
+public class CodeLoaderService(IOptions<AppOptions> codeAssistOptions) : ICodeLoaderService
 {
     private readonly AppOptions _appOptions = codeAssistOptions.Value;
 

@@ -1,4 +1,11 @@
 {
+  "ModelsOptions": {
+    "ollama/llama3.1": {
+      "CodeDiffType": "CodeBlockDiff",
+      "CodeAssistType": "Summary",
+      "Temperature": 0.2
+    }
+  },
   "AppOptions": {
     "ThemeName": "dracula",
     "PrintCostEnabled": true

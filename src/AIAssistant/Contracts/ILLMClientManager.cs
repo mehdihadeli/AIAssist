@@ -10,7 +10,7 @@ public interface ILLMClientManager
     public decimal EmbeddingThreshold { get; }
     IAsyncEnumerable<string?> GetCompletionStreamAsync(
         string userQuery,
-        string systemContext,
+        string? systemContext,
         CancellationToken cancellationToken = default
     );
     Task<GetEmbeddingResult> GetEmbeddingAsync(string input, CancellationToken cancellationToken = default);

@@ -1,5 +1,4 @@
 using AIAssistant.Models;
-using BuildingBlocks.Extensions;
 using BuildingBlocks.InMemoryVectorDatabase;
 using Humanizer;
 

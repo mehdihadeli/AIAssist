@@ -2,6 +2,7 @@ using AIAssistant.Contracts;
 using AIAssistant.Contracts.CodeAssist;
 using AIAssistant.Models;
 using AIAssistant.Models.Options;
+using AIAssistant.Prompts;
 using BuildingBlocks.SpectreConsole.Contracts;
 using BuildingBlocks.Utils;
 using Microsoft.Extensions.Options;
@@ -10,8 +11,8 @@ using Spectre.Console;
 namespace AIAssistant.Services.CodeAssistStrategies;
 
 public class EmbeddingCodeAssist(
-    CodeLoaderService codeLoaderService,
-    EmbeddingService embeddingService,
+    ICodeLoaderService codeLoaderService,
+    IEmbeddingService embeddingService,
     ICodeFileMapService codeFileMapService,
     ILLMClientManager llmClientManager,
     ISpectreUtilities spectreUtilities,
@@ -19,7 +20,7 @@ public class EmbeddingCodeAssist(
     IPromptCache promptCache
 ) : ICodeAssist
 {
-    public async Task LoadCodeFiles(string contextWorkingDirectory, IList<string>? codeFiles)
+    public async Task LoadInitCodeFiles(string contextWorkingDirectory, IList<string>? codeFiles)
     {
         var treeSitterCodeCaptures = codeLoaderService.LoadTreeSitterCodeCaptures(contextWorkingDirectory, codeFiles);
 
@@ -37,6 +38,16 @@ public class EmbeddingCodeAssist(
         PrintEmbeddingCost(relatedEmbeddingsResult.TotalTokensCount, relatedEmbeddingsResult.TotalCost);
     }
 
+    public Task AddOrUpdateCodeFilesToCache(string contextWorkingDirectory, IList<string>? codeFiles)
+    {
+        throw new NotImplementedException();
+    }
+
+    public Task<IEnumerable<string>> GetCodeFilesFromCache(string contextWorkingDirectory, IList<string>? codeFiles)
+    {
+        throw new NotImplementedException();
+    }
+
     public async IAsyncEnumerable<string?> QueryChatCompletionAsync(string userQuery)
     {
         var relatedEmbeddingsResult = await embeddingService.GetRelatedEmbeddings(userQuery);
@@ -47,7 +58,7 @@ public class EmbeddingCodeAssist(
         }
 
         // Prepare context from relevant code snippets
-        var codeContext = embeddingService.CreateLLMContext(relatedEmbeddingsResult.CodeEmbeddings);
+        var codeContext = CreateLLMContext(relatedEmbeddingsResult.CodeEmbeddings);
 
         var systemCodeAssistPrompt = promptCache.GetPrompt(
             CommandType.Code,
@@ -65,6 +76,19 @@ public class EmbeddingCodeAssist(
         {
             yield return streamItem;
         }
+    }
+
+    private string CreateLLMContext(IEnumerable<CodeEmbedding> relevantCode)
+    {
+        return string.Join(
+            Environment.NewLine,
+            relevantCode.Select(rc =>
+                PromptManager.RenderPromptTemplate(
+                    AIAssistantConstants.Prompts.CodeBlockTemplate,
+                    new { treeSitterCode = rc.TreeOriginalCode }
+                )
+            )
+        );
     }
 
     private void PrintEmbeddingCost(int totalCount, decimal totalCost)

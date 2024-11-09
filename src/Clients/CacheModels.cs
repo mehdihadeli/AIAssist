@@ -68,16 +68,17 @@ public class CacheModels : ICacheModels
             $"{nameof(Clients)}.LLMs.models_options.json"
         );
 
-        var options = JsonObjectSerializer.Options;
+        var options = JsonObjectSerializer.NoCaseOptions;
         options.Converters.Add(new ModelInformationConverter());
         options.Converters.Add(new ModelOptionConverter());
 
-        var predefinedModelsInformation = JsonSerializer.Deserialize<Dictionary<string, ModelInformation>>(
-            modelsListJson,
-            options
-        )!;
         var predefinedModelOptions = JsonSerializer.Deserialize<Dictionary<string, ModelOption>>(
             modelsOptionsJson,
+            options
+        )!;
+
+        var predefinedModelsInformation = JsonSerializer.Deserialize<Dictionary<string, ModelInformation>>(
+            modelsListJson,
             options
         )!;
 

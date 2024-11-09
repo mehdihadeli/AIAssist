@@ -28,7 +28,7 @@ public class ColorCodeBlockExtension(string theme) : IMarkdownExtension
 public class ColorCodeFenceBlockParser : FencedCodeBlockParser
 {
     private readonly HtmlFormatter _formatter;
-    private readonly CodeSnippetTheme? _codeBlockStyle;
+    private readonly CodeSnippetTheme? _codeBlockTheme;
 
     public ColorCodeFenceBlockParser(string? theme)
     {
@@ -37,8 +37,11 @@ public class ColorCodeFenceBlockParser : FencedCodeBlockParser
             $"{nameof(BuildingBlocks)}.{nameof(MarkdigMarkdown)}.Themes.{theme ?? "vscode_light"}.json"
         );
 
-        _codeBlockStyle = JsonSerializer.Deserialize<CodeSnippetTheme>(jsonTheme, JsonObjectSerializer.Options);
-        var codeBlockStyleDictionary = _codeBlockStyle?.ToStyleDictionary() ?? StyleDictionary.DefaultLight;
+        _codeBlockTheme = JsonSerializer.Deserialize<CodeSnippetTheme>(
+            jsonTheme,
+            JsonObjectSerializer.SnakeCaseOptions
+        );
+        var codeBlockStyleDictionary = _codeBlockTheme?.ToColorCodeStyleDictionary() ?? StyleDictionary.DefaultLight;
         _formatter = new HtmlFormatter(codeBlockStyleDictionary);
     }
 
@@ -46,9 +49,11 @@ public class ColorCodeFenceBlockParser : FencedCodeBlockParser
     {
         if (block is FencedCodeBlock fencedCodeBlock)
         {
-            var background =
-                _codeBlockStyle?.Background ?? StyleDictionary.DefaultLight[ScopeName.PlainText].Background;
-            block.SetData("background", background);
+            var background = _codeBlockTheme?.Background;
+            if (!string.IsNullOrEmpty(background))
+            {
+                block.SetData("background", background);
+            }
 
             //  Get the language and code content
             var language = fencedCodeBlock.Info?.Trim() ?? "md"; // e.g., "csharp"

@@ -12,12 +12,13 @@ For understanding context you should consider following rules:
     
 For providing response you should consider following rules:
 
-- Provide your suggested changes or new feature using the `Unified Diff format` to clearly describe code modifications before any explanation.
+- Provide your suggested changes or new feature using the `Unified Diff format` to clearly describe code modifications before any explanation and don't add any extra code blocks.
 - If there are `no code changes` like `edit`, `delete` or `add new feature` with user requests in the code base, don't create any `Unified Diff` sections.
-- You should not add any extra code blocks we just need `Unified Diff` section for changed files
 - You should add `-` to removed lines and `+` for modified and new lines according unified diff rules.
-- For creating a new file show original path `--- /dev/null` and modified path to `+++ new file relativePath`
-- Create `separated unified diff` sections for each file in the response.
+- For creating a new file show original path `--- /dev/null` and modified path to `+++ [new file relativePath]`.
+- For deleting a file, show the original path as --- [relativeFilePath of deleted file] and the modified path as `+++ /dev/null`.
+- For file moves or renames, show a deletion with `--- [original relativeFilePath]` and `+++ /dev/null`, and a creation at the new path with `--- /dev/null` and `+++ [new relativeFilePath]`, including any modified content.
+- Create seperated **md diff block** sections in `Unified Diff` format for each `relative file path` in the response.
 
 
 You MUST use bellow **Unified Diff format** as a section for showing every `modification` or `adding` in each file and you should differentiate between the old and new versions using the following format:
@@ -44,8 +45,8 @@ Here is explanation of above structure about creating **Unified Diff sections** 
 Bellow is an example for modifying code file `Domains/Models/Product.cs`, your `unified diff` section in the response should look like this:
 
 ```diff
---- OriginalProduct.cs
-+++ ModifiedProduct.cs
+--- Models/Product.cs
++++ Models/Product.cs
 @@ -1,8 +1,15 @@
  public class Product
  {
@@ -74,5 +75,5 @@ Bellow is an example for modifying code file `Domains/Models/Product.cs`, your `
 
 
 For explanation of the produced response you should consider following rules:
-- After providing the modified code sections in the `CodeBlock style` format, include an `Explanation` section in the markdown result that summarizes each change.
+- After providing the modified code sections in the `Unified Diff` format, include an `Explanation` section in the markdown result that summarizes each change.
 - Clearly indicate what modifications were made in each file and the reasoning behind them.

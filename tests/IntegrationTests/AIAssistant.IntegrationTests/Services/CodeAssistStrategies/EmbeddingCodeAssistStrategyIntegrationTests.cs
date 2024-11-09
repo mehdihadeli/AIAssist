@@ -22,7 +22,7 @@ public class EmbeddingCodeAssistStrategyIntegrationTests(ApplicationFixture appl
     {
         // Arrange
         var userQuery = "can you remove all comments in Add.cs file?";
-        await _codeAssist.LoadCodeFiles(contextWorkingDirectory: _appWorkingDir, codeFiles: null);
+        await _codeAssist.LoadInitCodeFiles(contextWorkingDirectory: _appWorkingDir, codeFiles: null);
 
         // Act
         IAsyncEnumerable<string?> responseStream = _codeAssist.QueryChatCompletionAsync(userQuery);
@@ -46,7 +46,7 @@ public class EmbeddingCodeAssistStrategyIntegrationTests(ApplicationFixture appl
             TestDataConstants.CalculatorApp.DivideRelativeFilePath,
             TestDataConstants.CalculatorApp.MultiplyRelativeFilePath,
         ];
-        await _codeAssist.LoadCodeFiles(contextWorkingDirectory: null, codeFiles: files);
+        await _codeAssist.LoadInitCodeFiles(contextWorkingDirectory: null, codeFiles: files);
 
         // Act
         IAsyncEnumerable<string?> responseStream = _codeAssist.QueryChatCompletionAsync(userQuery);

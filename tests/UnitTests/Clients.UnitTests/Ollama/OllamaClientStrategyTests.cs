@@ -99,7 +99,7 @@ public class OllamaClientStrategyTests : IAsyncLifetime
 
         _mockHttp
             .When(HttpMethod.Post, $"{_clientBaseUri}v1/chat/completions")
-            .Respond(JsonContent.Create(responseContent, options: JsonObjectSerializer.Options));
+            .Respond(JsonContent.Create(responseContent, options: JsonObjectSerializer.SnakeCaseOptions));
 
         // Act
         var chatItems = new List<ChatItem> { new(Role: RoleType.User, Prompt: "Hello") };
@@ -143,7 +143,7 @@ public class OllamaClientStrategyTests : IAsyncLifetime
 
         _mockHttp
             .When(HttpMethod.Post, $"{_clientBaseUri}v1/embeddings")
-            .Respond(JsonContent.Create(responseContent, options: JsonObjectSerializer.Options));
+            .Respond(JsonContent.Create(responseContent, options: JsonObjectSerializer.SnakeCaseOptions));
 
         // Act
         var result = await _clientStrategy.GetEmbeddingAsync(input);

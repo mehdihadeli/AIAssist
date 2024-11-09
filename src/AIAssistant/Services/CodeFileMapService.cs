@@ -14,12 +14,12 @@ public class CodeFileMapService : ICodeFileMapService
             .Select(fileCapturesGroup => new CodeFileMap
             {
                 RelativePath = fileCapturesGroup.Key,
+                OriginalCode = GetOriginalCode(fileCapturesGroup.ToList()),
                 TreeSitterFullCode = TreeGenerator.GenerateTreeSitter(fileCapturesGroup.ToList(), true),
                 TreeOriginalCode = TreeGenerator.GenerateOriginalCodeTree(
                     GetOriginalCode(fileCapturesGroup.ToList()),
                     fileCapturesGroup.Key
                 ),
-                OriginalCode = GetOriginalCode(fileCapturesGroup.ToList()),
                 TreeSitterSummarizeCode = TreeGenerator.GenerateTreeSitter(fileCapturesGroup.ToList(), false),
                 ReferencedCodesMap = GenerateRelatedCodeFilesMap(fileCapturesGroup.ToList()),
             })

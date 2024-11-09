@@ -67,7 +67,7 @@ public class AnthropicClient(
         });
 
         var completionResponse = await httpResponseMessage.Content.ReadFromJsonAsync<AnthropicChatResponse>(
-            options: JsonObjectSerializer.Options,
+            options: JsonObjectSerializer.SnakeCaseOptions,
             cancellationToken: cancellationToken
         );
 
@@ -144,7 +144,7 @@ public class AnthropicClient(
 
                 var streamResponse = JsonSerializer.Deserialize<AnthropicChatResponse>(
                     jsonData,
-                    options: JsonObjectSerializer.Options
+                    options: JsonObjectSerializer.SnakeCaseOptions
                 );
 
                 HandleException(httpResponseMessage, streamResponse);
@@ -225,7 +225,10 @@ public class AnthropicClient(
     {
         var inputTokenCount = await tokenizer.GetTokenCount(input);
 
-        if (inputTokenCount > _chatModel.ModelInformation.MaxInputTokens)
+        if (
+            _chatModel.ModelInformation.MaxInputTokens > 0
+            && inputTokenCount > _chatModel.ModelInformation.MaxInputTokens
+        )
         {
             throw new AnthropicException(
                 new AnthropicError
@@ -241,7 +244,7 @@ public class AnthropicClient(
 
     private void ValidateMaxToken(int maxTokenCount)
     {
-        if (maxTokenCount > _chatModel.ModelInformation.MaxTokens)
+        if (_chatModel.ModelInformation.MaxTokens > 0 && maxTokenCount > _chatModel.ModelInformation.MaxTokens)
         {
             throw new AnthropicException(
                 new AnthropicError

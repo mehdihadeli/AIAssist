@@ -67,7 +67,7 @@ public class OpenAiClient(
         });
 
         var completionResponse = await httpResponseMessage.Content.ReadFromJsonAsync<OpenAIChatResponse>(
-            options: JsonObjectSerializer.Options,
+            options: JsonObjectSerializer.SnakeCaseOptions,
             cancellationToken: cancellationToken
         );
 
@@ -152,7 +152,7 @@ public class OpenAiClient(
 
                 var streamResponse = JsonSerializer.Deserialize<OpenAIChatResponse>(
                     jsonData,
-                    options: JsonObjectSerializer.Options
+                    options: JsonObjectSerializer.SnakeCaseOptions
                 );
 
                 HandleException(httpResponseMessage, streamResponse);
@@ -210,7 +210,7 @@ public class OpenAiClient(
         });
 
         var embeddingResponse = await httpResponseMessage.Content.ReadFromJsonAsync<OpenAIEmbeddingResponse>(
-            options: JsonObjectSerializer.Options,
+            options: JsonObjectSerializer.SnakeCaseOptions,
             cancellationToken: cancellationToken
         );
 
@@ -267,7 +267,10 @@ public class OpenAiClient(
     {
         var inputTokenCount = await tokenizer.GetTokenCount(input);
 
-        if (inputTokenCount > _chatModel.ModelInformation.MaxInputTokens)
+        if (
+            _chatModel.ModelInformation.MaxInputTokens > 0
+            && inputTokenCount > _chatModel.ModelInformation.MaxInputTokens
+        )
         {
             throw new OpenAIException(
                 new OpenAIError
@@ -283,7 +286,7 @@ public class OpenAiClient(
 
     private void ValidateMaxToken(int maxTokenCount)
     {
-        if (maxTokenCount > _chatModel.ModelInformation.MaxTokens)
+        if (_chatModel.ModelInformation.MaxTokens > 0 && maxTokenCount > _chatModel.ModelInformation.MaxTokens)
         {
             throw new OpenAIException(
                 new OpenAIError

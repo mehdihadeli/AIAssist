@@ -11,7 +11,7 @@ public class CodeBlockCodeDiffParser : ICodeDiffParser
     private static readonly Regex _codeFenceStartRegex = new(@"^```csharp$", RegexOptions.Compiled);
     private static readonly Regex _codeFenceEndRegex = new(@"^```$", RegexOptions.Compiled);
 
-    public IList<FileChange> ExtractFileChanges(string diff)
+    public IList<FileChange> GetFileChanges(string diff)
     {
         var fileChanges = new List<FileChange>();
         string? currentFilePath = null;

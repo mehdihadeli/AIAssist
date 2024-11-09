@@ -12,7 +12,7 @@ public class MergeConflictCodeDiffParser : ICodeDiffParser
     private static readonly Regex _newVersionEnd = new(@"^>>>>>>> NEW VERSION$", RegexOptions.Compiled);
     private static readonly Regex _separator = new(@"^=======$", RegexOptions.Compiled);
 
-    public IList<FileChange> ExtractFileChanges(string diff)
+    public IList<FileChange> GetFileChanges(string diff)
     {
         var changes = new List<FileChange>();
         string? currentFilePath = null;

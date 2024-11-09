@@ -6,105 +6,86 @@
     "type": "object",
     "description": "A fully qualified model name with AI provider type and '/' prefix (e.g., 'ollama/llama3.1').",
     "properties": {
-      "enabled": {
+      "Enabled": {
         "type": "boolean",
-        "description": "Indicates whether the model is enabled (true) or disabled (false).",
+        "description": "Indicates whether the model is Enabled (true) or disabled (false).",
         "default": true
       },
-      "max_tokens": {
+      "MaxTokens": {
         "type": "integer",
         "description": "The maximum number of tokens for the provider",
         "default": 8192
       },
-      "max_input_tokens": {
+      "MaxInputTokens": {
         "type": "integer",
-        "description": "Maximum input tokens allowed by the provider; defaults to max_tokens",
+        "description": "Maximum input tokens allowed by the provider; defaults to MaxTokens",
         "default": 8192
       },
-      "max_output_tokens": {
+      "MaxOutputTokens": {
         "type": "integer",
-        "description": "Maximum output tokens allowed by the provider; defaults to max_tokens",
+        "description": "Maximum output tokens allowed by the provider; defaults to MaxTokens",
         "default": 8192
       },
-      "input_cost_per_token": {
+      "InputCostPerToken": {
         "type": "number",
         "minimum": 0,
         "description": "Cost per input token",
         "default": 0.0
       },
-      "output_cost_per_token": {
+      "OutputCostPerToken": {
         "type": "number",
         "minimum": 0,
         "description": "Cost per output token",
         "default": 0.0
       },
-      "output_vector_size": {
+      "OutputVectorSize": {
         "type": "number",
         "minimum": 0,
         "description": "Output vector size",
         "default": 0.0
       },
-      "provider": {
+      "AIProvider": {
         "type": "string",
-        "description": "Name of the provider, must match a known provider (e.g., 'ollama')",
-        "enum": ["ollama", "openai", "azure", "azure_ai", "anthropic", "google"]
+        "description": "Name of the AIProvider, must match a known AIProvider (e.g., 'ollama')",
+        "enum": ["Ollama", "Openai", "Azure", "Anthropic"]
       },
-      "mode": {
+      "ModelType": {
         "type": "string",
         "enum": [
-          "chat",
-          "embedding",
-          "completion",
-          "image_generation",
-          "audio_transcription",
-          "audio_speech"
+          "Chat",
+          "Embedding"
         ],
-        "description": "Operational mode for the provider (e.g., chat, completion)"
+        "description": "Operational mode for the AIProvider (e.g., chat, completion)"
       },
-      "supports_function_calling": {
+      "SupportsFunctionCalling": {
         "type": "boolean",
-        "description": "Indicates if the provider supports function calling",
+        "description": "Indicates if the AIProvider supports function calling",
         "default": false
       },
-      "supports_parallel_function_calling": {
+      "SupportsParallelFunctionCalling": {
         "type": "boolean",
         "description": "Indicates if parallel function calling is supported",
         "default": false
       },
-      "supports_vision": {
+      "SupportsVision": {
         "type": "boolean",
         "description": "Indicates if vision input/output is supported",
         "default": false
       },
-      "embedding_dimensions": {
+      "EmbeddingDimensions": {
         "type": "integer",
         "minimum": 1,
         "description": "Dimensions of the output embedding vector, applicable only for embedding mode",
         "default": 512
-      },
-      "supports_audio_input": {
-        "type": "boolean",
-        "description": "Indicates if audio input is supported",
-        "default": false
-      },
-      "supports_audio_output": {
-        "type": "boolean",
-        "description": "Indicates if audio output is supported",
-        "default": false
-      },
-      "supports_prompt_caching": {
-        "type": "boolean",
-        "description": "Indicates if prompt caching is supported",
-        "default": false
       }
     },
     "required": [
-      "max_tokens",
-      "max_input_tokens",
-      "input_cost_per_token",
-      "output_cost_per_token",
-      "provider",
-      "mode"
+      "MaxTokens",
+      "MaxInputTokens",
+      "InputCostPerToken",
+      "OutputCostPerToken",
+      "AIProvider",
+      "ModelType"
     ],
     "additionalProperties": false
   }

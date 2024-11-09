@@ -7,23 +7,23 @@
     "type": "object",
     "description": "A fully qualified model name with AI provider type and '/' prefix (e.g., 'ollama/llama3.1').",
     "properties": {
-      "code_diff_type": {
+      "CodeDiffType": {
         "type": "string",
         "enum": ["UnifiedDiff", "CodeBlockDiff", "MergeConflictDiff"],
         "description": "Specifies the type of code diff supported by the model."
       },
-      "code_assist_type": {
+      "CodeAssistType": {
         "type": "string",
         "enum": ["Embedding", "Summary"],
         "description": "Specifies the type of code assistance provided by the model."
       },
-      "threshold": {
+      "Threshold": {
         "type": "number",
         "minimum": 0,
         "maximum": 1,
-        "description": "Defines the threshold for embedding similarity, between 0 and 1."
+        "description": "Defines the Threshold for embedding similarity, between 0 and 1."
       },
-      "temperature": {
+      "Temperature": {
         "type": "number",
         "minimum": 0,
         "maximum": 1,

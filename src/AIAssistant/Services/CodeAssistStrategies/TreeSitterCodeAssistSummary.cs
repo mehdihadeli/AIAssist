@@ -1,21 +1,146 @@
+using System.Text;
 using AIAssistant.Contracts;
 using AIAssistant.Contracts.CodeAssist;
+using AIAssistant.Models;
+using AIAssistant.Prompts;
+using BuildingBlocks.Utils;
 
 namespace AIAssistant.Services.CodeAssistStrategies;
 
-public class TreeSitterCodeAssistSummary(CodeLoaderService codeLoaderService, ICodeFileMapService codeFileMapService)
-    : ICodeAssist
+public class TreeSitterCodeAssistSummary(
+    ICodeLoaderService codeLoaderService,
+    ICodeFileMapService codeFileMapService,
+    IChatSessionManager chatSessionManager,
+    IPromptCache promptCache,
+    ILLMClientManager llmClientManager
+) : ICodeAssist
 {
-    public Task LoadCodeFiles(string contextWorkingDirectory, IList<string>? codeFiles)
+    private List<CodeSummary> _cachedCodeSummaries = default!;
+
+    public Task LoadInitCodeFiles(string contextWorkingDirectory, IList<string>? codeFiles)
     {
-        var codeCaptures = codeLoaderService.LoadTreeSitterCodeCaptures(contextWorkingDirectory);
+        var treeSitterCodeCaptures = codeLoaderService.LoadTreeSitterCodeCaptures(contextWorkingDirectory, codeFiles);
+
+        if (!treeSitterCodeCaptures.Any())
+            throw new Exception("Not found any files to load.");
+
+        var codeFilesMap = codeFileMapService.GenerateCodeFileMaps(treeSitterCodeCaptures);
+
+        var session = chatSessionManager.GetCurrentActiveSession();
+
+        _cachedCodeSummaries = codeFilesMap
+            .Select(codeFileMap => new CodeSummary
+            {
+                RelativeFilePath = codeFileMap.RelativePath,
+                TreeSitterSummarizeCode = codeFileMap.TreeSitterSummarizeCode,
+                TreeOriginalCode = codeFileMap.TreeOriginalCode,
+                Code = codeFileMap.OriginalCode,
+                SessionId = session.SessionId,
+                UseFullCodeFile = codeFiles?.Contains(codeFileMap.RelativePath) ?? false,
+            })
+            .ToList();
 
         return Task.CompletedTask;
     }
 
-    public IAsyncEnumerable<string> QueryChatCompletionAsync(string userQuery)
+    public Task AddOrUpdateCodeFilesToCache(string contextWorkingDirectory, IList<string>? codeFiles)
     {
-        throw new NotImplementedException();
+        if (codeFiles is null || !codeFiles.Any())
+            return Task.CompletedTask;
+
+        var filesTreeToUpdate = _cachedCodeSummaries
+            .Where(x => codeFiles.Select(FilesUtilities.NormalizePath).Contains(x.RelativeFilePath.NormalizePath()))
+            .ToList();
+
+        foreach (var existingFile in filesTreeToUpdate)
+        {
+            existingFile.UseFullCodeFile = true;
+        }
+
+        var filesTreeToAdd = codeFiles
+            .Where(codeFile =>
+                _cachedCodeSummaries.All(c => c.RelativeFilePath.NormalizePath() != codeFile.NormalizePath())
+            )
+            .ToList();
+
+        if (filesTreeToAdd.Count == 0)
+            return Task.CompletedTask;
+
+        var noneExistingTreeSitterCodeCaptures = codeLoaderService.LoadTreeSitterCodeCaptures(
+            contextWorkingDirectory,
+            filesTreeToAdd
+        );
+
+        var noneExistingCodeFilesMap = codeFileMapService.GenerateCodeFileMaps(noneExistingTreeSitterCodeCaptures);
+        var session = chatSessionManager.GetCurrentActiveSession();
+
+        _cachedCodeSummaries.AddRange(
+            noneExistingCodeFilesMap.Select(codeFileMap => new CodeSummary
+            {
+                RelativeFilePath = codeFileMap.RelativePath,
+                TreeSitterSummarizeCode = codeFileMap.TreeSitterSummarizeCode,
+                TreeOriginalCode = codeFileMap.TreeOriginalCode,
+                Code = codeFileMap.OriginalCode,
+                SessionId = session.SessionId,
+                UseFullCodeFile = true,
+            })
+        );
+
+        return Task.CompletedTask;
+    }
+
+    public Task<IEnumerable<string>> GetCodeFilesFromCache(string contextWorkingDirectory, IList<string>? codeFiles)
+    {
+        if (codeFiles is null || !codeFiles.Any())
+            return Task.FromResult(Enumerable.Empty<string>());
+
+        var filesTreeToUpdate = _cachedCodeSummaries
+            .Where(x => codeFiles.Select(FilesUtilities.NormalizePath).Contains(x.RelativeFilePath.NormalizePath()))
+            .Select(x => x.UseFullCodeFile ? x.TreeOriginalCode : x.TreeSitterSummarizeCode);
+
+        return Task.FromResult(filesTreeToUpdate);
+    }
+
+    public async IAsyncEnumerable<string?> QueryChatCompletionAsync(string userQuery)
+    {
+        var codeContext = CreateLLMContext(_cachedCodeSummaries);
+
+        var systemCodeAssistPrompt = promptCache.GetPrompt(
+            CommandType.Code,
+            llmClientManager.ChatModel.ModelOption.CodeDiffType,
+            new { codeContext = codeContext }
+        );
+
+        // Generate a response from the language model (e.g., OpenAI or Llama)
+        var completionStreams = llmClientManager.GetCompletionStreamAsync(
+            userQuery: userQuery,
+            systemContext: systemCodeAssistPrompt
+        );
+
+        StringBuilder sb = new StringBuilder();
+        await foreach (var streamItem in completionStreams)
+        {
+            sb.Append(streamItem);
+            yield return streamItem;
+        }
+    }
+
+    private string CreateLLMContext(IEnumerable<CodeSummary> codeFileSummaries)
+    {
+        return string.Join(
+            Environment.NewLine,
+            codeFileSummaries.Select(codeFileSummary =>
+                PromptManager.RenderPromptTemplate(
+                    AIAssistantConstants.Prompts.CodeBlockTemplate,
+                    new
+                    {
+                        treeSitterCode = codeFileSummary.UseFullCodeFile
+                            ? codeFileSummary.TreeOriginalCode
+                            : codeFileSummary.TreeSitterSummarizeCode,
+                    }
+                )
+            )
+        );
     }
 
     // private static void CalculateDefinitionCaptureItemsRanks(IReadOnlyList<DefinitionCaptureItem> items)

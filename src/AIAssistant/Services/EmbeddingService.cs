@@ -11,12 +11,13 @@ public class EmbeddingService(
     ILLMClientManager llmClientManager,
     EmbeddingsStore embeddingsStore,
     IChatSessionManager chatSessionManager
-)
+) : IEmbeddingService
 {
     public async Task<AddEmbeddingsForFilesResult> AddEmbeddingsForFiles(IEnumerable<CodeFileMap> codeFilesMap)
     {
         int totalTokens = 0;
         decimal totalCost = 0;
+        var session = chatSessionManager.GetCurrentActiveSession();
 
         IList<CodeEmbedding> codeEmbeddings = new List<CodeEmbedding>();
         foreach (var codeFileMap in codeFilesMap)
@@ -31,7 +32,7 @@ public class EmbeddingService(
                     TreeSitterFullCode = codeFileMap.TreeSitterFullCode,
                     TreeOriginalCode = codeFileMap.TreeOriginalCode,
                     Code = codeFileMap.OriginalCode,
-                    SessionId = chatSessionManager.GetCurrentActiveSession().SessionId,
+                    SessionId = session.SessionId,
                     Embeddings = embeddingResult.Embeddings,
                 }
             );
@@ -68,19 +69,6 @@ public class EmbeddingService(
     public async Task<GetEmbeddingResult> GenerateEmbeddingForUserInput(string userInput)
     {
         return await llmClientManager.GetEmbeddingAsync(userInput);
-    }
-
-    public string CreateLLMContext(IEnumerable<CodeEmbedding> relevantCode)
-    {
-        return string.Join(
-            Environment.NewLine + Environment.NewLine,
-            relevantCode.Select(rc =>
-                PromptManager.RenderPromptTemplate(
-                    AIAssistantConstants.Prompts.CodeBlockTemplate,
-                    new { treeSitterCode = rc.TreeOriginalCode, relativeFilePath = rc.RelativeFilePath }
-                )
-            )
-        );
     }
 
     private static string GenerateEmbeddingInputString(string treeSitterCode)

@@ -1,3 +1,4 @@
+using System.Diagnostics;
 using System.Text.RegularExpressions;
 using AIAssistant.Contracts.Diff;
 using AIAssistant.Models;
@@ -8,7 +9,19 @@ public class UnifiedCodeDiffParser : ICodeDiffParser
 {
     private static readonly Regex _diffHeaderRegex = new(@"@@ -(\d+),?(\d+)? \+(\d+),?(\d+)? @@");
 
-    public IList<FileChange> ExtractFileChanges(string diff)
+    public bool GitPatch { get; set; }
+
+    public IList<FileChange> GetFileChanges(string diff)
+    {
+        if (GitPatch)
+        {
+            return ApplyUsingGitPatch(diff);
+        }
+
+        return ParseUnifiedDiff(diff);
+    }
+
+    private IList<FileChange> ParseUnifiedDiff(string diff)
     {
         var fileChanges = new List<FileChange>();
         FileChange? currentFileChange = null;
@@ -16,12 +29,12 @@ public class UnifiedCodeDiffParser : ICodeDiffParser
         var lines = diff.Split('\n');
         int currentLineNumberOriginal = 0;
         int currentLineNumberNew = 0;
-
         bool insideCodeBlock = false;
+        bool isFileCreation = false;
 
-        for (int i = 0; i < lines.Length; i++)
+        foreach (var lineItem in lines)
         {
-            var line = lines[i].Trim();
+            var line = lineItem.Trim();
 
             // Detect start and end of the code block
             if (line.StartsWith("```diff"))
@@ -42,7 +55,7 @@ public class UnifiedCodeDiffParser : ICodeDiffParser
             // Match the file header
             if (line.StartsWith("--- "))
             {
-                // If we already have an ongoing file change, add it to the list
+                // If there's an ongoing file change, add it to the list
                 if (currentFileChange != null)
                 {
                     fileChanges.Add(currentFileChange);
@@ -51,18 +64,39 @@ public class UnifiedCodeDiffParser : ICodeDiffParser
                 var filePath = line.Substring(4).Trim();
                 if (filePath == "/dev/null")
                 {
-                    // Treat as a deleted file if path is /dev/null
-                    currentFileChange = new FileChange(lines[i + 1].Substring(4).Trim(), CodeChangeType.Delete);
+                    isFileCreation = true;
+                    continue; // Handle file creation in the "+++" section
                 }
                 else
                 {
-                    // New instance for a standard file path
                     currentFileChange = new FileChange(filePath, CodeChangeType.Update);
+                    isFileCreation = false;
                 }
             }
             else if (line.StartsWith("+++ "))
             {
-                continue; // Skip the "+++" line as it is part of the file header
+                var filePath = line.Substring(4).Trim();
+                if (filePath == "/dev/null")
+                {
+                    // File deletion
+                    currentFileChange.FileCodeChangeType = CodeChangeType.Delete;
+                }
+                else if (isFileCreation)
+                {
+                    // File creation
+                    currentFileChange = new FileChange(filePath, CodeChangeType.Add);
+                    isFileCreation = false;
+                }
+                else if (currentFileChange?.FilePath != filePath)
+                {
+                    // File move/rename: treat as delete + add
+                    if (currentFileChange != null)
+                    {
+                        fileChanges.Add(new FileChange(currentFileChange.FilePath, CodeChangeType.Delete));
+                    }
+                    currentFileChange = new FileChange(filePath, CodeChangeType.Add);
+                }
+                continue;
             }
             // Match the diff headers with line numbers
             else if (line.StartsWith("@@"))
@@ -88,20 +122,68 @@ public class UnifiedCodeDiffParser : ICodeDiffParser
                     new FileChangeLine(currentLineNumberNew++, line.Substring(1).Trim(), CodeChangeType.Add)
                 );
             }
-            // Handle unchanged lines, which are usually part of the context
             else
             {
+                // Handle unchanged lines, which are usually part of the context
                 currentFileChange?.ChangeLines.Add(
                     new FileChangeLine(currentLineNumberOriginal++, line, CodeChangeType.Update)
                 );
-                currentLineNumberNew++; // Increment both line counters as line is unchanged
+                // Increment both line counters as line is unchanged
+                currentLineNumberNew++;
             }
         }
 
-        // Add the final file change, if any, to the list
         if (currentFileChange != null)
         {
             fileChanges.Add(currentFileChange);
+        }
+
+        return fileChanges;
+    }
+
+    private IList<FileChange> ApplyUsingGitPatch(string diff)
+    {
+        // we don't add any file to collection because changes will apply automatically with git apply
+        var fileChanges = new List<FileChange>();
+
+        // Write the diff to a temporary file
+        var tempFilePath = Path.GetTempFileName();
+        File.WriteAllText(tempFilePath, diff);
+
+        try
+        {
+            // Use git apply command to apply the diff
+            var process = new Process
+            {
+                StartInfo = new ProcessStartInfo
+                {
+                    FileName = "git",
+                    Arguments = $"apply \"{tempFilePath}\"",
+                    RedirectStandardError = true,
+                    RedirectStandardOutput = true,
+                    UseShellExecute = false,
+                    CreateNoWindow = true,
+                },
+            };
+
+            process.Start();
+            process.WaitForExit();
+
+            if (process.ExitCode == 0)
+            {
+                // Successfully applied the patch
+            }
+            else
+            {
+                // Failed to apply the patch, log or handle errors
+                string errorOutput = process.StandardError.ReadToEnd();
+                throw new Exception($"Git apply failed: {errorOutput}");
+            }
+        }
+        finally
+        {
+            // Delete the temporary file
+            File.Delete(tempFilePath);
         }
 
         return fileChanges;

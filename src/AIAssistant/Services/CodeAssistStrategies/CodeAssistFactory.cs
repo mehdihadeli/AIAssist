@@ -1,6 +1,4 @@
-using AIAssistant.Contracts;
 using AIAssistant.Contracts.CodeAssist;
-using AIAssistant.Models;
 using Clients.Models;
 
 namespace AIAssistant.Services.CodeAssistStrategies;

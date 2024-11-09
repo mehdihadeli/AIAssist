@@ -22,29 +22,21 @@ public class ChatHistory(ChatSession chatSession)
         var lastUserInputHistory = _historyItems.LastOrDefault(x => x.Role == RoleType.User);
         if (lastUserInputHistory is not null)
         {
-            lastUserInputHistory.ChatCost = new ChatCost(inputTokenCount, inputCostPerToken, 0, 0);
+            lastUserInputHistory.ChangeCost(new ChatCost(inputTokenCount, inputCostPerToken, 0, 0));
         }
 
         _historyItems.Add(
-            new ChatHistoryItem
-            {
-                Role = chatItem.Role,
-                Prompt = chatItem.Prompt,
-                ChatCost = new ChatCost(inputTokenCount, inputCostPerToken, outputTokenCount, outputCostPerToken),
-            }
+            new ChatHistoryItem(
+                chatItem.Prompt,
+                chatItem.Role,
+                new ChatCost(inputTokenCount, inputCostPerToken, outputTokenCount, outputCostPerToken)
+            )
         );
     }
 
     public void AddToHistory(ChatItem chatItem)
     {
-        _historyItems.Add(
-            new ChatHistoryItem
-            {
-                Role = chatItem.Role,
-                Prompt = chatItem.Prompt,
-                ChatCost = null,
-            }
-        );
+        _historyItems.Add(new ChatHistoryItem(chatItem.Prompt, chatItem.Role, null));
     }
 
     public override string ToString()

@@ -92,7 +92,7 @@ public class AnthropicClientStrategyTests : IAsyncLifetime
 
         _mockHttp
             .When(HttpMethod.Post, $"{_clientBaseUri}v1/complete")
-            .Respond(JsonContent.Create(responseContent, options: JsonObjectSerializer.Options));
+            .Respond(JsonContent.Create(responseContent, options: JsonObjectSerializer.SnakeCaseOptions));
 
         // Act
         var result = await _clientStrategy.GetCompletionAsync(chatItems);

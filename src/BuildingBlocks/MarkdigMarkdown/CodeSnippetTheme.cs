@@ -18,7 +18,7 @@ public class CodeSnippetTheme
     [JsonPropertyName("token_types")]
     public IDictionary<string, TokenType> TokenTypes { get; set; } = default!;
 
-    public StyleDictionary ToStyleDictionary()
+    public StyleDictionary ToColorCodeStyleDictionary()
     {
         var styleDictionary = new StyleDictionary();
 

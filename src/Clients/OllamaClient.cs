@@ -16,6 +16,7 @@ using Clients.Options;
 using Humanizer;
 using Microsoft.Extensions.Options;
 using Polly.Wrap;
+using Spectre.Console;
 
 namespace Clients;
 
@@ -47,7 +48,7 @@ public class OllamaClient(
                 content = x.Prompt,
             }),
             options = new { temperature = _chatModel.ModelOption.Temperature },
-            keep_alive = "15m",
+            keep_alive = "5m",
             stream = false,
         };
 
@@ -62,7 +63,7 @@ public class OllamaClient(
         });
 
         var completionResponse = await httpResponseMessage.Content.ReadFromJsonAsync<LlamaCompletionResponse>(
-            options: JsonObjectSerializer.Options,
+            options: JsonObjectSerializer.SnakeCaseOptions,
             cancellationToken: cancellationToken
         );
 
@@ -90,6 +91,12 @@ public class OllamaClient(
     {
         await ValidateMaxInputToken(chatCompletionRequest);
 
+        foreach (var item in chatCompletionRequest.Items)
+        {
+            AnsiConsole.WriteLine(item.Prompt);
+            AnsiConsole.WriteLine("------------");
+        }
+
         // https://github.com/ollama/ollama/blob/main/docs/api.md#generate-a-chat-completion
         // https://github.com/ollama/ollama/pull/6784
         // for now doesn't support `include_usage` for open ai compatibility apis
@@ -103,7 +110,7 @@ public class OllamaClient(
             }),
             options = new { temperature = _chatModel.ModelOption.Temperature },
             stream = true,
-            keep_alive = "15m",
+            keep_alive = "5m",
         };
 
         var client = httpClientFactory.CreateClient("llm_client");
@@ -138,7 +145,7 @@ public class OllamaClient(
 
             var completionResponse = JsonSerializer.Deserialize<LlamaCompletionResponse>(
                 jsonData,
-                options: JsonObjectSerializer.Options
+                options: JsonObjectSerializer.SnakeCaseOptions
             );
 
             HandleException(httpResponseMessage, completionResponse);
@@ -180,7 +187,7 @@ public class OllamaClient(
             input = new[] { input },
             model = _embeddingModel.Name,
             options = new { temperature = _embeddingModel.ModelOption.Temperature },
-            keep_alive = "15m",
+            keep_alive = "5m",
         };
 
         var client = httpClientFactory.CreateClient("llm_client");
@@ -197,7 +204,7 @@ public class OllamaClient(
         });
 
         var embeddingResponse = await httpResponseMessage.Content.ReadFromJsonAsync<LlamaEmbeddingResponse>(
-            options: JsonObjectSerializer.Options,
+            options: JsonObjectSerializer.SnakeCaseOptions,
             cancellationToken: cancellationToken
         );
 
@@ -245,7 +252,10 @@ public class OllamaClient(
     {
         var inputTokenCount = await tokenizer.GetTokenCount(input);
 
-        if (inputTokenCount > _chatModel.ModelInformation.MaxInputTokens)
+        if (
+            _chatModel.ModelInformation.MaxInputTokens > 0
+            && inputTokenCount > _chatModel.ModelInformation.MaxInputTokens
+        )
         {
             throw new OllamaException(
                 $"'max_input_token' count: {inputTokenCount.FormatCommas()} is larger than configured 'max_input_token' count: {_chatModel.ModelInformation.MaxInputTokens.FormatCommas()}, if you need more token change the configuration.",
@@ -256,7 +266,7 @@ public class OllamaClient(
 
     private void ValidateMaxToken(int maxTokenCount)
     {
-        if (maxTokenCount > _chatModel.ModelInformation.MaxTokens)
+        if (_chatModel.ModelInformation.MaxTokens > 0 && maxTokenCount > _chatModel.ModelInformation.MaxTokens)
         {
             throw new OllamaException(
                 $"'max_token' count: {maxTokenCount.FormatCommas()} is larger than configured 'max_token' count: {_chatModel.ModelInformation.MaxTokens.FormatCommas()}, if you need more token change the configuration.",

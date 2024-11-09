@@ -81,6 +81,7 @@ public static class DependencyInjectionExtensions
     private static void AddSpectreConsoleDependencies(HostApplicationBuilder builder)
     {
         builder.Services.AddSingleton(AnsiConsole.Console);
+
         builder.Services.AddSingleton<ISpectreUtilities>(sp =>
         {
             var appOptions = sp.GetRequiredService<AppOptions>();
@@ -92,7 +93,7 @@ public static class DependencyInjectionExtensions
     private static void AddCodeLoaderDependencies(HostApplicationBuilder builder)
     {
         builder.Services.AddSingleton<ICodeFileMapService, CodeFileMapService>();
-        builder.Services.AddSingleton<CodeLoaderService>();
+        builder.Services.AddSingleton<ICodeLoaderService, CodeLoaderService>();
     }
 
     private static void AddResiliencyDependencies(HostApplicationBuilder builder)
@@ -132,8 +133,9 @@ public static class DependencyInjectionExtensions
         // will set json options for httpclient AsJson and FromJson
         builder.Services.ConfigureHttpJsonOptions(options =>
         {
-            options.SerializerOptions.PropertyNamingPolicy = JsonObjectSerializer.Options.PropertyNamingPolicy;
-            options.SerializerOptions.WriteIndented = JsonObjectSerializer.Options.WriteIndented;
+            options.SerializerOptions.PropertyNamingPolicy = JsonObjectSerializer.SnakeCaseOptions.PropertyNamingPolicy;
+
+            options.SerializerOptions.WriteIndented = JsonObjectSerializer.SnakeCaseOptions.WriteIndented;
         });
 
         builder.Services.AddSingleton<IJsonSerializer, JsonObjectSerializer>();
@@ -155,7 +157,7 @@ public static class DependencyInjectionExtensions
 
     private static void AddEmbeddingDependencies(HostApplicationBuilder builder)
     {
-        builder.Services.AddSingleton<EmbeddingService>();
+        builder.Services.AddSingleton<IEmbeddingService, EmbeddingService>();
         builder.Services.AddSingleton<EmbeddingsStore>();
         builder.Services.AddSingleton<VectorDatabase>();
     }
@@ -163,11 +165,13 @@ public static class DependencyInjectionExtensions
     private static void AddCodeAssistDependencies(HostApplicationBuilder builder)
     {
         builder.Services.TryAddKeyedSingleton<ICodeAssist, EmbeddingCodeAssist>(CodeAssistType.Embedding);
+
         builder.Services.TryAddKeyedSingleton<ICodeAssist, TreeSitterCodeAssistSummary>(CodeAssistType.Summary);
 
         builder.Services.AddSingleton<ICodeAssistFactory>(sp =>
         {
             var embeddingCodeStrategy = sp.GetRequiredKeyedService<ICodeAssist>(CodeAssistType.Embedding);
+
             var treeSitterSummaryCodeStrategy = sp.GetRequiredKeyedService<ICodeAssist>(CodeAssistType.Summary);
 
             IDictionary<CodeAssistType, ICodeAssist> codeStrategies = new Dictionary<CodeAssistType, ICodeAssist>
@@ -275,15 +279,18 @@ public static class DependencyInjectionExtensions
                     //     break;
                     case AIProvider.Openai:
                         ArgumentException.ThrowIfNullOrEmpty(options.ApiKey);
+
                         client.DefaultRequestHeaders.Authorization = new AuthenticationHeaderValue(
                             "Bearer",
                             options.ApiKey
                         );
+
                         break;
                     case AIProvider.Ollama:
                         client.DefaultRequestHeaders.Accept.Add(
                             new MediaTypeWithQualityHeaderValue("application/json")
                         );
+
                         break;
                 }
             }
@@ -303,16 +310,21 @@ public static class DependencyInjectionExtensions
     private static void AddCodeDiffDependency(HostApplicationBuilder builder)
     {
         builder.Services.AddKeyedSingleton<ICodeDiffParser, CodeBlockCodeDiffParser>(CodeDiffType.CodeBlockDiff);
+
         builder.Services.AddKeyedSingleton<ICodeDiffParser, UnifiedCodeDiffParser>(CodeDiffType.UnifiedDiff);
+
         builder.Services.AddKeyedSingleton<ICodeDiffParser, MergeConflictCodeDiffParser>(
             CodeDiffType.MergeConflictDiff
         );
+
         builder.Services.AddSingleton<ICodeDiffUpdater, CodeDiffUpdater>();
 
         builder.Services.AddSingleton<ICodeDiffParserFactory, CodeDiffParserFactory>(sp =>
         {
             var codeBlockDiffParser = sp.GetRequiredKeyedService<ICodeDiffParser>(CodeDiffType.CodeBlockDiff);
+
             var unifiedDiffParser = sp.GetRequiredKeyedService<ICodeDiffParser>(CodeDiffType.UnifiedDiff);
+
             var mergeConflictDiffParser = sp.GetRequiredKeyedService<ICodeDiffParser>(CodeDiffType.MergeConflictDiff);
 
             IDictionary<CodeDiffType, ICodeDiffParser> codeDiffStrategies = new Dictionary<

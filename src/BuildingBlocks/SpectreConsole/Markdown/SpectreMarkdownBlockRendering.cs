@@ -71,13 +71,13 @@ internal class SpectreMarkdownBlockRendering : IDisposable
             case FencedCodeBlock fencedCodeBlock:
                 return RenderFenceBlock(fencedCodeBlock);
             case CodeBlock codeBlock:
-                // var blockContents = codeBlock.Lines.ToString();
-                // result = new Panel(blockContents)
-                // {
-                //     Header = new PanelHeader("code"),
-                //     Expand = true,
-                //     Border = BoxBorder.Rounded,
-                // };
+                var blockContents = codeBlock.Lines.ToString();
+                result = new Panel(blockContents)
+                {
+                    Header = new PanelHeader("code"),
+                    Expand = true,
+                    Border = BoxBorder.Rounded,
+                };
                 break;
             case ListBlock listBlock:
                 result = RenderListBlock(listBlock, CreateStyle(_colorTheme.ListStyle, style));
@@ -120,25 +120,16 @@ internal class SpectreMarkdownBlockRendering : IDisposable
     private IRenderable RenderFenceBlock(FencedCodeBlock fencedCodeBlock)
     {
         var bbcode = fencedCodeBlock.Lines.ToString();
-        var backgroundColor = fencedCodeBlock.GetData("background") as string;
+        var backgroundColor = fencedCodeBlock.GetData("background") ?? "default";
 
-        return string.IsNullOrEmpty(backgroundColor)
-            ? new Padder(
-                new CustomPanel(bbcode)
-                {
-                    Expand = true,
-                    Border = BoxBorder.Rounded,
-                    Header = new PanelHeader(fencedCodeBlock.Info ?? "code"),
-                }
-            ).PadLeft(_colorTheme.CodeBlockStyle.Margin)
-            : new Padder(
-                new CustomPanel(bbcode, Style.Parse($"on {backgroundColor}"))
-                {
-                    Expand = true,
-                    Border = BoxBorder.Rounded,
-                    Header = new PanelHeader(fencedCodeBlock.Info ?? "code"),
-                }
-            ).PadLeft(_colorTheme.CodeBlockStyle.Margin);
+        return new Padder(
+            new CustomPanel(bbcode, Style.Parse($"on {backgroundColor}"))
+            {
+                Expand = true,
+                Border = BoxBorder.Rounded,
+                Header = new PanelHeader(fencedCodeBlock.Info ?? "code"),
+            }
+        ).PadLeft(_colorTheme.CodeBlockStyle.Margin);
     }
 
     private IRenderable RenderQuoteBlock(QuoteBlock quoteBlock, Style style)

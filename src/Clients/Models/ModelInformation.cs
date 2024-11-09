@@ -9,12 +9,7 @@ namespace Clients.Models;
 
 public class ModelInformation
 {
-    [JsonConverter(typeof(AIProviderTypeConverter))]
-    [JsonPropertyName("provider")]
     public AIProvider AIProvider { get; set; }
-
-    [JsonConverter(typeof(ModelTypeConverter))]
-    [JsonPropertyName("mode")]
     public ModelType ModelType { get; set; }
     public int MaxTokens { get; set; }
     public int MaxInputTokens { get; set; }
