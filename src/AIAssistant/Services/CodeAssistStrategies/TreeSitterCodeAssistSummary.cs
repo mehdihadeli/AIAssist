@@ -5,6 +5,7 @@ using AIAssistant.Contracts.CodeAssist;
 using AIAssistant.Models;
 using AIAssistant.Prompts;
 using BuildingBlocks.Utils;
+using Clients.Models;
 using TreeSitter.Bindings.CustomTypes.TreeParser;
 
 namespace AIAssistant.Services.CodeAssistStrategies;
@@ -62,10 +63,16 @@ public class TreeSitterCodeAssistSummary(
     {
         var codeContext = SharedPrompts.CreateLLMContext(_scopedCacheCodeSummaries);
 
+        // Add `ask-more-context-prompt` to the code-assistant prompts when `CodeAssistType` is `Summary`
+        var askMoreContextPrompt =
+            llmClientManager.ChatModel.ModelOption.CodeAssistType == CodeAssistType.Summary
+                ? SharedPrompts.AskMoreContextPrompt()
+                : string.Empty;
+
         var systemCodeAssistPrompt = promptCache.GetPrompt(
             CommandType.Code,
             llmClientManager.ChatModel.ModelOption.CodeDiffType,
-            new { codeContext = codeContext }
+            new { codeContext = codeContext, askMoreContextPrompt = askMoreContextPrompt }
         );
 
         // Generate a response from the language model (e.g., OpenAI or Llama)

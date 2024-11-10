@@ -167,6 +167,11 @@ public class SpectreUtilities(ColorTheme theme, IAnsiConsole console) : ISpectre
         return false;
     }
 
+    public void Clear()
+    {
+        console.Clear();
+    }
+
     private Style CreateStyle(StyleBase styleBase)
     {
         var style = Style.Parse(CreateStringStyle(styleBase));

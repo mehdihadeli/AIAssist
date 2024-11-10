@@ -29,6 +29,7 @@
         <None Remove="Prompts\Templates\code-assistant-code-block-diff.template" />
         <None Remove="Prompts\Templates\code-assist-merge-conflict-diff.template" />
         <None Remove="Prompts\Templates\code-embedding.template"/>
+        <None Remove="Prompts\Templates\ask-more-context.template" />
         <None Remove="default-config.json" />
     </ItemGroup>
 
@@ -38,6 +39,7 @@
         <EmbeddedResource Include="Prompts\Templates\code-assist-merge-conflict-diff.template" />
         <EmbeddedResource Include="Prompts\Templates\code-block.template" />
         <EmbeddedResource Include="Prompts\Templates\code-embedding.template" />
+        <EmbeddedResource Include="Prompts\Templates\ask-more-context.template" />
         <EmbeddedResource Include="default-config.json" />
     </ItemGroup>
 

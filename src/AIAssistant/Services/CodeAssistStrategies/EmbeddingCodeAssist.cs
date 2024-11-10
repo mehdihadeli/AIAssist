@@ -6,6 +6,7 @@ using AIAssistant.Models.Options;
 using AIAssistant.Prompts;
 using BuildingBlocks.SpectreConsole.Contracts;
 using BuildingBlocks.Utils;
+using Clients.Models;
 using Humanizer;
 using Microsoft.Extensions.Options;
 using Spectre.Console;
@@ -87,7 +88,7 @@ public class EmbeddingCodeAssist(
         var systemCodeAssistPrompt = promptCache.GetPrompt(
             CommandType.Code,
             llmClientManager.ChatModel.ModelOption.CodeDiffType,
-            new { codeContext = codeContext }
+            new { codeContext = codeContext, askMoreContextPrompt = string.Empty }
         );
 
         // Generate a response from the language model (e.g., OpenAI or Llama)

@@ -21,4 +21,5 @@ public interface ISpectreUtilities
         ConsoleModifiers consoleModifierKey,
         out string pressedKey
     );
+    void Clear();
 }

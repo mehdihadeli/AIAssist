@@ -1,5 +1,6 @@
 using System.Net.Http.Headers;
 using AIAssistant.Commands;
+using AIAssistant.Commands.InternalCommands;
 using AIAssistant.Contracts;
 using AIAssistant.Contracts.CodeAssist;
 using AIAssistant.Contracts.Diff;
@@ -311,12 +312,51 @@ public static class DependencyInjectionExtensions
 
     private static void AddCommandsDependencies(HostApplicationBuilder builder)
     {
-        // Commands
-        builder.Services.AddSingleton<CodeAssistCommand>();
-        builder.Services.AddSingleton<CodeExplanationCommand>();
-        builder.Services.AddSingleton<ChatAssistCommand>();
-        builder.Services.AddSingleton<TreeStructureCommand>();
-        builder.Services.AddSingleton<AIAssistCommand>();
+        builder.Services.AddTransient<IInternalCommandProcessor, InternalCommandProcessor>();
+        builder.Services.AddSingleton<ICodeAssistInternalCommands>(sp =>
+        {
+            IList<IInternalConsoleCommand> internalCommands =
+            [
+                sp.GetRequiredService<AddFileCommand>(),
+                sp.GetRequiredService<RunCommand>(),
+                sp.GetRequiredService<ClearCommand>(),
+                sp.GetRequiredService<ClearHistoryCommand>(),
+                sp.GetRequiredService<QuitCommand>(),
+                sp.GetRequiredService<FoldersTreeListCommand>(),
+                sp.GetRequiredService<TokenCommand>(),
+                sp.GetRequiredService<SummarizeCommand>(),
+            ];
+
+            var help =
+                @"- `:clear` / `:c` / Ctrl+F - Clear the conversation.
+- `:quit` / `:q` / Ctrl+C - Quit the program.
+- `:help` / `:h` / `:?` - Show this help message.";
+            var spectreUtils = sp.GetRequiredService<ISpectreUtilities>();
+            internalCommands.Add(new HelpCommand(help, spectreUtils));
+
+            var codeAssistInternalCommands = new CodeAssistInternalCommands();
+            codeAssistInternalCommands.AddRange(internalCommands!);
+
+            return codeAssistInternalCommands;
+        });
+
+        // internal commands
+        builder.Services.AddTransient<AddFileCommand>();
+        builder.Services.AddTransient<RunCommand>();
+        builder.Services.AddTransient<ClearCommand>();
+        builder.Services.AddTransient<ClearHistoryCommand>();
+        builder.Services.AddTransient<QuitCommand>();
+        builder.Services.AddTransient<FoldersTreeListCommand>();
+        builder.Services.AddTransient<HelpCommand>();
+        builder.Services.AddTransient<TokenCommand>();
+        builder.Services.AddTransient<SummarizeCommand>();
+
+        // commands
+        builder.Services.AddTransient<CodeAssistCommand>();
+        builder.Services.AddTransient<CodeExplanationCommand>();
+        builder.Services.AddTransient<ChatAssistCommand>();
+        builder.Services.AddTransient<TreeStructureCommand>();
+        builder.Services.AddTransient<AIAssistCommand>();
     }
 
     private static void AddCodeDiffDependency(HostApplicationBuilder builder)

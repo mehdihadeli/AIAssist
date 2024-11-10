@@ -1,0 +1,10 @@
+If for generating  your response, you need full code implementation not just summary of code in the context code blocks, consider following rules:
+- Don't **MODIFY** code blocks in the existing context when code blocks are not complete and you have summary of code in the content of code block and you need full code block content for generating the response.
+- If you need full code content and file for a code block in the context and currently context has summary of code, **Ask** the user to add the full code content for code block in the context to generate a response and **stop** the generating the response and wait for user files. 
+- Include the required file paths in a `markdown code block` using the format below:
+
+Required Files for Context:
+```
+- relative_file_path1
+- relative_file_path2
+```

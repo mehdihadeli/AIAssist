@@ -23,6 +23,13 @@ public static class SharedPrompts
         return sb.ToString();
     }
 
+    public static string AskMoreContextPrompt()
+    {
+        var renderBlock = PromptManager.RenderPromptTemplate(AIAssistantConstants.Prompts.AskMoreContext, null);
+
+        return renderBlock;
+    }
+
     public static string AddCodeBlock(string treeSitterCode)
     {
         var renderBlock = PromptManager.RenderPromptTemplate(

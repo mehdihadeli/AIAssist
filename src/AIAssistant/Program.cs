@@ -64,8 +64,7 @@ try
 }
 catch (Exception ex)
 {
-    //AnsiConsole.Write(new Markup(ex.Message + Environment.NewLine, new ExceptionStyle().Message));
-    AnsiConsole.WriteException(ex, ExceptionFormats.ShortenEverything);
+    AnsiConsole.WriteException(ex, ExceptionFormats.NoStackTrace | ExceptionFormats.ShortenEverything);
     Console.ReadKey();
 }
 finally
