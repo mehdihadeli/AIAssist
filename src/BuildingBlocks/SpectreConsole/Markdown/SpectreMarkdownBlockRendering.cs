@@ -106,9 +106,8 @@ internal class SpectreMarkdownBlockRendering : IDisposable
                     suppressNewLine
                 );
                 break;
-            case ThematicBreakBlock:
-                result = new Rule { Style = new Style(decoration: Decoration.Bold), Border = BoxBorder.Double };
-                break;
+            case ThematicBreakBlock thematicBreakBlock:
+                return new Text(thematicBreakBlock.Content.Text);
         }
 
         if (result is not null)

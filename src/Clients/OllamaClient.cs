@@ -48,7 +48,7 @@ public class OllamaClient(
                 content = x.Prompt,
             }),
             options = new { temperature = _chatModel.ModelOption.Temperature },
-            keep_alive = "5m",
+            keep_alive = "30m",
             stream = false,
         };
 
@@ -110,7 +110,7 @@ public class OllamaClient(
             }),
             options = new { temperature = _chatModel.ModelOption.Temperature },
             stream = true,
-            keep_alive = "5m",
+            keep_alive = "30m",
         };
 
         var client = httpClientFactory.CreateClient("llm_client");
@@ -187,7 +187,7 @@ public class OllamaClient(
             input = new[] { input },
             model = _embeddingModel.Name,
             options = new { temperature = _embeddingModel.ModelOption.Temperature },
-            keep_alive = "5m",
+            keep_alive = "30m",
         };
 
         var client = httpClientFactory.CreateClient("llm_client");

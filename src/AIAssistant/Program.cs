@@ -64,7 +64,8 @@ try
 }
 catch (Exception ex)
 {
-    AnsiConsole.WriteException(ex, ExceptionFormats.NoStackTrace | ExceptionFormats.ShortenEverything);
+    //AnsiConsole.WriteException(ex, ExceptionFormats.NoStackTrace | ExceptionFormats.ShortenEverything);
+    AnsiConsole.WriteException(ex);
     Console.ReadKey();
 }
 finally

@@ -35,7 +35,7 @@ public class FileChangeLine(int lineNumber, string content, CodeChangeType lineC
 
 public enum CodeChangeType
 {
-    Add,
+    Add = 0,
     Update,
     Delete,
 }

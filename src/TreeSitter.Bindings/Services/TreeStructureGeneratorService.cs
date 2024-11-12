@@ -41,7 +41,6 @@ public class TreeStructureGeneratorService : ITreeStructureGeneratorService
         {
             // Add the CaptureKey as a top-level tree node
             sb.AppendLine($"├── {GetNormalizedKeyName(groupedItem.CaptureKey)}:");
-
             // Recursively add children for each CaptureValue under this CaptureKey
             AddChildItems(sb, groupedItem.Values, "│   ");
         }
@@ -85,11 +84,16 @@ public class TreeStructureGeneratorService : ITreeStructureGeneratorService
     private static void WriteChildrenCodeLine(StringBuilder sb, string indent, string itemDefinition)
     {
         var lines = itemDefinition.Trim().Split('\n');
-        sb.AppendLine($"{indent}├── {lines[0].Trim()}");
 
+        // Write first line with bullet
+        sb.AppendLine($"{indent}├── {lines[0]}");
+
+        // Write subsequent lines with additional indentation, preserving each line's original indent
+        string lineIndent = indent + "│   ";
         for (int i = 1; i < lines.Length; i++)
         {
-            sb.AppendLine($"{indent}│   {lines[i].Trim()}");
+            string formattedLine = lineIndent + lines[i];
+            sb.AppendLine(formattedLine);
         }
     }
 

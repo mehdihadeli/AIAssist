@@ -48,6 +48,6 @@ namespace ProductManagement.Models
 ```
 
 
-For explanation of the produced response you should consider following rules:
+For explanation section of the produced response you should consider following rules:
 - After providing the modified code sections in the `CodeBlock` format, include an `Explanation` section in the markdown result that summarizes each change.
 - Clearly indicate what modifications were made in each file and the reasoning behind them.

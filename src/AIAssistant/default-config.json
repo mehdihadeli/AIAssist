@@ -1,7 +1,7 @@
 {
   "ModelsOptions": {
     "ollama/llama3.1": {
-      "CodeDiffType": "CodeBlockDiff",
+      "CodeDiffType": "UnifiedDiff",
       "CodeAssistType": "Embedding",
       "Temperature": 0.2
     },

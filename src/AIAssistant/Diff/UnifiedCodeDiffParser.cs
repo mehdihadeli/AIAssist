@@ -1,4 +1,3 @@
-using System.Diagnostics;
 using System.Text.RegularExpressions;
 using AIAssistant.Contracts.Diff;
 using AIAssistant.Models;
@@ -7,17 +6,12 @@ namespace AIAssistant.Diff;
 
 public class UnifiedCodeDiffParser : ICodeDiffParser
 {
-    private static readonly Regex _diffHeaderRegex = new(@"@@ -(\d+),?(\d+)? \+(\d+),?(\d+)? @@");
-
-    public bool GitPatch { get; set; }
+    private static readonly Regex _hunkHeaderRegex = new(@"^@@.*@@");
+    private static readonly string _codeBlockMarker = "```";
+    private readonly bool _useHunkHeaderLineNumbers = true;
 
     public IList<FileChange> GetFileChanges(string diff)
     {
-        if (GitPatch)
-        {
-            return ApplyUsingGitPatch(diff);
-        }
-
         return ParseUnifiedDiff(diff);
     }
 
@@ -27,35 +21,34 @@ public class UnifiedCodeDiffParser : ICodeDiffParser
         FileChange? currentFileChange = null;
 
         var lines = diff.Split('\n');
-        int currentLineNumberOriginal = 0;
-        int currentLineNumberNew = 0;
-        bool insideCodeBlock = false;
         bool isFileCreation = false;
+        var currentLineNumber = 1;
+        bool insideCodeBlock = false;
+        bool insideHunk = false;
 
-        foreach (var lineItem in lines)
+        //In the context of a unified diff, the hunkOldLineNumber and hunkNewLineNumber are variables used to track the line numbers in the old and new versions of the file
+        // Variables to track hunk header line numbers
+        int hunkOldLineNumber = 0;
+        int hunkNewLineNumber = 0;
+
+        foreach (var codeLine in lines)
         {
-            var line = lineItem.Trim();
+            var line = codeLine.TrimEnd(); // Only trim end to preserve indentation
 
-            // Detect start and end of the code block
-            if (line.StartsWith("```diff"))
+            // Handle code block markers
+            if (line.Trim().StartsWith(_codeBlockMarker))
             {
-                insideCodeBlock = true;
-                continue;
-            }
-            else if (line.StartsWith("```"))
-            {
-                insideCodeBlock = false;
+                insideCodeBlock = !insideCodeBlock;
+                insideHunk = false;
                 continue;
             }
 
-            // If not inside a code block, ignore the line
             if (!insideCodeBlock)
                 continue;
 
             // Match the file header
             if (line.StartsWith("--- "))
             {
-                // If there's an ongoing file change, add it to the list
                 if (currentFileChange != null)
                 {
                     fileChanges.Add(currentFileChange);
@@ -65,125 +58,94 @@ public class UnifiedCodeDiffParser : ICodeDiffParser
                 if (filePath == "/dev/null")
                 {
                     isFileCreation = true;
-                    continue; // Handle file creation in the "+++" section
+                    continue;
                 }
                 else
                 {
                     currentFileChange = new FileChange(filePath, CodeChangeType.Update);
                     isFileCreation = false;
                 }
+                currentLineNumber = 1;
             }
             else if (line.StartsWith("+++ "))
             {
                 var filePath = line.Substring(4).Trim();
                 if (filePath == "/dev/null")
                 {
-                    // File deletion
-                    currentFileChange.FileCodeChangeType = CodeChangeType.Delete;
+                    if (currentFileChange != null)
+                    {
+                        currentFileChange.FileCodeChangeType = CodeChangeType.Delete;
+                    }
                 }
                 else if (isFileCreation)
                 {
-                    // File creation
                     currentFileChange = new FileChange(filePath, CodeChangeType.Add);
                     isFileCreation = false;
                 }
                 else if (currentFileChange?.FilePath != filePath)
                 {
-                    // File move/rename: treat as delete + add
                     if (currentFileChange != null)
                     {
                         fileChanges.Add(new FileChange(currentFileChange.FilePath, CodeChangeType.Delete));
                     }
                     currentFileChange = new FileChange(filePath, CodeChangeType.Add);
                 }
+            }
+            // A hunk header (contains the line range info for the changes)
+            else if (_hunkHeaderRegex.IsMatch(line))
+            {
+                // Reset line tracking for new block
+                insideHunk = true;
+
+                if (_useHunkHeaderLineNumbers)
+                {
+                    // Extract the line numbers from the hunk header (e.g., `@@ -1,4 +1,4 @@`)
+                    var hunkHeader = line.Substring(2, line.IndexOf(" @@", StringComparison.Ordinal) - 2).Trim();
+                    var hunkParts = hunkHeader.Split(" ");
+
+                    // remove `-` and `+` from hunk header ranges
+                    var oldLineInfo = hunkParts[0].Trim().Substring(1).Split(",");
+                    var newLineInfo = hunkParts[1].Trim().Substring(1).Split(",");
+
+                    hunkOldLineNumber = int.Parse(oldLineInfo[0]);
+                    hunkNewLineNumber = int.Parse(newLineInfo[0]);
+                }
+
                 continue;
             }
-            // Match the diff headers with line numbers
-            else if (line.StartsWith("@@"))
+            else if (insideHunk)
             {
-                var match = _diffHeaderRegex.Match(line);
-                if (match.Success)
+                // If inside a hunk, process line changes
+                if (line.StartsWith("-"))
                 {
-                    currentLineNumberOriginal = int.Parse(match.Groups[1].Value);
-                    currentLineNumberNew = int.Parse(match.Groups[3].Value);
+                    // A line is removed (delete)
+                    int lineNumber = _useHunkHeaderLineNumbers ? hunkOldLineNumber++ : currentLineNumber++;
+                    // replace `-` with an empty line
+                    currentFileChange?.ChangeLines.Add(
+                        new FileChangeLine(lineNumber, $"{line.Substring(1)}", CodeChangeType.Delete)
+                    );
                 }
-            }
-            // Handle removed lines
-            else if (line.StartsWith("-"))
-            {
-                currentFileChange?.ChangeLines.Add(
-                    new FileChangeLine(currentLineNumberOriginal++, line.Substring(1).Trim(), CodeChangeType.Delete)
-                );
-            }
-            // Handle added lines
-            else if (line.StartsWith("+"))
-            {
-                currentFileChange?.ChangeLines.Add(
-                    new FileChangeLine(currentLineNumberNew++, line.Substring(1).Trim(), CodeChangeType.Add)
-                );
-            }
-            else
-            {
-                // Handle unchanged lines, which are usually part of the context
-                currentFileChange?.ChangeLines.Add(
-                    new FileChangeLine(currentLineNumberOriginal++, line, CodeChangeType.Update)
-                );
-                // Increment both line counters as line is unchanged
-                currentLineNumberNew++;
+                else if (line.StartsWith("+"))
+                {
+                    // A line is added (add)
+                    int lineNumber = _useHunkHeaderLineNumbers ? hunkOldLineNumber++ : currentLineNumber++;
+                    // replace `+` with an empty line
+                    currentFileChange?.ChangeLines.Add(
+                        new FileChangeLine(lineNumber, $"{line.Substring(1)}", CodeChangeType.Add)
+                    );
+                }
+                else
+                {
+                    // Process unchanged or empty lines as well (update)
+                    int lineNumber = _useHunkHeaderLineNumbers ? hunkOldLineNumber++ : currentLineNumber++;
+                    currentFileChange?.ChangeLines.Add(new FileChangeLine(lineNumber, line, CodeChangeType.Update));
+                }
             }
         }
 
         if (currentFileChange != null)
         {
             fileChanges.Add(currentFileChange);
-        }
-
-        return fileChanges;
-    }
-
-    private IList<FileChange> ApplyUsingGitPatch(string diff)
-    {
-        // we don't add any file to collection because changes will apply automatically with git apply
-        var fileChanges = new List<FileChange>();
-
-        // Write the diff to a temporary file
-        var tempFilePath = Path.GetTempFileName();
-        File.WriteAllText(tempFilePath, diff);
-
-        try
-        {
-            // Use git apply command to apply the diff
-            var process = new Process
-            {
-                StartInfo = new ProcessStartInfo
-                {
-                    FileName = "git",
-                    Arguments = $"apply \"{tempFilePath}\"",
-                    RedirectStandardError = true,
-                    RedirectStandardOutput = true,
-                    UseShellExecute = false,
-                    CreateNoWindow = true,
-                },
-            };
-
-            process.Start();
-            process.WaitForExit();
-
-            if (process.ExitCode == 0)
-            {
-                // Successfully applied the patch
-            }
-            else
-            {
-                // Failed to apply the patch, log or handle errors
-                string errorOutput = process.StandardError.ReadToEnd();
-                throw new Exception($"Git apply failed: {errorOutput}");
-            }
-        }
-        finally
-        {
-            // Delete the temporary file
-            File.Delete(tempFilePath);
         }
 
         return fileChanges;
