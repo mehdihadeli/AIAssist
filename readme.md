@@ -21,7 +21,7 @@
 -   ✅ Showing token usage count and calculated priced based on each model `input token` and `output token` price.
 -   ✅ Customize models information with creating a customized models information through `ModelsInformationOptions` section in the `aiassist-config.json` and a format like [predefined models information](./src/Clients/LLMs/models_information_list.json).
 -   ✅ Customize models options through `ModelsOptions` section in the `aiassist-config.json` and a format like [predefined models options](./src/Clients/LLMs/models_options.json).
--   ✅ Terminal main commands like code, chat, explain and support some internal commands like clear, add-file, clear-history, token, ...
+-   ✅ Terminal main commands like `aiassist code`, `aiassist chat`, `aiassist explain` and support some internal commands like `:clear`, `:add-file`, `:clear-history`, `:token`, ...
 
 ## Get Started
 
@@ -65,14 +65,16 @@ $env:EMBEDDINGS_MODEL_API_KEY=your-embedding-api-key-here
 aiassist code --chat-api-key your-chat-api-key-here  --embeddings-api-key your-embedding-api-key-here
 ```
 
--   If you are using AI models that need `ApiVersion` and `DeploymentId` like Azure AI Service models, you can set them by environment variable or command options.
--   Set `ApiVersion` and `DeploymentId` through `environment variable`:
+-   If you are using AI models that need `ApiVersion`, `DeploymentId` and `BaseAddress` like Azure AI Service models, you can set them by environment variable or command options.
+-   Set `ApiVersion`, `DeploymentId` and `BaseAddress` through`environment variable`:
 
 Linux terminal:
 
 ```bash
+export CHAT_BASE_ADDRESS=your-chat-base-address-here
 export CHAT_API_VERSION=your-chat-api-version-here
 export CHAT_DEPLOYMENT_ID=your-chat-deployment-id-here
+export EMBEDDINGS_BASE_ADDRESS=your-embedding-base-address-here
 export EMBEDDINGS_API_VERSION=your-embedding-api-version-here
 export EMBEDDINGS_DEPLOYMENT_ID=your-embedding-deployment-id-here
 ```
@@ -80,16 +82,18 @@ export EMBEDDINGS_DEPLOYMENT_ID=your-embedding-deployment-id-here
 Windows Powershell Terminal:
 
 ```powershell
+$env:CHAT_BASE_ADDRESS=your-chat-base-address-here
 $env:CHAT_API_VERSION=your-chat-api-version-here
 $env:CHAT_DEPLOYMENT_ID=your-chat-deployment-id-here
+$env:EMBEDDINGS_BASE_ADDRESS=your-embedding-base-address-here
 $env:EMBEDDINGS_API_VERSION=your-embedding-api-version-here
 $env:EMBEDDINGS_DEPLOYMENT_ID=your-embedding-deployment-id-here
 ```
 
--   Or set `ApiVersion` and `DeploymentId` through `command option`:
+-   Or set `ApiVersion`, `DeploymentId` and `BaseAddress` through `command option`:
 
 ```bash
-aiassist code --chat-api-version your-chat-api-version-here  --chat-deployment-id your-chat-deployment-id-here  --embeddings-api-version your-embeddings-api-version-here  --embeddings-deployment-id your-embeddings-deployment-id-here
+aiassist code --chat-base-address your-chat-base-address-here --chat-api-version your-chat-api-version-here  --chat-deployment-id your-chat-deployment-id-here  --embeddings-base-address your-embeddings-base-address-here  --embeddings-api-version your-embeddings-api-version-here  --embeddings-deployment-id your-embeddings-deployment-id-here
 ```
 
 -   Now run the ai assistant with `aiassist` command.

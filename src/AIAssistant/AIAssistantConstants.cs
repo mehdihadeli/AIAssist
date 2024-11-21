@@ -33,10 +33,4 @@ public class AIAssistantConstants
     {
         public const string ThemeName = "ThemeName";
     }
-
-    public class Environments
-    {
-        public const string EmbeddingsModelApiKey = "EMBEDDINGS_MODEL_API_KEY";
-        public const string ChatModelApiKey = "CHAT_MODEL_API_KEY";
-    }
 }

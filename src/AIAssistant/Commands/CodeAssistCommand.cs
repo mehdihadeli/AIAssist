@@ -79,6 +79,10 @@ public class CodeAssistCommand(
         [Description("[grey] the chat model deployment-id.[/].")]
         public string? ChatDeploymentId { get; set; }
 
+        [CommandOption("--chat-base-address <base-address>")]
+        [Description("[grey] the chat model base-address.[/].")]
+        public string? ChatBaseAddress { get; set; }
+
         [CommandOption("--embeddings-api-version <version>")]
         [Description("[grey] the embeddings model api version.[/].")]
         public string? EmbeddingsApiVersion { get; set; }
@@ -86,6 +90,10 @@ public class CodeAssistCommand(
         [CommandOption("--embeddings-deployment-id <deployment-id>")]
         [Description("[grey] the embeddings model deployment-id.[/].")]
         public string? EmbeddingsDeploymentId { get; set; }
+
+        [CommandOption("--embeddings-base-address <base-address>")]
+        [Description("[grey] the embeddings model base-address.[/].")]
+        public string? EmbeddingsBaseAddress { get; set; }
     }
 
     public override async Task<int> ExecuteAsync(CommandContext context, Settings settings)
@@ -183,6 +191,13 @@ public class CodeAssistCommand(
             chatModel.ModelOption.DeploymentId = settings.ChatDeploymentId.Trim();
         }
 
+        if (!string.IsNullOrEmpty(settings.ChatBaseAddress))
+        {
+            ArgumentException.ThrowIfNullOrEmpty(_llmOptions.ChatModel);
+            var chatModel = cacheModels.GetModel(_llmOptions.ChatModel);
+            chatModel.ModelOption.BaseAddress = settings.ChatBaseAddress.Trim();
+        }
+
         if (!string.IsNullOrEmpty(settings.EmbeddingsModelApiKey))
         {
             ArgumentException.ThrowIfNullOrEmpty(_llmOptions.EmbeddingsModel);
@@ -202,6 +217,13 @@ public class CodeAssistCommand(
             ArgumentException.ThrowIfNullOrEmpty(_llmOptions.EmbeddingsModel);
             var embeddingModel = cacheModels.GetModel(_llmOptions.EmbeddingsModel);
             embeddingModel.ModelOption.DeploymentId = settings.EmbeddingsDeploymentId.Trim();
+        }
+
+        if (!string.IsNullOrEmpty(settings.EmbeddingsBaseAddress))
+        {
+            ArgumentException.ThrowIfNullOrEmpty(_llmOptions.EmbeddingsModel);
+            var embeddingModel = cacheModels.GetModel(_llmOptions.EmbeddingsModel);
+            embeddingModel.ModelOption.BaseAddress = settings.EmbeddingsBaseAddress.Trim();
         }
 
         _appOptions.ContextWorkingDirectory = !string.IsNullOrEmpty(settings.ContextWorkingDirectory)

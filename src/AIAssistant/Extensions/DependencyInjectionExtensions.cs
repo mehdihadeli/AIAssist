@@ -291,35 +291,54 @@ public static class DependencyInjectionExtensions
                 client.Timeout = TimeSpan.FromSeconds(policyOptions.TimeoutSeconds);
 
                 var chatApiKey =
-                    Environment.GetEnvironmentVariable(AIAssistantConstants.Environments.ChatModelApiKey)
+                    Environment.GetEnvironmentVariable(ClientsConstants.Environments.ChatModelApiKey)
                     ?? chatModel.ModelOption.ApiKey;
 
                 switch (chatModel.ModelInformation.AIProvider)
                 {
                     case AIProvider.Openai:
+                    {
                         // https://platform.openai.com/docs/api-reference
                         ArgumentException.ThrowIfNullOrEmpty(chatApiKey);
-                        client.BaseAddress = new Uri(
-                            chatModel.ModelOption.BaseAddress?.Trim() ?? "https://api.openai.com"
-                        );
+
+                        var baseAddress =
+                            Environment.GetEnvironmentVariable(ClientsConstants.Environments.ChatBaseAddress)
+                            ?? chatModel.ModelOption.BaseAddress
+                            ?? "https://api.openai.com";
+
+                        client.BaseAddress = new Uri(baseAddress.Trim());
                         client.DefaultRequestHeaders.Authorization = new AuthenticationHeaderValue(
                             "Bearer",
                             chatApiKey
                         );
                         break;
+                    }
                     case AIProvider.Azure:
+                    {
                         // https://learn.microsoft.com/en-us/azure/ai-services/openai/reference
                         ArgumentException.ThrowIfNullOrEmpty(chatApiKey);
-                        ArgumentException.ThrowIfNullOrEmpty(chatModel.ModelOption.BaseAddress);
-                        client.BaseAddress = new Uri(chatModel.ModelOption.BaseAddress.Trim());
+
+                        var baseAddress =
+                            Environment.GetEnvironmentVariable(ClientsConstants.Environments.ChatBaseAddress)
+                            ?? chatModel.ModelOption.BaseAddress;
+                        ArgumentException.ThrowIfNullOrEmpty(baseAddress);
+
+                        client.BaseAddress = new Uri(baseAddress.Trim());
                         client.DefaultRequestHeaders.Add("api-key", chatApiKey);
                         break;
+                    }
+
                     case AIProvider.Ollama:
+                    {
+                        var baseAddress =
+                            Environment.GetEnvironmentVariable(ClientsConstants.Environments.ChatBaseAddress)
+                            ?? chatModel.ModelOption.BaseAddress
+                            ?? "http://localhost:11434";
+
                         // https://github.com/ollama/ollama/blob/main/docs/api.md
-                        client.BaseAddress = new Uri(
-                            chatModel.ModelOption.BaseAddress?.Trim() ?? "http://localhost:11434"
-                        );
+                        client.BaseAddress = new Uri(baseAddress.Trim());
                         break;
+                    }
                     // case AIProvider.Anthropic:
                     //     // https://docs.anthropic.com/en/api/messages
                     //     ArgumentException.ThrowIfNullOrEmpty(model.ModelOption.ApiVersion);
@@ -345,35 +364,54 @@ public static class DependencyInjectionExtensions
                 client.Timeout = TimeSpan.FromSeconds(policyOptions.TimeoutSeconds);
 
                 var embeddingsApiKey =
-                    Environment.GetEnvironmentVariable(AIAssistantConstants.Environments.EmbeddingsModelApiKey)
+                    Environment.GetEnvironmentVariable(ClientsConstants.Environments.EmbeddingsModelApiKey)
                     ?? embeddingModel.ModelOption.ApiKey;
 
                 switch (embeddingModel.ModelInformation.AIProvider)
                 {
                     case AIProvider.Openai:
+                    {
                         // https://platform.openai.com/docs/api-reference
                         ArgumentException.ThrowIfNullOrEmpty(embeddingsApiKey);
-                        client.BaseAddress = new Uri(
-                            embeddingModel.ModelOption.BaseAddress?.Trim() ?? "https://api.openai.com"
-                        );
+
+                        var baseAddress =
+                            Environment.GetEnvironmentVariable(ClientsConstants.Environments.EmbeddingsBaseAddress)
+                            ?? embeddingModel.ModelOption.BaseAddress
+                            ?? "https://api.openai.com";
+
+                        client.BaseAddress = new Uri(baseAddress.Trim());
                         client.DefaultRequestHeaders.Authorization = new AuthenticationHeaderValue(
                             "Bearer",
                             embeddingsApiKey
                         );
                         break;
+                    }
                     case AIProvider.Azure:
+                    {
                         // https://learn.microsoft.com/en-us/azure/ai-services/openai/reference
                         ArgumentException.ThrowIfNullOrEmpty(embeddingsApiKey);
-                        ArgumentException.ThrowIfNullOrEmpty(embeddingModel.ModelOption.BaseAddress);
-                        client.BaseAddress = new Uri(embeddingModel.ModelOption.BaseAddress.Trim());
+
+                        var baseAddress =
+                            Environment.GetEnvironmentVariable(ClientsConstants.Environments.EmbeddingsBaseAddress)
+                            ?? embeddingModel.ModelOption.BaseAddress;
+                        ArgumentException.ThrowIfNullOrEmpty(baseAddress);
+
+                        client.BaseAddress = new Uri(baseAddress.Trim());
                         client.DefaultRequestHeaders.Add("api-key", embeddingsApiKey);
                         break;
+                    }
+
                     case AIProvider.Ollama:
+                    {
+                        var baseAddress =
+                            Environment.GetEnvironmentVariable(ClientsConstants.Environments.EmbeddingsBaseAddress)
+                            ?? embeddingModel.ModelOption.BaseAddress
+                            ?? "http://localhost:11434";
+
                         // https://github.com/ollama/ollama/blob/main/docs/api.md
-                        client.BaseAddress = new Uri(
-                            embeddingModel.ModelOption.BaseAddress?.Trim() ?? "http://localhost:11434"
-                        );
+                        client.BaseAddress = new Uri(baseAddress.Trim());
                         break;
+                    }
                 }
             }
         );
