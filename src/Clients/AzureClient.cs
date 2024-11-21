@@ -56,17 +56,25 @@ public class AzureClient(
 
         var client = httpClientFactory.CreateClient("llm_chat_client");
 
-        ArgumentException.ThrowIfNullOrEmpty(_chatModel.ModelOption.ApiVersion);
-        ArgumentException.ThrowIfNullOrEmpty(_chatModel.ModelOption.DeploymentId);
+        var apiVersion =
+            Environment.GetEnvironmentVariable(ClientsConstants.Environments.ChatApiVersion)
+            ?? _chatModel.ModelOption.ApiVersion;
+
+        var deploymentId =
+            Environment.GetEnvironmentVariable(ClientsConstants.Environments.ChatDeploymentId)
+            ?? _chatModel.ModelOption.DeploymentId;
+
+        ArgumentException.ThrowIfNullOrEmpty(apiVersion);
+        ArgumentException.ThrowIfNullOrEmpty(deploymentId);
 
         // https://github.com/App-vNext/Polly#handing-return-values-and-policytresult
         var httpResponseMessage = await combinedPolicy.ExecuteAsync(async () =>
         {
             var queryBuilder = new QueryBuilder(
-                new Dictionary<string, string> { { "api-version", _chatModel.ModelOption.ApiVersion.Trim() } }
+                new Dictionary<string, string> { { "api-version", apiVersion.Trim() } }
             );
 
-            var deploymentUriSection = GetDeploymentUriSection(_chatModel.ModelOption.DeploymentId.Trim());
+            var deploymentUriSection = GetDeploymentUriSection(deploymentId.Trim());
 
             // https://platform.openai.com/docs/api-reference/chat/create
             var response = await client.PostAsJsonAsync(
@@ -126,17 +134,25 @@ public class AzureClient(
 
         var client = httpClientFactory.CreateClient("llm_chat_client");
 
-        ArgumentException.ThrowIfNullOrEmpty(_chatModel.ModelOption.ApiVersion);
-        ArgumentException.ThrowIfNullOrEmpty(_chatModel.ModelOption.DeploymentId);
+        var apiVersion =
+            Environment.GetEnvironmentVariable(ClientsConstants.Environments.ChatApiVersion)
+            ?? _chatModel.ModelOption.ApiVersion;
+
+        var deploymentId =
+            Environment.GetEnvironmentVariable(ClientsConstants.Environments.ChatDeploymentId)
+            ?? _chatModel.ModelOption.DeploymentId;
+
+        ArgumentException.ThrowIfNullOrEmpty(apiVersion);
+        ArgumentException.ThrowIfNullOrEmpty(deploymentId);
 
         // Execute the policy with streaming support
         var httpResponseMessage = await combinedPolicy.ExecuteAsync(async () =>
         {
             var queryBuilder = new QueryBuilder(
-                new Dictionary<string, string> { { "api-version", _chatModel.ModelOption.ApiVersion.Trim() } }
+                new Dictionary<string, string> { { "api-version", apiVersion.Trim() } }
             );
 
-            var deploymentUriSection = GetDeploymentUriSection(_chatModel.ModelOption.DeploymentId.Trim());
+            var deploymentUriSection = GetDeploymentUriSection(deploymentId.Trim());
 
             var response = await client.PostAsJsonAsync(
                 $"{deploymentUriSection}/chat/completions{queryBuilder}",
@@ -234,17 +250,25 @@ public class AzureClient(
 
         var client = httpClientFactory.CreateClient("llm_embeddings_client");
 
-        ArgumentException.ThrowIfNullOrEmpty(_embeddingModel.ModelOption.ApiVersion);
-        ArgumentException.ThrowIfNullOrEmpty(_embeddingModel.ModelOption.DeploymentId);
+        var apiVersion =
+            Environment.GetEnvironmentVariable(ClientsConstants.Environments.EmbeddingsApiVersion)
+            ?? _chatModel.ModelOption.ApiVersion;
+
+        var deploymentId =
+            Environment.GetEnvironmentVariable(ClientsConstants.Environments.EmbeddingsDeploymentId)
+            ?? _chatModel.ModelOption.DeploymentId;
+
+        ArgumentException.ThrowIfNullOrEmpty(apiVersion);
+        ArgumentException.ThrowIfNullOrEmpty(deploymentId);
 
         // https://github.com/App-vNext/Polly#handing-return-values-and-policytresult
         var httpResponseMessage = await combinedPolicy.ExecuteAsync(async () =>
         {
             var queryBuilder = new QueryBuilder(
-                new Dictionary<string, string> { { "api-version", _embeddingModel.ModelOption.ApiVersion.Trim() } }
+                new Dictionary<string, string> { { "api-version", apiVersion.Trim() } }
             );
 
-            var deploymentUriSection = GetDeploymentUriSection(_embeddingModel.ModelOption.DeploymentId.Trim());
+            var deploymentUriSection = GetDeploymentUriSection(deploymentId.Trim());
 
             // https://platform.openai.com/docs/api-reference/embeddings
             var response = await client.PostAsJsonAsync(

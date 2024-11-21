@@ -41,27 +41,27 @@ public class CodeAssistCommand(
         [Description("[grey] disable auto adding all files to the context.[/].")]
         public bool DisableAutoContext { get; set; }
 
-        [CommandOption("-m|--chat-model <Chat-Model>")]
+        [CommandOption("-m|--chat-model <chat-model>")]
         [Description("[grey] llm model for chatting with ai. for example llama3.1.[/].")]
         public string? ChatModel { get; set; }
 
-        [CommandOption("-t|--code-assist-type <DiffTool>")]
+        [CommandOption("-t|--code-assist-type <code-assist-type>")]
         [Description("[grey] the type of code assist. it can be `embedding` or `summary`.[/].")]
         public CodeAssistType? CodeAssistType { get; set; }
 
-        [CommandOption("-e|--embedding-model <Embedding-Chat-Model>")]
+        [CommandOption("-e|--embedding-model <embedding-model>")]
         [Description("[grey] llm model for embedding purpose. for example mxbai_embed_large.[/].")]
         public string? EmbeddingModel { get; set; }
 
-        [CommandOption("-f|--files <Files>")]
+        [CommandOption("-f|--files <files>")]
         [Description("[grey] the list of files to add the context.[/].")]
         public IList<string>? Files { get; set; }
 
-        [CommandOption("-d|--diff <Diff-Strategy>")]
+        [CommandOption("-d|--diff <diff-type>")]
         [Description(
             "[grey] the diff tool for showing changes. it can be `unifieddiff`, `codeblockdiff` and `mergeconflictdiff`.[/]."
         )]
-        public CodeDiffType? CodeDiff { get; set; }
+        public CodeDiffType? CodeDiffType { get; set; }
 
         [CommandOption("--chat-api-key <key>")]
         [Description("[grey] the chat model api key.[/].")]
@@ -70,6 +70,22 @@ public class CodeAssistCommand(
         [CommandOption("--embeddings-api-key <key>")]
         [Description("[grey] the embeddings model api key.[/].")]
         public string? EmbeddingsModelApiKey { get; set; }
+
+        [CommandOption("--chat-api-version <version>")]
+        [Description("[grey] the chat model api version.[/].")]
+        public string? ChatApiVersion { get; set; }
+
+        [CommandOption("--chat-deployment-id <deployment-id>")]
+        [Description("[grey] the chat model deployment-id.[/].")]
+        public string? ChatDeploymentId { get; set; }
+
+        [CommandOption("--embeddings-api-version <version>")]
+        [Description("[grey] the embeddings model api version.[/].")]
+        public string? EmbeddingsApiVersion { get; set; }
+
+        [CommandOption("--embeddings-deployment-id <deployment-id>")]
+        [Description("[grey] the embeddings model deployment-id.[/].")]
+        public string? EmbeddingsDeploymentId { get; set; }
     }
 
     public override async Task<int> ExecuteAsync(CommandContext context, Settings settings)
@@ -153,11 +169,39 @@ public class CodeAssistCommand(
             chatModel.ModelOption.ApiKey = settings.ChatModelApiKey.Trim();
         }
 
+        if (!string.IsNullOrEmpty(settings.ChatApiVersion))
+        {
+            ArgumentException.ThrowIfNullOrEmpty(_llmOptions.ChatModel);
+            var chatModel = cacheModels.GetModel(_llmOptions.ChatModel);
+            chatModel.ModelOption.ApiVersion = settings.ChatApiVersion.Trim();
+        }
+
+        if (!string.IsNullOrEmpty(settings.ChatDeploymentId))
+        {
+            ArgumentException.ThrowIfNullOrEmpty(_llmOptions.ChatModel);
+            var chatModel = cacheModels.GetModel(_llmOptions.ChatModel);
+            chatModel.ModelOption.DeploymentId = settings.ChatDeploymentId.Trim();
+        }
+
         if (!string.IsNullOrEmpty(settings.EmbeddingsModelApiKey))
         {
             ArgumentException.ThrowIfNullOrEmpty(_llmOptions.EmbeddingsModel);
             var embeddingModel = cacheModels.GetModel(_llmOptions.EmbeddingsModel);
             embeddingModel.ModelOption.ApiKey = settings.EmbeddingsModelApiKey.Trim();
+        }
+
+        if (!string.IsNullOrEmpty(settings.EmbeddingsApiVersion))
+        {
+            ArgumentException.ThrowIfNullOrEmpty(_llmOptions.EmbeddingsModel);
+            var embeddingModel = cacheModels.GetModel(_llmOptions.EmbeddingsModel);
+            embeddingModel.ModelOption.ApiVersion = settings.EmbeddingsApiVersion.Trim();
+        }
+
+        if (!string.IsNullOrEmpty(settings.EmbeddingsDeploymentId))
+        {
+            ArgumentException.ThrowIfNullOrEmpty(_llmOptions.EmbeddingsModel);
+            var embeddingModel = cacheModels.GetModel(_llmOptions.EmbeddingsModel);
+            embeddingModel.ModelOption.DeploymentId = settings.EmbeddingsDeploymentId.Trim();
         }
 
         _appOptions.ContextWorkingDirectory = !string.IsNullOrEmpty(settings.ContextWorkingDirectory)
@@ -176,12 +220,12 @@ public class CodeAssistCommand(
             _appOptions.AutoContextEnabled = false;
         }
 
-        if (settings.CodeDiff is not null)
+        if (settings.CodeDiffType is not null)
         {
             ArgumentException.ThrowIfNullOrEmpty(_llmOptions.ChatModel);
             var model = cacheModels.GetModel(_llmOptions.ChatModel);
 
-            switch (settings.CodeDiff)
+            switch (settings.CodeDiffType)
             {
                 case CodeDiffType.UnifiedDiff:
                     model.ModelOption.CodeDiffType = CodeDiffType.UnifiedDiff;

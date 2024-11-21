@@ -21,20 +21,21 @@
 -   ✅ Showing token usage count and calculated priced based on each model `input token` and `output token` price.
 -   ✅ Customize models information with creating a customized models information through `ModelsInformationOptions` section in the `aiassist-config.json` and a format like [predefined models information](./src/Clients/LLMs/models_information_list.json).
 -   ✅ Customize models options through `ModelsOptions` section in the `aiassist-config.json` and a format like [predefined models options](./src/Clients/LLMs/models_options.json).
+-   ✅ Terminal main commands like code, chat, explain and support some internal commands like clear, add-file, clear-history, token, ...
 
 ## Get Started
 
 AIAssist uses [Azure AI Services](https://azure.microsoft.com/en-us/products/ai-services) or [OpenAI](https://platform.openai.com/docs/api-reference/introduction) apis by default. For using `OpenAI` or `Azure AI` apis we need to have a `ApiKey`.
 
--   For OpenAI If you don't have a API key you can [sign up](https://platform.openai.com/signup) in OpenAI and get a ApiKey.
--   For Azure AI service you can [signup](https://azure.microsoft.com/en-us/products/ai-services) a azure account and get a AI model API key.
--   After getting Api key we should set API key for chat and embedding models through environment variable or command options.
 -   Install `aiassist` with `dotnet tool install ` and bellow command:
 
 ```bash
-TODO
+TODO: Add Nuget Soon
 ```
 
+-   For OpenAI If you don't have a API key you can [sign up](https://platform.openai.com/signup) in OpenAI and get a ApiKey.
+-   For Azure AI service you can [signup](https://azure.microsoft.com/en-us/products/ai-services) a azure account and get a AI model API key.
+-   After getting Api key we should set API key for chat and embedding models through environment variable or command options.
 -   Now got to `project directory` with `cd` command in terminal, For running `aiassist` and setting api key.
 
 ```bash
@@ -42,7 +43,7 @@ TODO
 cd /to/project/directory
 ```
 
--   Setting `Api Key` through `environment variable`:
+-   Set `Api Key` through `environment variable`:
 
 Linux terminal:
 
@@ -58,10 +59,37 @@ $env:CHAT_MODEL_API_KEY=your-chat-api-key-here
 $env:EMBEDDINGS_MODEL_API_KEY=your-embedding-api-key-here
 ```
 
--   Or Setting `Api Key` through `command option`:
+-   Or set `Api Key` through `command option`:
 
 ```bash
 aiassist code --chat-api-key your-chat-api-key-here  --embeddings-api-key your-embedding-api-key-here
+```
+
+-   If you are using AI models that need `ApiVersion` and `DeploymentId` like Azure AI Service models, you can set them by environment variable or command options.
+-   Set `ApiVersion` and `DeploymentId` through `environment variable`:
+
+Linux terminal:
+
+```bash
+export CHAT_API_VERSION=your-chat-api-version-here
+export CHAT_DEPLOYMENT_ID=your-chat-deployment-id-here
+export EMBEDDINGS_API_VERSION=your-embedding-api-version-here
+export EMBEDDINGS_DEPLOYMENT_ID=your-embedding-deployment-id-here
+```
+
+Windows Powershell Terminal:
+
+```powershell
+$env:CHAT_API_VERSION=your-chat-api-version-here
+$env:CHAT_DEPLOYMENT_ID=your-chat-deployment-id-here
+$env:EMBEDDINGS_API_VERSION=your-embedding-api-version-here
+$env:EMBEDDINGS_DEPLOYMENT_ID=your-embedding-deployment-id-here
+```
+
+-   Or set `ApiVersion` and `DeploymentId` through `command option`:
+
+```bash
+aiassist code --chat-api-version your-chat-api-version-here  --chat-deployment-id your-chat-deployment-id-here  --embeddings-api-version your-embeddings-api-version-here  --embeddings-deployment-id your-embeddings-deployment-id-here
 ```
 
 -   Now run the ai assistant with `aiassist` command.
