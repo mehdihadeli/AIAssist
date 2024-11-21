@@ -30,7 +30,10 @@
         <None Remove="Prompts\Templates\code-assist-merge-conflict-diff.template" />
         <None Remove="Prompts\Templates\code-embedding.template"/>
         <None Remove="Prompts\Templates\ask-more-context.template" />
-        <None Remove="default-config.json" />
+        <None Remove="Prompts\Templates\code-assist-search-replace-diff.template" />
+        <None Remove="Prompts\Templates\code-context.template" />
+        <None Remove="aiassist-config.json" />
+        <None Remove=".aiassistignore" />
     </ItemGroup>
 
     <ItemGroup>
@@ -40,7 +43,10 @@
         <EmbeddedResource Include="Prompts\Templates\code-block.template" />
         <EmbeddedResource Include="Prompts\Templates\code-embedding.template" />
         <EmbeddedResource Include="Prompts\Templates\ask-more-context.template" />
-        <EmbeddedResource Include="default-config.json" />
+        <EmbeddedResource Include="Prompts\Templates\code-assist-search-replace-diff.template" />
+        <EmbeddedResource Include="Prompts\Templates\code-context.template" />
+        <EmbeddedResource Include="aiassist-config.json" />
+        <EmbeddedResource Include=".aiassistignore" />
     </ItemGroup>
 
     <ItemGroup>

@@ -1,12 +1,13 @@
 {
+  "Test":"Test1",
   "ModelsOptions": {
-    "ollama/llama3.1": {
-      "CodeDiffType": "UnifiedDiff",
+    "azure/gpt-4o": {
+      "CodeDiffType": "CodeBlockDiff",
       "CodeAssistType": "Embedding",
       "Temperature": 0.2
     },
-    "ollama/nomic-embed-text": {
-      "Threshold": 0.4,
+    "azure/text-embedding-3-large": {
+      "Threshold": 0.3,
       "Temperature": 0.2
     }
   },
@@ -15,10 +16,8 @@
     "PrintCostEnabled": true
   },
   "LLMOptions": {
-    "BaseAddress": "http://localhost:11434",
-    "ApiKey": "your-api-key-here",
-    "ChatModel": "ollama/llama3.1",
-    "EmbeddingsModel": "ollama/nomic-embed-text"
+    "ChatModel": "azure/gpt-4o",
+    "EmbeddingsModel": "azure/text-embedding-3-large"
   },
   "Serilog": {
     "MinimumLevel": {

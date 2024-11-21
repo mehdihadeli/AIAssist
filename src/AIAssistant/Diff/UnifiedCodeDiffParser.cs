@@ -4,150 +4,280 @@ using AIAssistant.Models;
 
 namespace AIAssistant.Diff;
 
-public class UnifiedCodeDiffParser : ICodeDiffParser
-{
-    private static readonly Regex _hunkHeaderRegex = new(@"^@@.*@@");
-    private static readonly string _codeBlockMarker = "```";
-    private readonly bool _useHunkHeaderLineNumbers = true;
+// https://en.wikipedia.org/wiki/Diff#Unified_format
 
-    public IList<FileChange> GetFileChanges(string diff)
+
+public class UnifiedDiffParser : ICodeDiffParser
+{
+    private readonly string _originalFileHunkMarker = "---";
+    private readonly string _modifiedFileHunkMarker = "+++";
+    private readonly Regex _hunkHeaderRegex = new(@"^@@\s*-(\d+),?(\d*)\s*\+(\d+),?(\d*)\s*@@");
+
+    public IList<DiffResult> ParseDiffResults(string diffContent, string contextWorkingDirectory)
     {
-        return ParseUnifiedDiff(diff);
+        // Extract all code blocks enclosed in backticks
+        var codeBlocks = ExtractMarkdownCodeBlocks(diffContent);
+        var diffResults = new List<DiffResult>();
+
+        foreach (var codeBlock in codeBlocks)
+        {
+            var (hunks, originalPath, modifiedPath) = ExtractHunks(codeBlock);
+
+            var replacements = ProcessHunks(hunks, originalPath, modifiedPath, contextWorkingDirectory);
+
+            var action = DetermineAction(originalPath, modifiedPath);
+
+            diffResults.Add(
+                new DiffResult
+                {
+                    OriginalPath = originalPath,
+                    ModifiedPath = modifiedPath,
+                    Action = action,
+                    Replacements = replacements,
+                    ModifiedLines = null,
+                }
+            );
+        }
+
+        return diffResults;
     }
 
-    private IList<FileChange> ParseUnifiedDiff(string diff)
+    private static ActionType DetermineAction(string originalPath, string modifiedPath)
     {
-        var fileChanges = new List<FileChange>();
-        FileChange? currentFileChange = null;
-
-        var lines = diff.Split('\n');
-        bool isFileCreation = false;
-        var currentLineNumber = 1;
-        bool insideCodeBlock = false;
-        bool insideHunk = false;
-
-        //In the context of a unified diff, the hunkOldLineNumber and hunkNewLineNumber are variables used to track the line numbers in the old and new versions of the file
-        // Variables to track hunk header line numbers
-        int hunkOldLineNumber = 0;
-        int hunkNewLineNumber = 0;
-
-        foreach (var codeLine in lines)
+        var noneExistPath = "/dev/null";
+        if (
+            !string.IsNullOrEmpty(originalPath)
+            && originalPath == noneExistPath
+            && !string.IsNullOrEmpty(modifiedPath)
+            && modifiedPath != noneExistPath
+        )
         {
-            var line = codeLine.TrimEnd(); // Only trim end to preserve indentation
+            return ActionType.Add;
+        }
+        if (
+            !string.IsNullOrEmpty(modifiedPath)
+            && modifiedPath == noneExistPath
+            && !string.IsNullOrEmpty(originalPath)
+            && originalPath != noneExistPath
+        )
+        {
+            return ActionType.Delete;
+        }
 
-            // Handle code block markers
-            if (line.Trim().StartsWith(_codeBlockMarker))
+        return ActionType.Update;
+    }
+
+    private static IList<Replacement> ProcessHunks(
+        List<Hunk> hunks,
+        string originalPath,
+        string modifiedPath,
+        string contextWorkingDirectory
+    )
+    {
+        var replacements = new List<Replacement>();
+
+        const string devNull = "/dev/null";
+
+        // Handle file addition
+        if (originalPath == devNull)
+        {
+            foreach (var hunk in hunks)
             {
-                insideCodeBlock = !insideCodeBlock;
-                insideHunk = false;
+                // For additions, all lines are treated as added
+                replacements.AddRange(BuildReplacements(hunk, 0));
+            }
+
+            return replacements;
+        }
+
+        // Handle file deletion
+        if (modifiedPath == devNull)
+        {
+            foreach (var hunk in hunks)
+            {
+                // For deletions, all lines are treated as deleted starting from the hunk's OriginalStart
+                replacements.AddRange(BuildReplacements(hunk, hunk.OriginalStart - 1));
+            }
+
+            return replacements;
+        }
+
+        // handle file modification
+        var filePath = Path.Combine(contextWorkingDirectory, originalPath);
+        var originalLines = File.Exists(filePath) ? File.ReadAllLines(filePath).ToList() : new List<string>();
+
+        foreach (var hunk in hunks)
+        {
+            if (hunk.HunkItems.Count == 0)
+                continue;
+
+            // Convert to 0-based index, because hunk header lines start from 1
+            int startLine = hunk.OriginalStart - 1;
+
+            if (startLine < 0 || startLine >= originalLines.Count)
+                continue;
+
+            AlignEmptyLines(hunk, originalLines, startLine);
+            replacements.AddRange(BuildReplacements(hunk, startLine));
+        }
+
+        return replacements;
+    }
+
+    private static IEnumerable<Replacement> BuildReplacements(Hunk hunk, int startIndex)
+    {
+        var replacements = new List<Replacement>();
+        int currentStart = -1;
+        var currentAdditions = new List<string>();
+        int currentIndex = startIndex;
+
+        foreach (var hunkItem in hunk.HunkItems)
+        {
+            if (hunkItem.ChangeType == ChangeType.Unchanged || string.IsNullOrWhiteSpace(hunkItem.Line))
+            {
+                if (currentStart != -1)
+                {
+                    replacements.Add(new Replacement(currentStart, currentIndex, new List<string>(currentAdditions)));
+                    currentAdditions.Clear();
+                    currentStart = -1;
+                }
+                currentIndex++;
+            }
+            else if (hunkItem.ChangeType == ChangeType.Add)
+            {
+                if (currentStart == -1)
+                    currentStart = currentIndex;
+                currentAdditions.Add(hunkItem.Line.Substring(1));
+            }
+            else if (hunkItem.ChangeType == ChangeType.Delete)
+            {
+                if (currentStart == -1)
+                    currentStart = currentIndex;
+                currentIndex++;
+            }
+        }
+
+        if (currentStart != -1)
+        {
+            replacements.Add(new Replacement(currentStart, currentIndex, currentAdditions));
+        }
+
+        return replacements;
+    }
+
+    private static void AlignEmptyLines(Hunk hunk, IList<string> originalLines, int startIndex)
+    {
+        int currentFileIndex = startIndex;
+        int currentChangeIndex = 0;
+        while (currentChangeIndex < hunk.HunkItems.Count && currentFileIndex < originalLines.Count)
+        {
+            var curChangeLine = hunk.HunkItems[currentChangeIndex];
+
+            if (curChangeLine.ChangeType == ChangeType.Add)
+            {
+                currentChangeIndex++;
                 continue;
             }
 
-            if (!insideCodeBlock)
-                continue;
+            var currentFileLine = originalLines[currentFileIndex];
 
-            // Match the file header
-            if (line.StartsWith("--- "))
+            if (currentFileLine.Trim().Length == 0 && curChangeLine.Line.Trim().Length != 0)
             {
-                if (currentFileChange != null)
-                {
-                    fileChanges.Add(currentFileChange);
-                }
+                hunk.HunkItems.Insert(currentChangeIndex, new DiffHunkItem(ChangeType.Unchanged, ""));
+            }
+            else if (curChangeLine.Line.Trim().Length == 0 && currentFileLine.Trim().Length != 0)
+            {
+                originalLines.Insert(currentFileIndex, "");
+            }
 
-                var filePath = line.Substring(4).Trim();
-                if (filePath == "/dev/null")
-                {
-                    isFileCreation = true;
-                    continue;
-                }
-                else
-                {
-                    currentFileChange = new FileChange(filePath, CodeChangeType.Update);
-                    isFileCreation = false;
-                }
-                currentLineNumber = 1;
-            }
-            else if (line.StartsWith("+++ "))
+            currentFileIndex++;
+            currentChangeIndex++;
+        }
+    }
+
+    private (List<Hunk> Hunks, string OriginalPath, string ModifiedPath) ExtractHunks(string codeBlock)
+    {
+        var lines = codeBlock.Split('\n');
+        var hunks = new List<Hunk>();
+        Hunk? currentHunk = null;
+
+        string originalPath = string.Empty;
+        string modifiedPath = string.Empty;
+
+        foreach (var line in lines)
+        {
+            if (line.StartsWith(_originalFileHunkMarker))
             {
-                var filePath = line.Substring(4).Trim();
-                if (filePath == "/dev/null")
-                {
-                    if (currentFileChange != null)
-                    {
-                        currentFileChange.FileCodeChangeType = CodeChangeType.Delete;
-                    }
-                }
-                else if (isFileCreation)
-                {
-                    currentFileChange = new FileChange(filePath, CodeChangeType.Add);
-                    isFileCreation = false;
-                }
-                else if (currentFileChange?.FilePath != filePath)
-                {
-                    if (currentFileChange != null)
-                    {
-                        fileChanges.Add(new FileChange(currentFileChange.FilePath, CodeChangeType.Delete));
-                    }
-                    currentFileChange = new FileChange(filePath, CodeChangeType.Add);
-                }
+                originalPath = line.Substring(_originalFileHunkMarker.Length).Trim();
             }
-            // A hunk header (contains the line range info for the changes)
+            else if (line.StartsWith(_modifiedFileHunkMarker))
+            {
+                modifiedPath = line.Substring(_modifiedFileHunkMarker.Length).Trim();
+            }
             else if (_hunkHeaderRegex.IsMatch(line))
             {
-                // Reset line tracking for new block
-                insideHunk = true;
-
-                if (_useHunkHeaderLineNumbers)
-                {
-                    // Extract the line numbers from the hunk header (e.g., `@@ -1,4 +1,4 @@`)
-                    var hunkHeader = line.Substring(2, line.IndexOf(" @@", StringComparison.Ordinal) - 2).Trim();
-                    var hunkParts = hunkHeader.Split(" ");
-
-                    // remove `-` and `+` from hunk header ranges
-                    var oldLineInfo = hunkParts[0].Trim().Substring(1).Split(",");
-                    var newLineInfo = hunkParts[1].Trim().Substring(1).Split(",");
-
-                    hunkOldLineNumber = int.Parse(oldLineInfo[0]);
-                    hunkNewLineNumber = int.Parse(newLineInfo[0]);
-                }
-
-                continue;
+                currentHunk = ParseHunkHeader(line);
+                hunks.Add(currentHunk);
             }
-            else if (insideHunk)
+            else if (currentHunk != null)
             {
-                // If inside a hunk, process line changes
-                if (line.StartsWith("-"))
-                {
-                    // A line is removed (delete)
-                    int lineNumber = _useHunkHeaderLineNumbers ? hunkOldLineNumber++ : currentLineNumber++;
-                    // replace `-` with an empty line
-                    currentFileChange?.ChangeLines.Add(
-                        new FileChangeLine(lineNumber, $"{line.Substring(1)}", CodeChangeType.Delete)
-                    );
-                }
-                else if (line.StartsWith("+"))
-                {
-                    // A line is added (add)
-                    int lineNumber = _useHunkHeaderLineNumbers ? hunkOldLineNumber++ : currentLineNumber++;
-                    // replace `+` with an empty line
-                    currentFileChange?.ChangeLines.Add(
-                        new FileChangeLine(lineNumber, $"{line.Substring(1)}", CodeChangeType.Add)
-                    );
-                }
-                else
-                {
-                    // Process unchanged or empty lines as well (update)
-                    int lineNumber = _useHunkHeaderLineNumbers ? hunkOldLineNumber++ : currentLineNumber++;
-                    currentFileChange?.ChangeLines.Add(new FileChangeLine(lineNumber, line, CodeChangeType.Update));
-                }
+                var changeType =
+                    line.StartsWith("+") ? ChangeType.Add
+                    : line.StartsWith("-") ? ChangeType.Delete
+                    : ChangeType.Unchanged;
+
+                currentHunk.HunkItems.Add(new DiffHunkItem(changeType, line));
             }
         }
 
-        if (currentFileChange != null)
+        return (hunks, originalPath, modifiedPath);
+    }
+
+    private Hunk ParseHunkHeader(string headerLine)
+    {
+        var match = _hunkHeaderRegex.Match(headerLine);
+
+        if (!match.Success)
+            throw new InvalidOperationException($"Invalid hunk header: {headerLine}");
+
+        return new Hunk
         {
-            fileChanges.Add(currentFileChange);
+            OriginalStart = int.Parse(match.Groups[1].Value),
+            OriginalCount =
+                match.Groups[2].Success && !string.IsNullOrWhiteSpace(match.Groups[2].Value)
+                    ? int.Parse(match.Groups[2].Value)
+                    : 0,
+            ModifiedStart = int.Parse(match.Groups[3].Value),
+            ModifiedCount =
+                match.Groups[4].Success && !string.IsNullOrWhiteSpace(match.Groups[4].Value)
+                    ? int.Parse(match.Groups[4].Value)
+                    : 0,
+            HunkItems = new List<DiffHunkItem>(),
+        };
+    }
+
+    private static List<string> ExtractMarkdownCodeBlocks(string text)
+    {
+        const string backticks = "```";
+        var codeBlocks = new List<string>();
+
+        int startIdx = text.IndexOf(backticks, StringComparison.Ordinal);
+        while (startIdx != -1)
+        {
+            int endIdx = text.IndexOf(backticks, startIdx + backticks.Length, StringComparison.Ordinal);
+            if (endIdx != -1)
+            {
+                var codeBlock = text.Substring(startIdx + backticks.Length, endIdx - (startIdx + backticks.Length))
+                    .Trim();
+                codeBlocks.Add(codeBlock);
+                startIdx = text.IndexOf(backticks, endIdx + backticks.Length, StringComparison.Ordinal);
+            }
+            else
+            {
+                break;
+            }
         }
 
-        return fileChanges;
+        return codeBlocks;
     }
 }

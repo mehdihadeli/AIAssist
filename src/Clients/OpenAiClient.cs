@@ -19,6 +19,8 @@ using Polly.Wrap;
 
 namespace Clients;
 
+// Ref: https://platform.openai.com/docs/api-reference/
+
 public class OpenAiClient(
     IHttpClientFactory httpClientFactory,
     IOptions<LLMOptions> options,
@@ -29,6 +31,7 @@ public class OpenAiClient(
 {
     private readonly Model _chatModel = cacheModels.GetModel(options.Value.ChatModel);
     private readonly Model _embeddingModel = cacheModels.GetModel(options.Value.EmbeddingsModel);
+    private const int MaxRequestSizeInBytes = 100 * 1024; // 100KB
 
     public async Task<ChatCompletionResponse?> GetCompletionAsync(
         ChatCompletionRequest chatCompletionRequest,
@@ -36,6 +39,7 @@ public class OpenAiClient(
     )
     {
         await ValidateMaxInputToken(chatCompletionRequest);
+        ValidateRequestSizeAndContent(chatCompletionRequest);
 
         // https://platform.openai.com/docs/api-reference/chat/create
         var requestBody = new
@@ -47,11 +51,9 @@ public class OpenAiClient(
                 content = x.Prompt,
             }),
             temperature = _chatModel.ModelOption.Temperature,
-            // https://platform.openai.com/docs/api-reference/chat/create#chat-create-max_completion_tokens
-            max_completion_tokens = _chatModel.ModelInformation.MaxOutputTokens,
         };
 
-        var client = httpClientFactory.CreateClient("llm_client");
+        var client = httpClientFactory.CreateClient("llm_chat_client");
 
         // https://github.com/App-vNext/Polly#handing-return-values-and-policytresult
         var httpResponseMessage = await combinedPolicy.ExecuteAsync(async () =>
@@ -96,6 +98,7 @@ public class OpenAiClient(
     )
     {
         await ValidateMaxInputToken(chatCompletionRequest);
+        ValidateRequestSizeAndContent(chatCompletionRequest);
 
         var requestBody = new
         {
@@ -106,82 +109,97 @@ public class OpenAiClient(
                 content = x.Prompt,
             }),
             temperature = _chatModel.ModelOption.Temperature,
-            // https://platform.openai.com/docs/api-reference/chat/create#chat-create-max_completion_tokens
-            max_completion_tokens = _chatModel.ModelInformation.MaxOutputTokens,
             stream = true,
             // https://cookbook.openai.com/examples/how_to_stream_completions#4-how-to-get-token-usage-data-for-streamed-chat-completion-response
             stream_options = new { include_usage = true },
         };
 
-        var client = httpClientFactory.CreateClient("llm_client");
+        var client = httpClientFactory.CreateClient("llm_chat_client");
 
         // Execute the policy with streaming support
         var httpResponseMessage = await combinedPolicy.ExecuteAsync(async () =>
         {
-            var request = new HttpRequestMessage(HttpMethod.Post, "v1/chat/completions")
-            {
-                Content = JsonContent.Create(requestBody),
-            };
-
-            // Send the request and get the response
-            var response = await client.SendAsync(request, HttpCompletionOption.ResponseHeadersRead, cancellationToken);
+            var response = await client.PostAsJsonAsync(
+                "v1/chat/completions",
+                requestBody,
+                cancellationToken: cancellationToken
+            );
 
             return response;
         });
 
-        // https://platform.openai.com/docs/api-reference/chat/create#chat-create-stream
-        // https://cookbook.openai.com/examples/how_to_stream_completions
-        // Read the response stream
-        await using var responseStream = await httpResponseMessage.Content.ReadAsStreamAsync(cancellationToken);
-
-        using var streamReader = new StreamReader(responseStream);
-
-        while (!streamReader.EndOfStream)
+        if (httpResponseMessage.IsSuccessStatusCode)
         {
-            var line = await streamReader.ReadLineAsync(cancellationToken);
+            // https://platform.openai.com/docs/api-reference/chat/create#chat-create-stream
+            // https://cookbook.openai.com/examples/how_to_stream_completions
+            // Read the response stream
+            await using var responseStream = await httpResponseMessage.Content.ReadAsStreamAsync(cancellationToken);
 
-            if (string.IsNullOrEmpty(line) || string.IsNullOrWhiteSpace(line))
-                continue;
+            using var streamReader = new StreamReader(responseStream);
 
-            // Parse the streaming data (assume JSON format)
-            if (line.StartsWith("data: "))
+            while (!streamReader.EndOfStream)
             {
-                var jsonData = line.Substring("data: ".Length);
-                if (string.IsNullOrEmpty(jsonData))
+                var line = await streamReader.ReadLineAsync(cancellationToken);
+
+                if (string.IsNullOrEmpty(line) || string.IsNullOrWhiteSpace(line))
                     continue;
-
-                var streamResponse = JsonSerializer.Deserialize<OpenAIChatResponse>(
-                    jsonData,
-                    options: JsonObjectSerializer.SnakeCaseOptions
-                );
-
-                HandleException(httpResponseMessage, streamResponse);
-
-                var completionMessage = streamResponse
-                    .Choices?.FirstOrDefault(x => x.Delta.Role == RoleType.Assistant)
-                    ?.Delta.Content;
 
                 // when we reached to the end of the streams
                 if (line.StartsWith("data: [DONE]"))
                 {
-                    // Capture the `usage` data from the final chunk and after done
-                    var inputTokens = streamResponse.Usage?.PromptTokens ?? 0;
-                    var outTokens = streamResponse.Usage?.CompletionTokens ?? 0;
-                    var inputCostPerToken = _chatModel.ModelInformation.InputCostPerToken;
-                    var outputCostPerToken = _chatModel.ModelInformation.OutputCostPerToken;
-
-                    ValidateMaxToken(inputTokens + outTokens);
-
-                    yield return new ChatCompletionResponse(
-                        null,
-                        new TokenUsageResponse(inputTokens, inputCostPerToken, outTokens, outputCostPerToken)
-                    );
+                    continue;
                 }
-                else
+
+                // Parse the streaming data (assume JSON format)
+                if (line.StartsWith("data: "))
                 {
-                    yield return new ChatCompletionResponse(completionMessage, null);
+                    var jsonData = line.Substring("data: ".Length);
+                    if (string.IsNullOrEmpty(jsonData))
+                        continue;
+
+                    var completionStreamResponse = JsonSerializer.Deserialize<OpenAIChatResponse>(
+                        jsonData,
+                        options: JsonObjectSerializer.SnakeCaseOptions
+                    );
+
+                    if (completionStreamResponse is null)
+                        continue;
+
+                    var choice = completionStreamResponse.Choices?.FirstOrDefault();
+
+                    if (choice?.Delta is not null)
+                    {
+                        var completionMessage = choice.Delta.Content;
+
+                        if (completionMessage is null)
+                            continue;
+
+                        yield return new ChatCompletionResponse(completionMessage, null);
+                    }
+                    else if (completionStreamResponse.Usage is not null)
+                    {
+                        // Capture the `usage` data from the final chunk and after done
+                        var inputTokens = completionStreamResponse.Usage?.PromptTokens ?? 0;
+                        var outTokens = completionStreamResponse.Usage?.CompletionTokens ?? 0;
+                        var inputCostPerToken = _chatModel.ModelInformation.InputCostPerToken;
+                        var outputCostPerToken = _chatModel.ModelInformation.OutputCostPerToken;
+
+                        ValidateMaxToken(inputTokens + outTokens);
+
+                        yield return new ChatCompletionResponse(
+                            null,
+                            new TokenUsageResponse(inputTokens, inputCostPerToken, outTokens, outputCostPerToken)
+                        );
+                    }
                 }
             }
+        }
+        else
+        {
+            var completionResponse = await httpResponseMessage.Content.ReadFromJsonAsync<OpenAIChatResponse>(
+                cancellationToken: cancellationToken
+            );
+            HandleException(httpResponseMessage, completionResponse);
         }
     }
 
@@ -191,10 +209,11 @@ public class OpenAiClient(
     )
     {
         await ValidateMaxInputToken(input);
+        ValidateRequestSizeAndContent(input);
 
         var requestBody = new { input = new[] { input }, model = _embeddingModel.Name.Trim() };
 
-        var client = httpClientFactory.CreateClient("llm_client");
+        var client = httpClientFactory.CreateClient("llm_embeddings_client");
 
         // https://github.com/App-vNext/Polly#handing-return-values-and-policytresult
         var httpResponseMessage = await combinedPolicy.ExecuteAsync(async () =>
@@ -294,6 +313,31 @@ public class OpenAiClient(
                     StatusCode = (int)HttpStatusCode.BadRequest,
                     Message =
                         $"'max_token' count: {maxTokenCount.FormatCommas()} is larger than configured 'max_token' count: {_chatModel.ModelInformation.MaxTokens.FormatCommas()}, if you need more tokens change the configuration.",
+                },
+                HttpStatusCode.BadRequest
+            );
+        }
+    }
+
+    private void ValidateRequestSizeAndContent(ChatCompletionRequest chatCompletionRequest)
+    {
+        ValidateRequestSizeAndContent(string.Concat(chatCompletionRequest.Items.Select(x => x.Prompt)));
+    }
+
+    private void ValidateRequestSizeAndContent(string input)
+    {
+        var requestBodySizeInBytes = System.Text.Encoding.UTF8.GetByteCount(input);
+
+        if (requestBodySizeInBytes > MaxRequestSizeInBytes)
+        {
+            throw new OpenAIException(
+                new OpenAIError()
+                {
+                    StatusCode = (int)HttpStatusCode.BadRequest,
+                    Message =
+                        $"Request size {
+                        requestBodySizeInBytes
+                    } bytes exceeds the 100KB limit.",
                 },
                 HttpStatusCode.BadRequest
             );

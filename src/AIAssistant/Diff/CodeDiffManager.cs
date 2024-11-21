@@ -3,15 +3,15 @@ using AIAssistant.Models;
 
 namespace AIAssistant.Diff;
 
-public class CodeDiffManager(ICodeDiffParser codeDiffParser, ICodeDiffUpdater codeDiffUpdater) : ICodeDiffManager
+public class CodeDiffManager(ICodeDiffUpdater codeDiffUpdater, ICodeDiffParser codeDiffParser) : ICodeDiffManager
 {
-    public IList<FileChange> GetFileChanges(string diff)
+    public void ApplyChanges(IList<DiffResult> diffResults, string contextWorkingDirectory)
     {
-        return codeDiffParser.GetFileChanges(diff);
+        codeDiffUpdater.ApplyChanges(diffResults, contextWorkingDirectory);
     }
 
-    public void ApplyChanges(IList<FileChange> changes, string contextWorkingDirectory)
+    public IList<DiffResult> ParseDiffResults(string diffContent, string contextWorkingDirectory)
     {
-        codeDiffUpdater.ApplyChanges(changes, contextWorkingDirectory);
+        return codeDiffParser.ParseDiffResults(diffContent, contextWorkingDirectory);
     }
 }

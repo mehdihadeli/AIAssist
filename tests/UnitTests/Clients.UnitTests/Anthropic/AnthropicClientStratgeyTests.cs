@@ -3,6 +3,7 @@ using System.Net.Http.Json;
 using System.Text;
 using BuildingBlocks.Serialization;
 using Clients.Chat.Models;
+using Clients.Dtos;
 using Clients.Models;
 using Clients.Models.Anthropic;
 using Clients.Options;
@@ -80,7 +81,7 @@ public class AnthropicClientStrategyTests : IAsyncLifetime
     public async Task GetCompletionAsync_ShouldReturnCompletion_WhenResponseIsSuccessful()
     {
         // Arrange
-        var chatItems = new List<ChatItem> { new(Role: RoleType.User, Prompt: "Hello, Claude!") };
+        var chatItems = new List<ChatCompletionRequestItem> { new(Role: RoleType.User, Prompt: "Hello, Claude!") };
 
         var responseContent = new AnthropicCompletionResponse
         {

@@ -6,7 +6,6 @@
         <PackageReference Include="Humanizer.Core"/>
         <PackageReference Include="Markdig"/>
         <PackageReference Include="Microsoft.CodeAnalysis.CSharp"/>
-        <PackageReference Include="Microsoft.Extensions.Caching.Memory" />
         <PackageReference Include="Microsoft.Extensions.DependencyInjection"/>
         <PackageReference Include="Microsoft.Extensions.FileSystemGlobbing"/>
         <PackageReference Include="Microsoft.Extensions.Hosting"/>
@@ -39,9 +38,6 @@
     </ItemGroup>
 
     <ItemGroup>
-        <EmbeddedResource Include="..\..\.gitignore">
-            <Link>.gitignore</Link>
-        </EmbeddedResource>
         <EmbeddedResource Include="SpectreConsole\Themes\atom_one_dark.json"/>
         <EmbeddedResource Include="SpectreConsole\Themes\atom_one_light.json"/>
         <EmbeddedResource Include="SpectreConsole\Themes\vscode_dark.json"/>

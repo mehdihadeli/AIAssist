@@ -39,13 +39,13 @@ public class LLMClientManager : ILLMClientManager
 
     public async IAsyncEnumerable<string?> GetCompletionStreamAsync(
         string userQuery,
-        string? systemContext,
+        string? systemPrompt,
         CancellationToken cancellationToken = default
     )
     {
         var chatSession = _chatSessionManager.GetCurrentActiveSession();
 
-        chatSession.TrySetSystemContext(systemContext);
+        chatSession.TrySetSystemContext(systemPrompt);
         chatSession.AddUserChatItem(userQuery);
 
         var chatItems = chatSession.GetChatItemsFromHistory();
@@ -62,6 +62,11 @@ public class LLMClientManager : ILLMClientManager
 
         await foreach (var chatCompletionStream in chatCompletionResponseStreams)
         {
+            if (chatCompletionStream?.ChatResponse is null)
+            {
+                continue;
+            }
+
             chatOutputResponseStringBuilder.Append(chatCompletionStream?.ChatResponse);
 
             if (chatCompletionStream?.TokenUsage is not null)

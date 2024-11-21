@@ -6,6 +6,7 @@ using BuildingBlocks.SpectreConsole.Contracts;
 using Clients.Contracts;
 using Clients.Models;
 using Clients.Options;
+using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Options;
 using Spectre.Console;
@@ -61,6 +62,14 @@ public class CodeAssistCommand(
             "[grey] the diff tool for showing changes. it can be `unifieddiff`, `codeblockdiff` and `mergeconflictdiff`.[/]."
         )]
         public CodeDiffType? CodeDiff { get; set; }
+
+        [CommandOption("--chat-api-key <key>")]
+        [Description("[grey] the chat model api key.[/].")]
+        public string? ChatModelApiKey { get; set; }
+
+        [CommandOption("--embeddings-api-key <key>")]
+        [Description("[grey] the embeddings model api key.[/].")]
+        public string? EmbeddingsModelApiKey { get; set; }
     }
 
     public override async Task<int> ExecuteAsync(CommandContext context, Settings settings)
@@ -137,6 +146,20 @@ public class CodeAssistCommand(
             _llmOptions.EmbeddingsModel = settings.EmbeddingModel;
         }
 
+        if (!string.IsNullOrEmpty(settings.ChatModelApiKey))
+        {
+            ArgumentException.ThrowIfNullOrEmpty(_llmOptions.ChatModel);
+            var chatModel = cacheModels.GetModel(_llmOptions.ChatModel);
+            chatModel.ModelOption.ApiKey = settings.ChatModelApiKey.Trim();
+        }
+
+        if (!string.IsNullOrEmpty(settings.EmbeddingsModelApiKey))
+        {
+            ArgumentException.ThrowIfNullOrEmpty(_llmOptions.EmbeddingsModel);
+            var embeddingModel = cacheModels.GetModel(_llmOptions.EmbeddingsModel);
+            embeddingModel.ModelOption.ApiKey = settings.EmbeddingsModelApiKey.Trim();
+        }
+
         _appOptions.ContextWorkingDirectory = !string.IsNullOrEmpty(settings.ContextWorkingDirectory)
             ? Path.Combine(Directory.GetCurrentDirectory(), settings.ContextWorkingDirectory)
             : Directory.GetCurrentDirectory(); // set to current working directory
@@ -155,6 +178,7 @@ public class CodeAssistCommand(
 
         if (settings.CodeDiff is not null)
         {
+            ArgumentException.ThrowIfNullOrEmpty(_llmOptions.ChatModel);
             var model = cacheModels.GetModel(_llmOptions.ChatModel);
 
             switch (settings.CodeDiff)
@@ -170,6 +194,7 @@ public class CodeAssistCommand(
 
         if (settings.CodeAssistType is not null)
         {
+            ArgumentException.ThrowIfNullOrEmpty(_llmOptions.ChatModel);
             var model = cacheModels.GetModel(_llmOptions.ChatModel);
             switch (settings.CodeAssistType)
             {

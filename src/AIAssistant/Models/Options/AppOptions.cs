@@ -5,7 +5,6 @@ namespace AIAssistant.Models.Options;
 public class AppOptions
 {
     public string ThemeName { get; set; } = default!;
-    public int CacheExpirationInMinutes { get; set; } = 15;
     public bool PrintCostEnabled { get; set; }
     public string ContextWorkingDirectory { get; set; } = default!;
     public bool AutoContextEnabled { get; set; } = true;

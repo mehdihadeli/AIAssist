@@ -1,6 +1,7 @@
 {
   "$schema": "./markdown_theme_schema.json",
   "foreground": "#f8f8f2",
+  "background": "#282a36",
   "margin": 2,
   "token_types": {
     "plain_text": {

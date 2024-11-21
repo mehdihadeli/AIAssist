@@ -17,7 +17,7 @@ using Polly.Wrap;
 
 namespace Clients;
 
-// ref: https://docs.anthropic.com/en/api/messages
+// ref: https://docs.anthropic.com/en/api
 // https://docs.anthropic.com/en/api/messages-streaming
 // https://docs.anthropic.com/en/api/messages-examples
 
@@ -30,6 +30,7 @@ public class AnthropicClient(
 ) : ILLMClient
 {
     private readonly Model _chatModel = cacheModels.GetModel(options.Value.ChatModel);
+    private const int MaxRequestSizeInBytes = 100 * 1024; // 100KB
 
     public async Task<ChatCompletionResponse?> GetCompletionAsync(
         ChatCompletionRequest chatCompletionRequest,
@@ -37,6 +38,7 @@ public class AnthropicClient(
     )
     {
         await ValidateMaxInputToken(chatCompletionRequest);
+        ValidateRequestSizeAndContent(chatCompletionRequest);
 
         var requestBody = new
         {
@@ -47,11 +49,9 @@ public class AnthropicClient(
                 content = x.Prompt,
             }),
             temperature = _chatModel.ModelOption.Temperature,
-            // https://docs.anthropic.com/en/api/messages
-            max_tokens = _chatModel.ModelInformation.MaxOutputTokens,
         };
 
-        var client = httpClientFactory.CreateClient("llm_client");
+        var client = httpClientFactory.CreateClient("llm_chat_client");
 
         // https://github.com/App-vNext/Polly#handing-return-values-and-policytresult
         var httpResponseMessage = await combinedPolicy.ExecuteAsync(async () =>
@@ -94,6 +94,7 @@ public class AnthropicClient(
     )
     {
         await ValidateMaxInputToken(chatCompletionRequest);
+        ValidateRequestSizeAndContent(chatCompletionRequest);
 
         var requestBody = new
         {
@@ -104,80 +105,91 @@ public class AnthropicClient(
                 content = x.Prompt,
             }),
             temperature = _chatModel.ModelOption.Temperature,
-            // https://docs.anthropic.com/en/api/messages
-            max_tokens = _chatModel.ModelInformation.MaxOutputTokens,
             stream = true,
         };
 
-        var client = httpClientFactory.CreateClient("llm_client");
+        var client = httpClientFactory.CreateClient("llm_chat_client");
 
         var httpResponseMessage = await combinedPolicy.ExecuteAsync(async () =>
         {
-            var request = new HttpRequestMessage(HttpMethod.Post, "v1/messages")
-            {
-                Content = JsonContent.Create(requestBody),
-            };
-
-            var response = await client.SendAsync(request, HttpCompletionOption.ResponseHeadersRead, cancellationToken);
+            var response = await client.PostAsJsonAsync(
+                "v1/messages",
+                requestBody,
+                cancellationToken: cancellationToken
+            );
 
             return response;
         });
 
-        // https://docs.anthropic.com/en/api/messages-streaming
-        // Read the response as a stream
-        await using var responseStream = await httpResponseMessage.Content.ReadAsStreamAsync(cancellationToken);
-        using var streamReader = new StreamReader(responseStream);
-
-        while (!streamReader.EndOfStream)
+        if (httpResponseMessage.IsSuccessStatusCode)
         {
-            var line = await streamReader.ReadLineAsync(cancellationToken);
+            // https://docs.anthropic.com/en/api/messages-streaming
+            // Read the response as a stream
+            await using var responseStream = await httpResponseMessage.Content.ReadAsStreamAsync(cancellationToken);
+            using var streamReader = new StreamReader(responseStream);
 
-            if (string.IsNullOrEmpty(line) || string.IsNullOrWhiteSpace(line))
-                continue;
-
-            if (line.StartsWith("data:"))
+            while (!streamReader.EndOfStream)
             {
-                var jsonData = line.Substring("data:".Length).Trim();
+                var line = await streamReader.ReadLineAsync(cancellationToken);
 
-                if (string.IsNullOrEmpty(jsonData))
+                if (string.IsNullOrEmpty(line) || string.IsNullOrWhiteSpace(line))
                     continue;
 
-                var streamResponse = JsonSerializer.Deserialize<AnthropicChatResponse>(
-                    jsonData,
-                    options: JsonObjectSerializer.SnakeCaseOptions
-                );
-
-                HandleException(httpResponseMessage, streamResponse);
-
-                var completionMessage = streamResponse.Delta?.Text;
-
-                // when we reached to the end of the streams
-                if (streamResponse.Delta?.StopReason == "end_turn")
+                if (line.StartsWith("data:"))
                 {
-                    //https://docs.anthropic.com/en/api/messages-streaming
-                    // we have the usage in the last chunk and done state
-                    var inputTokens = streamResponse.Usage?.InputTokens ?? 0;
-                    var outTokens = streamResponse.Usage?.OutputTokens ?? 0;
-                    var inputCostPerToken = _chatModel.ModelInformation.InputCostPerToken;
-                    var outputCostPerToken = _chatModel.ModelInformation.OutputCostPerToken;
+                    var jsonData = line.Substring("data:".Length).Trim();
 
-                    ValidateMaxToken(inputTokens + outTokens);
+                    if (string.IsNullOrEmpty(jsonData))
+                        continue;
 
-                    yield return new ChatCompletionResponse(
-                        null,
-                        new TokenUsageResponse(inputTokens, inputCostPerToken, outTokens, outputCostPerToken)
+                    var completionStreamResponse = JsonSerializer.Deserialize<AnthropicChatResponse>(
+                        jsonData,
+                        options: JsonObjectSerializer.SnakeCaseOptions
                     );
-                }
-                else
-                {
-                    yield return new ChatCompletionResponse(completionMessage, null);
-                }
-            }
 
-            if (cancellationToken.IsCancellationRequested)
-            {
-                yield break;
+                    if (completionStreamResponse is null)
+                        continue;
+
+                    var completionMessage = completionStreamResponse.Delta?.Text;
+
+                    if (completionMessage is null)
+                        continue;
+
+                    // when we reached to the end of the streams
+                    if (completionStreamResponse.Delta?.StopReason == "end_turn")
+                    {
+                        //https://docs.anthropic.com/en/api/messages-streaming
+                        // we have the usage in the last chunk and done state
+                        var inputTokens = completionStreamResponse.Usage?.InputTokens ?? 0;
+                        var outTokens = completionStreamResponse.Usage?.OutputTokens ?? 0;
+                        var inputCostPerToken = _chatModel.ModelInformation.InputCostPerToken;
+                        var outputCostPerToken = _chatModel.ModelInformation.OutputCostPerToken;
+
+                        ValidateMaxToken(inputTokens + outTokens);
+
+                        yield return new ChatCompletionResponse(
+                            null,
+                            new TokenUsageResponse(inputTokens, inputCostPerToken, outTokens, outputCostPerToken)
+                        );
+                    }
+                    else
+                    {
+                        yield return new ChatCompletionResponse(completionMessage, null);
+                    }
+                }
+
+                if (cancellationToken.IsCancellationRequested)
+                {
+                    yield break;
+                }
             }
+        }
+        else
+        {
+            var completionResponse = await httpResponseMessage.Content.ReadFromJsonAsync<AnthropicChatResponse>(
+                cancellationToken: cancellationToken
+            );
+            HandleException(httpResponseMessage, completionResponse);
         }
     }
 
@@ -252,6 +264,31 @@ public class AnthropicClient(
                     StatusCode = (int)HttpStatusCode.BadRequest,
                     Message =
                         $"'max_token' count: {maxTokenCount.FormatCommas()} is larger than configured 'max_token' count: {_chatModel.ModelInformation.MaxTokens.FormatCommas()}, if you need more tokens change the configuration.",
+                },
+                HttpStatusCode.BadRequest
+            );
+        }
+    }
+
+    private void ValidateRequestSizeAndContent(ChatCompletionRequest chatCompletionRequest)
+    {
+        ValidateRequestSizeAndContent(string.Concat(chatCompletionRequest.Items.Select(x => x.Prompt)));
+    }
+
+    private void ValidateRequestSizeAndContent(string input)
+    {
+        var requestBodySizeInBytes = System.Text.Encoding.UTF8.GetByteCount(input);
+
+        if (requestBodySizeInBytes > MaxRequestSizeInBytes)
+        {
+            throw new AnthropicException(
+                new AnthropicError()
+                {
+                    StatusCode = (int)HttpStatusCode.BadRequest,
+                    Message =
+                        $"Request size {
+                            requestBodySizeInBytes
+                        } bytes exceeds the 100KB limit.",
                 },
                 HttpStatusCode.BadRequest
             );

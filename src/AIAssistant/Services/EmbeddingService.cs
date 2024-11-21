@@ -8,8 +8,11 @@ using TreeSitter.Bindings.CustomTypes.TreeParser;
 
 namespace AIAssistant.Services;
 
-public class EmbeddingService(ILLMClientManager llmClientManager, ICodeEmbeddingsRepository codeEmbeddingsRepository)
-    : IEmbeddingService
+public class EmbeddingService(
+    ILLMClientManager llmClientManager,
+    ICodeEmbeddingsRepository codeEmbeddingsRepository,
+    IPromptManager promptManager
+) : IEmbeddingService
 {
     public async Task<AddEmbeddingsForFilesResult> AddOrUpdateEmbeddingsForFiles(
         IEnumerable<CodeFileMap> codeFilesMap,
@@ -22,7 +25,7 @@ public class EmbeddingService(ILLMClientManager llmClientManager, ICodeEmbedding
         IList<CodeEmbedding> codeEmbeddings = new List<CodeEmbedding>();
         foreach (var codeFileMap in codeFilesMap)
         {
-            var input = SharedPrompts.AddEmbeddingInputString(codeFileMap.TreeSitterFullCode);
+            var input = promptManager.AddEmbeddingInputString(codeFileMap.TreeSitterFullCode);
             var embeddingResult = await llmClientManager.GetEmbeddingAsync(input);
 
             codeEmbeddings.Add(

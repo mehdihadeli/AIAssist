@@ -1,312 +1,15 @@
 {
   "$schema": "./models_information_spec.json",
-  "gpt-4": {
-    "MaxTokens": 4096,
-    "MaxInputTokens": 8192,
-    "MaxOutputTokens": 4096,
-    "InputCostPerToken": 0.00003,
-    "OutputCostPerToken": 0.00006,
-    "AIProvider": "Openai",
-    "ModelType": "Chat",
-    "SupportsFunctionCalling": true
-  },
   "gpt-4o": {
-    "MaxTokens": 4096,
+    "MaxTokens": 8192,
     "MaxInputTokens": 128000,
-    "MaxOutputTokens": 4096,
+    "MaxOutputTokens": 16384,
     "InputCostPerToken": 0.000005,
     "OutputCostPerToken": 0.000015,
     "AIProvider": "Openai",
     "ModelType": "Chat",
     "SupportsFunctionCalling": true,
     "SupportsParallelFunctionCalling": true
-  },
-  "gpt-4o-mini": {
-    "MaxTokens": 16384,
-    "MaxInputTokens": 128000,
-    "MaxOutputTokens": 16384,
-    "InputCostPerToken": 0.00000015,
-    "OutputCostPerToken": 0.00000060,
-    "AIProvider": "Openai",
-    "ModelType": "Chat",
-    "SupportsFunctionCalling": true,
-    "SupportsParallelFunctionCalling": true
-  },
-  "gpt-4o-mini-2024-07-18": {
-    "MaxTokens": 16384,
-    "MaxInputTokens": 128000,
-    "MaxOutputTokens": 16384,
-    "InputCostPerToken": 0.00000015,
-    "OutputCostPerToken": 0.00000060,
-    "AIProvider": "Openai",
-    "ModelType": "Chat",
-    "SupportsFunctionCalling": true,
-    "SupportsParallelFunctionCalling": true
-  },
-  "o1-mini": {
-    "MaxTokens": 65536,
-    "MaxInputTokens": 128000,
-    "MaxOutputTokens": 65536,
-    "InputCostPerToken": 0.000003,
-    "OutputCostPerToken": 0.000012,
-    "AIProvider": "Openai",
-    "ModelType": "Chat",
-    "SupportsFunctionCalling": true,
-    "SupportsParallelFunctionCalling": true
-  },
-  "o1-mini-2024-09-12": {
-    "MaxTokens": 65536,
-    "MaxInputTokens": 128000,
-    "MaxOutputTokens": 65536,
-    "InputCostPerToken": 0.000003,
-    "OutputCostPerToken": 0.000012,
-    "AIProvider": "Openai",
-    "ModelType": "Chat",
-    "SupportsFunctionCalling": true,
-    "SupportsParallelFunctionCalling": true
-  },
-  "o1-preview": {
-    "MaxTokens": 32768,
-    "MaxInputTokens": 128000,
-    "MaxOutputTokens": 32768,
-    "InputCostPerToken": 0.000015,
-    "OutputCostPerToken": 0.000060,
-    "AIProvider": "Openai",
-    "ModelType": "Chat",
-    "SupportsFunctionCalling": true,
-    "SupportsParallelFunctionCalling": true
-  },
-  "o1-preview-2024-09-12": {
-    "MaxTokens": 32768,
-    "MaxInputTokens": 128000,
-    "MaxOutputTokens": 32768,
-    "InputCostPerToken": 0.000015,
-    "OutputCostPerToken": 0.000060,
-    "AIProvider": "Openai",
-    "ModelType": "Chat",
-    "SupportsFunctionCalling": true,
-    "SupportsParallelFunctionCalling": true
-  },
-  "Chatgpt-4o-latest": {
-    "MaxTokens": 4096,
-    "MaxInputTokens": 128000,
-    "MaxOutputTokens": 4096,
-    "InputCostPerToken": 0.000005,
-    "OutputCostPerToken": 0.000015,
-    "AIProvider": "Openai",
-    "ModelType": "Chat",
-    "SupportsFunctionCalling": true,
-    "SupportsParallelFunctionCalling": true
-  },
-  "gpt-4o-2024-05-13": {
-    "MaxTokens": 4096,
-    "MaxInputTokens": 128000,
-    "MaxOutputTokens": 4096,
-    "InputCostPerToken": 0.000005,
-    "OutputCostPerToken": 0.000015,
-    "AIProvider": "Openai",
-    "ModelType": "Chat",
-    "SupportsFunctionCalling": true,
-    "SupportsParallelFunctionCalling": true
-  },
-  "gpt-4o-2024-08-06": {
-    "MaxTokens": 16384,
-    "MaxInputTokens": 128000,
-    "MaxOutputTokens": 16384,
-    "InputCostPerToken": 0.0000025,
-    "OutputCostPerToken": 0.000010,
-    "AIProvider": "Openai",
-    "ModelType": "Chat",
-    "SupportsFunctionCalling": true,
-    "SupportsParallelFunctionCalling": true
-  },
-  "gpt-4-turbo-preview": {
-    "MaxTokens": 4096,
-    "MaxInputTokens": 128000,
-    "MaxOutputTokens": 4096,
-    "InputCostPerToken": 0.00001,
-    "OutputCostPerToken": 0.00003,
-    "AIProvider": "Openai",
-    "ModelType": "Chat",
-    "SupportsFunctionCalling": true,
-    "SupportsParallelFunctionCalling": true
-  },
-  "gpt-4-0314": {
-    "MaxTokens": 4096,
-    "MaxInputTokens": 8192,
-    "MaxOutputTokens": 4096,
-    "InputCostPerToken": 0.00003,
-    "OutputCostPerToken": 0.00006,
-    "AIProvider": "Openai",
-    "ModelType": "Chat"
-  },
-  "gpt-4-0613": {
-    "MaxTokens": 4096,
-    "MaxInputTokens": 8192,
-    "MaxOutputTokens": 4096,
-    "InputCostPerToken": 0.00003,
-    "OutputCostPerToken": 0.00006,
-    "AIProvider": "Openai",
-    "ModelType": "Chat",
-    "SupportsFunctionCalling": true
-  },
-  "gpt-4-32k": {
-    "MaxTokens": 4096,
-    "MaxInputTokens": 32768,
-    "MaxOutputTokens": 4096,
-    "InputCostPerToken": 0.00006,
-    "OutputCostPerToken": 0.00012,
-    "AIProvider": "Openai",
-    "ModelType": "Chat"
-  },
-  "gpt-4-32k-0314": {
-    "MaxTokens": 4096,
-    "MaxInputTokens": 32768,
-    "MaxOutputTokens": 4096,
-    "InputCostPerToken": 0.00006,
-    "OutputCostPerToken": 0.00012,
-    "AIProvider": "Openai",
-    "ModelType": "Chat"
-  },
-  "gpt-4-32k-0613": {
-    "MaxTokens": 4096,
-    "MaxInputTokens": 32768,
-    "MaxOutputTokens": 4096,
-    "InputCostPerToken": 0.00006,
-    "OutputCostPerToken": 0.00012,
-    "AIProvider": "Openai",
-    "ModelType": "Chat"
-  },
-  "gpt-4-turbo": {
-    "MaxTokens": 4096,
-    "MaxInputTokens": 128000,
-    "MaxOutputTokens": 4096,
-    "InputCostPerToken": 0.00001,
-    "OutputCostPerToken": 0.00003,
-    "AIProvider": "Openai",
-    "ModelType": "Chat",
-    "SupportsFunctionCalling": true,
-    "SupportsParallelFunctionCalling": true
-  },
-  "gpt-4-turbo-2024-04-09": {
-    "MaxTokens": 4096,
-    "MaxInputTokens": 128000,
-    "MaxOutputTokens": 4096,
-    "InputCostPerToken": 0.00001,
-    "OutputCostPerToken": 0.00003,
-    "AIProvider": "Openai",
-    "ModelType": "Chat",
-    "SupportsFunctionCalling": true,
-    "SupportsParallelFunctionCalling": true
-  },
-  "gpt-4-1106-preview": {
-    "MaxTokens": 4096,
-    "MaxInputTokens": 128000,
-    "MaxOutputTokens": 4096,
-    "InputCostPerToken": 0.00001,
-    "OutputCostPerToken": 0.00003,
-    "AIProvider": "Openai",
-    "ModelType": "Chat",
-    "SupportsFunctionCalling": true,
-    "SupportsParallelFunctionCalling": true
-  },
-  "gpt-4-0125-preview": {
-    "MaxTokens": 4096,
-    "MaxInputTokens": 128000,
-    "MaxOutputTokens": 4096,
-    "InputCostPerToken": 0.00001,
-    "OutputCostPerToken": 0.00003,
-    "AIProvider": "Openai",
-    "ModelType": "Chat",
-    "SupportsFunctionCalling": true,
-    "SupportsParallelFunctionCalling": true
-  },
-  "gpt-4-vision-preview": {
-    "MaxTokens": 4096,
-    "MaxInputTokens": 128000,
-    "MaxOutputTokens": 4096,
-    "InputCostPerToken": 0.00001,
-    "OutputCostPerToken": 0.00003,
-    "AIProvider": "Openai",
-    "ModelType": "Chat"
-  },
-  "gpt-4-1106-vision-preview": {
-    "MaxTokens": 4096,
-    "MaxInputTokens": 128000,
-    "MaxOutputTokens": 4096,
-    "InputCostPerToken": 0.00001,
-    "OutputCostPerToken": 0.00003,
-    "AIProvider": "Openai",
-    "ModelType": "Chat"
-  },
-  "gpt-3.5-turbo": {
-    "MaxTokens": 4097,
-    "MaxInputTokens": 16385,
-    "MaxOutputTokens": 4096,
-    "InputCostPerToken": 0.0000015,
-    "OutputCostPerToken": 0.000002,
-    "AIProvider": "Openai",
-    "ModelType": "Chat",
-    "SupportsFunctionCalling": true
-  },
-  "gpt-3.5-turbo-0301": {
-    "MaxTokens": 4097,
-    "MaxInputTokens": 4097,
-    "MaxOutputTokens": 4096,
-    "InputCostPerToken": 0.0000015,
-    "OutputCostPerToken": 0.000002,
-    "AIProvider": "Openai",
-    "ModelType": "Chat"
-  },
-  "gpt-3.5-turbo-0613": {
-    "MaxTokens": 4097,
-    "MaxInputTokens": 4097,
-    "MaxOutputTokens": 4096,
-    "InputCostPerToken": 0.0000015,
-    "OutputCostPerToken": 0.000002,
-    "AIProvider": "Openai",
-    "ModelType": "Chat",
-    "SupportsFunctionCalling": true
-  },
-  "gpt-3.5-turbo-1106": {
-    "MaxTokens": 16385,
-    "MaxInputTokens": 16385,
-    "MaxOutputTokens": 4096,
-    "InputCostPerToken": 0.0000010,
-    "OutputCostPerToken": 0.0000020,
-    "AIProvider": "Openai",
-    "ModelType": "Chat",
-    "SupportsFunctionCalling": true,
-    "SupportsParallelFunctionCalling": true
-  },
-  "gpt-3.5-turbo-0125": {
-    "MaxTokens": 16385,
-    "MaxInputTokens": 16385,
-    "MaxOutputTokens": 4096,
-    "InputCostPerToken": 0.0000005,
-    "OutputCostPerToken": 0.0000015,
-    "AIProvider": "Openai",
-    "ModelType": "Chat",
-    "SupportsFunctionCalling": true,
-    "SupportsParallelFunctionCalling": true
-  },
-  "gpt-3.5-turbo-16k": {
-    "MaxTokens": 16385,
-    "MaxInputTokens": 16385,
-    "MaxOutputTokens": 4096,
-    "InputCostPerToken": 0.000003,
-    "OutputCostPerToken": 0.000004,
-    "AIProvider": "Openai",
-    "ModelType": "Chat"
-  },
-  "gpt-3.5-turbo-16k-0613": {
-    "MaxTokens": 16385,
-    "MaxInputTokens": 16385,
-    "MaxOutputTokens": 4096,
-    "InputCostPerToken": 0.000003,
-    "OutputCostPerToken": 0.000004,
-    "AIProvider": "Openai",
-    "ModelType": "Chat"
   },
   "text-embedding-3-large": {
     "MaxTokens": 8191,
@@ -315,7 +18,7 @@
     "InputCostPerToken": 0.00000013,
     "OutputCostPerToken": 0.000000,
     "AIProvider": "Openai",
-    "ModelType": "embedding"
+    "ModelType": "Embedding"
   },
   "text-embedding-3-small": {
     "MaxTokens": 8191,
@@ -324,325 +27,18 @@
     "InputCostPerToken": 0.00000002,
     "OutputCostPerToken": 0.000000,
     "AIProvider": "Openai",
-    "ModelType": "embedding"
-  },
-  "text-embedding-ada-002": {
-    "MaxTokens": 8191,
-    "MaxInputTokens": 8191,
-    "OutputVectorSize": 1536,
-    "InputCostPerToken": 0.0000001,
-    "OutputCostPerToken": 0.000000,
-    "AIProvider": "Openai",
-    "ModelType": "embedding"
-  },
-  "text-embedding-ada-002-v2": {
-    "MaxTokens": 8191,
-    "MaxInputTokens": 8191,
-    "InputCostPerToken": 0.0000001,
-    "OutputCostPerToken": 0.000000,
-    "AIProvider": "Openai",
-    "ModelType": "embedding"
-  },
-  "azure/o1-mini": {
-    "MaxTokens": 65536,
-    "MaxInputTokens": 128000,
-    "MaxOutputTokens": 65536,
-    "InputCostPerToken": 0.000003,
-    "OutputCostPerToken": 0.000012,
-    "AIProvider": "Azure",
-    "ModelType": "Chat",
-    "SupportsFunctionCalling": true,
-    "SupportsParallelFunctionCalling": true
-  },
-  "azure/o1-mini-2024-09-12": {
-    "MaxTokens": 65536,
-    "MaxInputTokens": 128000,
-    "MaxOutputTokens": 65536,
-    "InputCostPerToken": 0.000003,
-    "OutputCostPerToken": 0.000012,
-    "AIProvider": "Azure",
-    "ModelType": "Chat",
-    "SupportsFunctionCalling": true,
-    "SupportsParallelFunctionCalling": true
-  },
-  "azure/o1-preview": {
-    "MaxTokens": 32768,
-    "MaxInputTokens": 128000,
-    "MaxOutputTokens": 32768,
-    "InputCostPerToken": 0.000015,
-    "OutputCostPerToken": 0.000060,
-    "AIProvider": "Azure",
-    "ModelType": "Chat",
-    "SupportsFunctionCalling": true,
-    "SupportsParallelFunctionCalling": true
-  },
-  "azure/o1-preview-2024-09-12": {
-    "MaxTokens": 32768,
-    "MaxInputTokens": 128000,
-    "MaxOutputTokens": 32768,
-    "InputCostPerToken": 0.000015,
-    "OutputCostPerToken": 0.000060,
-    "AIProvider": "Azure",
-    "ModelType": "Chat",
-    "SupportsFunctionCalling": true,
-    "SupportsParallelFunctionCalling": true
+    "ModelType": "Embedding"
   },
   "azure/gpt-4o": {
-    "MaxTokens": 4096,
+    "MaxTokens": 8192,
     "MaxInputTokens": 128000,
-    "MaxOutputTokens": 4096,
+    "MaxOutputTokens": 16384,
     "InputCostPerToken": 0.000005,
     "OutputCostPerToken": 0.000015,
     "AIProvider": "Azure",
     "ModelType": "Chat",
     "SupportsFunctionCalling": true,
     "SupportsParallelFunctionCalling": true
-  },
-  "azure/gpt-4o-2024-08-06": {
-    "MaxTokens": 16384,
-    "MaxInputTokens": 128000,
-    "MaxOutputTokens": 16384,
-    "InputCostPerToken": 0.00000275,
-    "OutputCostPerToken": 0.000011,
-    "AIProvider": "Azure",
-    "ModelType": "Chat",
-    "SupportsFunctionCalling": true,
-    "SupportsParallelFunctionCalling": true
-  },
-  "azure/gpt-4o-2024-05-13": {
-    "MaxTokens": 4096,
-    "MaxInputTokens": 128000,
-    "MaxOutputTokens": 4096,
-    "InputCostPerToken": 0.000005,
-    "OutputCostPerToken": 0.000015,
-    "AIProvider": "Azure",
-    "ModelType": "Chat",
-    "SupportsFunctionCalling": true,
-    "SupportsParallelFunctionCalling": true
-  },
-  "azure/global-standard/gpt-4o-2024-08-06": {
-    "MaxTokens": 16384,
-    "MaxInputTokens": 128000,
-    "MaxOutputTokens": 16384,
-    "InputCostPerToken": 0.0000025,
-    "OutputCostPerToken": 0.000010,
-    "AIProvider": "Azure",
-    "ModelType": "Chat",
-    "SupportsFunctionCalling": true,
-    "SupportsParallelFunctionCalling": true
-  },
-  "azure/global-standard/gpt-4o-mini": {
-    "MaxTokens": 16384,
-    "MaxInputTokens": 128000,
-    "MaxOutputTokens": 16384,
-    "InputCostPerToken": 0.00000015,
-    "OutputCostPerToken": 0.00000060,
-    "AIProvider": "Azure",
-    "ModelType": "Chat",
-    "SupportsFunctionCalling": true,
-    "SupportsParallelFunctionCalling": true
-  },
-  "azure/gpt-4o-mini": {
-    "MaxTokens": 16384,
-    "MaxInputTokens": 128000,
-    "MaxOutputTokens": 16384,
-    "InputCostPerToken": 0.000000165,
-    "OutputCostPerToken": 0.00000066,
-    "AIProvider": "Azure",
-    "ModelType": "Chat",
-    "SupportsFunctionCalling": true,
-    "SupportsParallelFunctionCalling": true
-  },
-  "azure/gpt-4o-mini-2024-07-18": {
-    "MaxTokens": 16384,
-    "MaxInputTokens": 128000,
-    "MaxOutputTokens": 16384,
-    "InputCostPerToken": 0.000000165,
-    "OutputCostPerToken": 0.00000066,
-    "AIProvider": "Azure",
-    "ModelType": "Chat",
-    "SupportsFunctionCalling": true,
-    "SupportsParallelFunctionCalling": true
-  },
-  "azure/gpt-4-turbo-2024-04-09": {
-    "MaxTokens": 4096,
-    "MaxInputTokens": 128000,
-    "MaxOutputTokens": 4096,
-    "InputCostPerToken": 0.00001,
-    "OutputCostPerToken": 0.00003,
-    "AIProvider": "Azure",
-    "ModelType": "Chat",
-    "SupportsFunctionCalling": true,
-    "SupportsParallelFunctionCalling": true
-  },
-  "azure/gpt-4-0125-preview": {
-    "MaxTokens": 4096,
-    "MaxInputTokens": 128000,
-    "MaxOutputTokens": 4096,
-    "InputCostPerToken": 0.00001,
-    "OutputCostPerToken": 0.00003,
-    "AIProvider": "Azure",
-    "ModelType": "Chat",
-    "SupportsFunctionCalling": true,
-    "SupportsParallelFunctionCalling": true
-  },
-  "azure/gpt-4-1106-preview": {
-    "MaxTokens": 4096,
-    "MaxInputTokens": 128000,
-    "MaxOutputTokens": 4096,
-    "InputCostPerToken": 0.00001,
-    "OutputCostPerToken": 0.00003,
-    "AIProvider": "Azure",
-    "ModelType": "Chat",
-    "SupportsFunctionCalling": true,
-    "SupportsParallelFunctionCalling": true
-  },
-  "azure/gpt-4-0613": {
-    "MaxTokens": 4096,
-    "MaxInputTokens": 8192,
-    "MaxOutputTokens": 4096,
-    "InputCostPerToken": 0.00003,
-    "OutputCostPerToken": 0.00006,
-    "AIProvider": "Azure",
-    "ModelType": "Chat",
-    "SupportsFunctionCalling": true
-  },
-  "azure/gpt-4-32k-0613": {
-    "MaxTokens": 4096,
-    "MaxInputTokens": 32768,
-    "MaxOutputTokens": 4096,
-    "InputCostPerToken": 0.00006,
-    "OutputCostPerToken": 0.00012,
-    "AIProvider": "Azure",
-    "ModelType": "Chat"
-  },
-  "azure/gpt-4-32k": {
-    "MaxTokens": 4096,
-    "MaxInputTokens": 32768,
-    "MaxOutputTokens": 4096,
-    "InputCostPerToken": 0.00006,
-    "OutputCostPerToken": 0.00012,
-    "AIProvider": "Azure",
-    "ModelType": "Chat"
-  },
-  "azure/gpt-4": {
-    "MaxTokens": 4096,
-    "MaxInputTokens": 8192,
-    "MaxOutputTokens": 4096,
-    "InputCostPerToken": 0.00003,
-    "OutputCostPerToken": 0.00006,
-    "AIProvider": "Azure",
-    "ModelType": "Chat",
-    "SupportsFunctionCalling": true
-  },
-  "azure/gpt-4-turbo": {
-    "MaxTokens": 4096,
-    "MaxInputTokens": 128000,
-    "MaxOutputTokens": 4096,
-    "InputCostPerToken": 0.00001,
-    "OutputCostPerToken": 0.00003,
-    "AIProvider": "Azure",
-    "ModelType": "Chat",
-    "SupportsFunctionCalling": true,
-    "SupportsParallelFunctionCalling": true
-  },
-  "azure/gpt-4-turbo-vision-preview": {
-    "MaxTokens": 4096,
-    "MaxInputTokens": 128000,
-    "MaxOutputTokens": 4096,
-    "InputCostPerToken": 0.00001,
-    "OutputCostPerToken": 0.00003,
-    "AIProvider": "Azure",
-    "ModelType": "Chat"
-  },
-  "azure/gpt-35-turbo-16k-0613": {
-    "MaxTokens": 4096,
-    "MaxInputTokens": 16385,
-    "MaxOutputTokens": 4096,
-    "InputCostPerToken": 0.000003,
-    "OutputCostPerToken": 0.000004,
-    "AIProvider": "Azure",
-    "ModelType": "Chat",
-    "SupportsFunctionCalling": true
-  },
-  "azure/gpt-35-turbo-1106": {
-    "MaxTokens": 4096,
-    "MaxInputTokens": 16384,
-    "MaxOutputTokens": 4096,
-    "InputCostPerToken": 0.000001,
-    "OutputCostPerToken": 0.000002,
-    "AIProvider": "Azure",
-    "ModelType": "Chat",
-    "SupportsFunctionCalling": true,
-    "SupportsParallelFunctionCalling": true
-  },
-  "azure/gpt-35-turbo-0613": {
-    "MaxTokens": 4097,
-    "MaxInputTokens": 4097,
-    "MaxOutputTokens": 4096,
-    "InputCostPerToken": 0.0000015,
-    "OutputCostPerToken": 0.000002,
-    "AIProvider": "Azure",
-    "ModelType": "Chat",
-    "SupportsFunctionCalling": true,
-    "SupportsParallelFunctionCalling": true
-  },
-  "azure/gpt-35-turbo-0301": {
-    "MaxTokens": 4097,
-    "MaxInputTokens": 4097,
-    "MaxOutputTokens": 4096,
-    "InputCostPerToken": 0.0000002,
-    "OutputCostPerToken": 0.000002,
-    "AIProvider": "Azure",
-    "ModelType": "Chat",
-    "SupportsFunctionCalling": true,
-    "SupportsParallelFunctionCalling": true
-  },
-  "azure/gpt-35-turbo-0125": {
-    "MaxTokens": 4096,
-    "MaxInputTokens": 16384,
-    "MaxOutputTokens": 4096,
-    "InputCostPerToken": 0.0000005,
-    "OutputCostPerToken": 0.0000015,
-    "AIProvider": "Azure",
-    "ModelType": "Chat",
-    "SupportsFunctionCalling": true,
-    "SupportsParallelFunctionCalling": true
-  },
-  "azure/gpt-35-turbo-16k": {
-    "MaxTokens": 4096,
-    "MaxInputTokens": 16385,
-    "MaxOutputTokens": 4096,
-    "InputCostPerToken": 0.000003,
-    "OutputCostPerToken": 0.000004,
-    "AIProvider": "Azure",
-    "ModelType": "Chat"
-  },
-  "azure/gpt-35-turbo": {
-    "MaxTokens": 4096,
-    "MaxInputTokens": 4097,
-    "MaxOutputTokens": 4096,
-    "InputCostPerToken": 0.0000005,
-    "OutputCostPerToken": 0.0000015,
-    "AIProvider": "Azure",
-    "ModelType": "Chat",
-    "SupportsFunctionCalling": true
-  },
-  "azure/ada": {
-    "MaxTokens": 8191,
-    "MaxInputTokens": 8191,
-    "InputCostPerToken": 0.0000001,
-    "OutputCostPerToken": 0.000000,
-    "AIProvider": "Azure",
-    "ModelType": "embedding"
-  },
-  "azure/text-embedding-ada-002": {
-    "MaxTokens": 8191,
-    "MaxInputTokens": 8191,
-    "InputCostPerToken": 0.0000001,
-    "OutputCostPerToken": 0.000000,
-    "AIProvider": "Azure",
-    "ModelType": "embedding"
   },
   "azure/text-embedding-3-large": {
     "MaxTokens": 8191,
@@ -650,7 +46,7 @@
     "InputCostPerToken": 0.00000013,
     "OutputCostPerToken": 0.000000,
     "AIProvider": "Azure",
-    "ModelType": "embedding"
+    "ModelType": "Embedding"
   },
   "azure/text-embedding-3-small": {
     "MaxTokens": 8191,
@@ -658,67 +54,7 @@
     "InputCostPerToken": 0.00000002,
     "OutputCostPerToken": 0.000000,
     "AIProvider": "Azure",
-    "ModelType": "embedding"
-  },
-  "claude-3-haiku-20240307": {
-    "MaxTokens": 4096,
-    "MaxInputTokens": 200000,
-    "MaxOutputTokens": 4096,
-    "InputCostPerToken": 0.00000025,
-    "OutputCostPerToken": 0.00000125,
-    "AIProvider": "Anthropic",
-    "ModelType": "Chat",
-    "SupportsFunctionCalling": true
-  },
-  "claude-3-5-haiku-20241022": {
-    "MaxTokens": 4096,
-    "MaxInputTokens": 200000,
-    "MaxOutputTokens": 4096,
-    "InputCostPerToken": 0.000001,
-    "OutputCostPerToken": 0.000005,
-    "AIProvider": "Anthropic",
-    "ModelType": "Chat",
-    "SupportsFunctionCalling": true
-  },
-  "claude-3-opus-20240229": {
-    "MaxTokens": 4096,
-    "MaxInputTokens": 200000,
-    "MaxOutputTokens": 4096,
-    "InputCostPerToken": 0.000015,
-    "OutputCostPerToken": 0.000075,
-    "AIProvider": "Anthropic",
-    "ModelType": "Chat",
-    "SupportsFunctionCalling": true
-  },
-  "claude-3-sonnet-20240229": {
-    "MaxTokens": 4096,
-    "MaxInputTokens": 200000,
-    "MaxOutputTokens": 4096,
-    "InputCostPerToken": 0.000003,
-    "OutputCostPerToken": 0.000015,
-    "AIProvider": "Anthropic",
-    "ModelType": "Chat",
-    "SupportsFunctionCalling": true
-  },
-  "claude-3-5-sonnet-20240620": {
-    "MaxTokens": 8192,
-    "MaxInputTokens": 200000,
-    "MaxOutputTokens": 8192,
-    "InputCostPerToken": 0.000003,
-    "OutputCostPerToken": 0.000015,
-    "AIProvider": "Anthropic",
-    "ModelType": "Chat",
-    "SupportsFunctionCalling": true
-  },
-  "claude-3-5-sonnet-20241022": {
-    "MaxTokens": 8192,
-    "MaxInputTokens": 200000,
-    "MaxOutputTokens": 8192,
-    "InputCostPerToken": 0.000003,
-    "OutputCostPerToken": 0.000015,
-    "AIProvider": "Anthropic",
-    "ModelType": "Chat",
-    "SupportsFunctionCalling": true
+    "ModelType": "Embedding"
   },
   "ollama/codegeex4": {
     "MaxTokens": 32768,
@@ -822,8 +158,8 @@
     "InputCostPerToken": 0.0,
     "OutputCostPerToken": 0.0,
     "AIProvider": "Ollama",
-    "ModelType": "embedding",
-    "embedding_dimensions": 512
+    "ModelType": "Embedding",
+    "EmbeddingDimensions": 512
   },
   "ollama/mxbai-embed-large": {
     "MaxTokens": 4096,
@@ -831,7 +167,7 @@
     "InputCostPerToken": 0.0,
     "OutputCostPerToken": 0.0,
     "AIProvider": "Ollama",
-    "ModelType": "embedding",
-    "embedding_dimensions": 1024
+    "ModelType": "Embedding",
+    "EmbeddingDimensions": 1024
   }
 }

@@ -1,3 +1,4 @@
+using System.Collections;
 using System.Text.RegularExpressions;
 using AIAssistant.Contracts.CodeAssist;
 using AIAssistant.Contracts.Diff;
@@ -19,12 +20,12 @@ public class CodeAssistantManager(ICodeAssist codeAssist, ICodeDiffManager diffM
 
     public Task AddOrUpdateCodeFilesToCache(IList<string>? codeFiles)
     {
-        return codeAssist.AddOrUpdateCodeFilesToCache(codeFiles);
+        return codeAssist.AddOrUpdateCodeFiles(codeFiles);
     }
 
     public Task<IEnumerable<string>> GetCodeTreeContentsFromCache(IList<string>? codeFiles)
     {
-        return codeAssist.GetCodeTreeContentsFromCache(codeFiles);
+        return codeAssist.GetCodeTreeContents(codeFiles);
     }
 
     public bool CheckExtraContextForResponse(string response, out IList<string> requiredFiles)
@@ -63,15 +64,15 @@ public class CodeAssistantManager(ICodeAssist codeAssist, ICodeDiffManager diffM
         return false;
     }
 
-    public IList<FileChange> ParseResponseCodeBlocks(string response)
+    public IList<DiffResult> ParseDiffResults(string diffContent, string contextWorkingDirectory)
     {
-        var codeBlocks = diffManager.GetFileChanges(response);
+        var diffResults = diffManager.ParseDiffResults(diffContent, contextWorkingDirectory);
 
-        return codeBlocks;
+        return diffResults;
     }
 
-    public void ApplyChangesToFiles(IList<FileChange> codeBlocks, string contextWorkingDirectory)
+    public void ApplyChanges(IList<DiffResult> diffResults, string contextWorkingDirectory)
     {
-        diffManager.ApplyChanges(codeBlocks, contextWorkingDirectory);
+        diffManager.ApplyChanges(diffResults, contextWorkingDirectory);
     }
 }

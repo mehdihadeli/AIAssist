@@ -47,9 +47,9 @@ public static class DependencyInjectionExtensions
 
         AddResiliencyDependencies(builder);
 
-        AddJsonSerializerDependencies(builder);
+        AddContextDependencies(builder);
 
-        AddInMemoryCache(builder);
+        AddJsonSerializerDependencies(builder);
 
         AddOptionsDependencies(builder);
 
@@ -63,6 +63,8 @@ public static class DependencyInjectionExtensions
 
         AddPromptDependencies(builder);
 
+        AddFileDependencies(builder);
+
         AddCacheModelsDependencies(builder);
 
         AddCommandsDependencies(builder);
@@ -74,9 +76,14 @@ public static class DependencyInjectionExtensions
         return builder;
     }
 
-    private static void AddInMemoryCache(HostApplicationBuilder builder)
+    private static void AddFileDependencies(HostApplicationBuilder builder)
     {
-        builder.Services.AddMemoryCache();
+        builder.Services.AddSingleton<IFileService, FileService>();
+    }
+
+    private static void AddContextDependencies(HostApplicationBuilder builder)
+    {
+        builder.Services.AddSingleton<IContextService, ContextService>();
     }
 
     private static void AddTokenizersDependencies(HostApplicationBuilder builder)
@@ -213,9 +220,10 @@ public static class DependencyInjectionExtensions
 
     private static void AddPromptDependencies(HostApplicationBuilder builder)
     {
-        builder.Services.AddSingleton<IPromptCache, PromptCache>(_ =>
+        builder.Services.AddSingleton<IPromptManager, PromptManager>(sp =>
         {
-            var promptStorage = new PromptCache();
+            var fileService = sp.GetRequiredService<IFileService>();
+            var promptStorage = new PromptManager(fileService);
 
             promptStorage.AddPrompt(
                 AIAssistantConstants.Prompts.CodeAssistantUnifiedDiffTemplate,
@@ -230,9 +238,9 @@ public static class DependencyInjectionExtensions
             );
 
             promptStorage.AddPrompt(
-                AIAssistantConstants.Prompts.CodeAssistantMergeConflictDiffTemplate,
+                AIAssistantConstants.Prompts.CodeAssistantSearchReplaceDiffTemplate,
                 CommandType.Code,
-                CodeDiffType.MergeConflictDiff
+                CodeDiffType.SearchReplaceDiff
             );
 
             return promptStorage;
@@ -245,19 +253,22 @@ public static class DependencyInjectionExtensions
 
         builder.Services.AddKeyedSingleton<ILLMClient, OllamaClient>(AIProvider.Ollama);
         builder.Services.AddKeyedSingleton<ILLMClient, OpenAiClient>(AIProvider.Openai);
+        builder.Services.AddKeyedSingleton<ILLMClient, AzureClient>(AIProvider.Azure);
         //builder.Services.AddKeyedSingleton<ILLMClient, AnthropicClient>(AIProvider.Anthropic);
         builder.Services.AddSingleton<ILLMClientManager, LLMClientManager>();
 
         builder.Services.AddSingleton<ILLMClientFactory, LLMClientFactory>(sp =>
         {
             var ollamaClient = sp.GetRequiredKeyedService<ILLMClient>(AIProvider.Ollama);
-            var openAIClient = sp.GetRequiredKeyedService<ILLMClient>(AIProvider.Openai);
+            var openaiClient = sp.GetRequiredKeyedService<ILLMClient>(AIProvider.Openai);
+            var azureClient = sp.GetRequiredKeyedService<ILLMClient>(AIProvider.Azure);
             //var anthropicClient = sp.GetRequiredKeyedService<ILLMClient>(AIProvider.Anthropic);
 
             IDictionary<AIProvider, ILLMClient> clientStrategies = new Dictionary<AIProvider, ILLMClient>
             {
                 { AIProvider.Ollama, ollamaClient },
-                { AIProvider.Openai, openAIClient },
+                { AIProvider.Openai, openaiClient },
+                { AIProvider.Azure, azureClient },
                 //{ AIProvider.Anthropic, anthropicClient },
             };
 
@@ -267,43 +278,101 @@ public static class DependencyInjectionExtensions
         // https://learn.microsoft.com/en-us/dotnet/architecture/microservices/implement-resilient-applications/use-httpclientfactory-to-implement-resilient-http-requests
         // https://learn.microsoft.com/en-us/aspnet/core/fundamentals/http-requests
         builder.Services.AddHttpClient(
-            "llm_client",
+            "llm_chat_client",
             (sp, client) =>
             {
                 var options = sp.GetRequiredService<IOptions<LLMOptions>>().Value;
                 var policyOptions = sp.GetRequiredService<IOptions<PolicyOptions>>().Value;
 
                 var cacheModels = sp.GetRequiredService<ICacheModels>();
-
-                ArgumentException.ThrowIfNullOrEmpty(options.BaseAddress);
                 ArgumentException.ThrowIfNullOrEmpty(options.ChatModel);
+                var chatModel = cacheModels.GetModel(options.ChatModel);
 
-                client.BaseAddress = new Uri(options.BaseAddress);
                 client.Timeout = TimeSpan.FromSeconds(policyOptions.TimeoutSeconds);
 
-                var model = cacheModels.GetModel(options.ChatModel);
+                var chatApiKey =
+                    Environment.GetEnvironmentVariable(AIAssistantConstants.Environments.ChatModelApiKey)
+                    ?? chatModel.ModelOption.ApiKey;
 
-                switch (model.ModelInformation.AIProvider)
+                switch (chatModel.ModelInformation.AIProvider)
                 {
-                    // case AIProvider.Anthropic:
-                    //     ArgumentException.ThrowIfNullOrEmpty(options.ApiKey);
-                    //     client.DefaultRequestHeaders.Add("x-api-key", options.ApiKey);
-                    //     // client.DefaultRequestHeaders.Add("anthropic-version", options.Version);
-                    //     break;
                     case AIProvider.Openai:
-                        ArgumentException.ThrowIfNullOrEmpty(options.ApiKey);
-
+                        // https://platform.openai.com/docs/api-reference
+                        ArgumentException.ThrowIfNullOrEmpty(chatApiKey);
+                        client.BaseAddress = new Uri(
+                            chatModel.ModelOption.BaseAddress?.Trim() ?? "https://api.openai.com"
+                        );
                         client.DefaultRequestHeaders.Authorization = new AuthenticationHeaderValue(
                             "Bearer",
-                            options.ApiKey
+                            chatApiKey
                         );
-
+                        break;
+                    case AIProvider.Azure:
+                        // https://learn.microsoft.com/en-us/azure/ai-services/openai/reference
+                        ArgumentException.ThrowIfNullOrEmpty(chatApiKey);
+                        ArgumentException.ThrowIfNullOrEmpty(chatModel.ModelOption.BaseAddress);
+                        client.BaseAddress = new Uri(chatModel.ModelOption.BaseAddress.Trim());
+                        client.DefaultRequestHeaders.Add("api-key", chatApiKey);
                         break;
                     case AIProvider.Ollama:
-                        client.DefaultRequestHeaders.Accept.Add(
-                            new MediaTypeWithQualityHeaderValue("application/json")
+                        // https://github.com/ollama/ollama/blob/main/docs/api.md
+                        client.BaseAddress = new Uri(
+                            chatModel.ModelOption.BaseAddress?.Trim() ?? "http://localhost:11434"
                         );
+                        break;
+                    // case AIProvider.Anthropic:
+                    //     // https://docs.anthropic.com/en/api/messages
+                    //     ArgumentException.ThrowIfNullOrEmpty(model.ModelOption.ApiVersion);
+                    //     client.BaseAddress = new Uri(model.ModelOption.BaseAddress ?? "https://api.anthropic.com");
+                    //     client.DefaultRequestHeaders.Add("x-api-key", chatApiKey);
+                    //     client.DefaultRequestHeaders.Add("anthropic-version", model.ModelOption.ApiVersion);
+                    //     break;
+                }
+            }
+        );
 
+        builder.Services.AddHttpClient(
+            "llm_embeddings_client",
+            (sp, client) =>
+            {
+                var options = sp.GetRequiredService<IOptions<LLMOptions>>().Value;
+                var policyOptions = sp.GetRequiredService<IOptions<PolicyOptions>>().Value;
+                var cacheModels = sp.GetRequiredService<ICacheModels>();
+
+                ArgumentException.ThrowIfNullOrEmpty(options.EmbeddingsModel);
+                var embeddingModel = cacheModels.GetModel(options.EmbeddingsModel);
+
+                client.Timeout = TimeSpan.FromSeconds(policyOptions.TimeoutSeconds);
+
+                var embeddingsApiKey =
+                    Environment.GetEnvironmentVariable(AIAssistantConstants.Environments.EmbeddingsModelApiKey)
+                    ?? embeddingModel.ModelOption.ApiKey;
+
+                switch (embeddingModel.ModelInformation.AIProvider)
+                {
+                    case AIProvider.Openai:
+                        // https://platform.openai.com/docs/api-reference
+                        ArgumentException.ThrowIfNullOrEmpty(embeddingsApiKey);
+                        client.BaseAddress = new Uri(
+                            embeddingModel.ModelOption.BaseAddress?.Trim() ?? "https://api.openai.com"
+                        );
+                        client.DefaultRequestHeaders.Authorization = new AuthenticationHeaderValue(
+                            "Bearer",
+                            embeddingsApiKey
+                        );
+                        break;
+                    case AIProvider.Azure:
+                        // https://learn.microsoft.com/en-us/azure/ai-services/openai/reference
+                        ArgumentException.ThrowIfNullOrEmpty(embeddingsApiKey);
+                        ArgumentException.ThrowIfNullOrEmpty(embeddingModel.ModelOption.BaseAddress);
+                        client.BaseAddress = new Uri(embeddingModel.ModelOption.BaseAddress.Trim());
+                        client.DefaultRequestHeaders.Add("api-key", embeddingsApiKey);
+                        break;
+                    case AIProvider.Ollama:
+                        // https://github.com/ollama/ollama/blob/main/docs/api.md
+                        client.BaseAddress = new Uri(
+                            embeddingModel.ModelOption.BaseAddress?.Trim() ?? "http://localhost:11434"
+                        );
                         break;
                 }
             }
@@ -361,13 +430,10 @@ public static class DependencyInjectionExtensions
 
     private static void AddCodeDiffDependency(HostApplicationBuilder builder)
     {
-        builder.Services.AddKeyedSingleton<ICodeDiffParser, CodeBlockCodeDiffParser>(CodeDiffType.CodeBlockDiff);
+        builder.Services.AddKeyedSingleton<ICodeDiffParser, CodeBlockDiffParser>(CodeDiffType.CodeBlockDiff);
 
-        builder.Services.AddKeyedSingleton<ICodeDiffParser, UnifiedCodeDiffParser>(CodeDiffType.UnifiedDiff);
-
-        builder.Services.AddKeyedSingleton<ICodeDiffParser, MergeConflictCodeDiffParser>(
-            CodeDiffType.MergeConflictDiff
-        );
+        builder.Services.AddKeyedSingleton<ICodeDiffParser, UnifiedDiffParser>(CodeDiffType.UnifiedDiff);
+        builder.Services.AddKeyedSingleton<ICodeDiffParser, SearchReplaceParser>(CodeDiffType.SearchReplaceDiff);
 
         builder.Services.AddSingleton<ICodeDiffUpdater, CodeDiffUpdater>();
 
@@ -377,7 +443,7 @@ public static class DependencyInjectionExtensions
 
             var unifiedDiffParser = sp.GetRequiredKeyedService<ICodeDiffParser>(CodeDiffType.UnifiedDiff);
 
-            var mergeConflictDiffParser = sp.GetRequiredKeyedService<ICodeDiffParser>(CodeDiffType.MergeConflictDiff);
+            var searchReplaceDiff = sp.GetRequiredKeyedService<ICodeDiffParser>(CodeDiffType.SearchReplaceDiff);
 
             IDictionary<CodeDiffType, ICodeDiffParser> codeDiffStrategies = new Dictionary<
                 CodeDiffType,
@@ -386,11 +452,13 @@ public static class DependencyInjectionExtensions
             {
                 { CodeDiffType.CodeBlockDiff, codeBlockDiffParser },
                 { CodeDiffType.UnifiedDiff, unifiedDiffParser },
-                { CodeDiffType.MergeConflictDiff, mergeConflictDiffParser },
+                { CodeDiffType.SearchReplaceDiff, searchReplaceDiff },
             };
 
             return new CodeDiffParserFactory(codeDiffStrategies);
         });
+
+        builder.Services.AddSingleton<ICodeDiffManager, CodeDiffManager>();
 
         builder.Services.AddSingleton<ICodeDiffManager, CodeDiffManager>(sp =>
         {
@@ -403,7 +471,7 @@ public static class DependencyInjectionExtensions
 
             var codeDiffUpdater = sp.GetRequiredService<ICodeDiffUpdater>();
 
-            return new CodeDiffManager(codeDiffParser, codeDiffUpdater);
+            return new CodeDiffManager(codeDiffUpdater, codeDiffParser);
         });
     }
 }

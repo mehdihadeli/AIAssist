@@ -6,12 +6,14 @@ public class AIAssistantConstants
 
     public class Prompts
     {
+        public const string CodeContextTemplate = "code-context";
         public const string CodeBlockTemplate = "code-block";
         public const string AskMoreContext = "ask-more-context";
         public const string CodeEmbeddingTemplate = "code-embedding";
         public const string CodeAssistantUnifiedDiffTemplate = "code-assistant-unified-diff";
         public const string CodeAssistantCodeBlockdDiffTemplate = "code-assistant-code-block-diff";
         public const string CodeAssistantMergeConflictDiffTemplate = "code-assist-merge-conflict-diff";
+        public const string CodeAssistantSearchReplaceDiffTemplate = "code-assist-search-replace-diff";
     }
 
     public class InternalCommands
@@ -30,5 +32,11 @@ public class AIAssistantConstants
     public class Configurations
     {
         public const string ThemeName = "ThemeName";
+    }
+
+    public class Environments
+    {
+        public const string EmbeddingsModelApiKey = "EMBEDDINGS_MODEL_API_KEY";
+        public const string ChatModelApiKey = "CHAT_MODEL_API_KEY";
     }
 }

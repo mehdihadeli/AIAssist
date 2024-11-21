@@ -1,5 +1,4 @@
 using AIAssistant.Contracts.Diff;
-using AIAssistant.Models;
 using Clients.Models;
 
 namespace AIAssistant.Diff;

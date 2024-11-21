@@ -4,5 +4,5 @@ namespace AIAssistant.Contracts.Diff;
 
 public interface ICodeDiffUpdater
 {
-    void ApplyChanges(IEnumerable<FileChange> changes, string contextWorkingDirectory);
+    public void ApplyChanges(IList<DiffResult> diffResults, string contextWorkingDirectory);
 }

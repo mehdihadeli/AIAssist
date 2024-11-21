@@ -1,6 +1,7 @@
 using System.Text;
 using BuildingBlocks.Extensions;
 using BuildingBlocks.Types;
+using BuildingBlocks.Utils;
 using TreeSitter.Bindings.Contracts;
 using TreeSitter.Bindings.CustomTypes.TreeParser;
 using TreeSitter.Bindings.Utilities;
@@ -26,7 +27,7 @@ public class TreeSitterCodeCaptureService(ITreeSitterParser treeSitterParser) : 
                     new DefinitionCaptureItem
                     {
                         CaptureKey = "definition.code",
-                        RelativePath = codeFile.RelativePath,
+                        RelativePath = codeFile.RelativePath.NormalizePath(),
                         CaptureValue = codeFile.Code,
                         CodeChunk = null,
                         OriginalCode = codeFile.Code,
@@ -38,7 +39,7 @@ public class TreeSitterCodeCaptureService(ITreeSitterParser treeSitterParser) : 
                     new DefinitionCaptureItem
                     {
                         CaptureKey = "name.code",
-                        RelativePath = codeFile.RelativePath,
+                        RelativePath = codeFile.RelativePath.NormalizePath(),
                         CaptureValue = CodeHelper.GetLinesOfInterest(codeFile.Code, 1),
                         CodeChunk = CodeHelper.GetLinesOfInterest(codeFile.Code, 1),
                         OriginalCode = codeFile.Code,
@@ -108,7 +109,7 @@ public class TreeSitterCodeCaptureService(ITreeSitterParser treeSitterParser) : 
                                     new ReferenceCaptureItem
                                     {
                                         CaptureKey = captureKey,
-                                        RelativePath = codeFile.RelativePath,
+                                        RelativePath = codeFile.RelativePath.NormalizePath(),
                                         CaptureValue = captureValue,
                                         CodeChunk = CodeHelper.GetLinesOfInterest(codeFile.Code, startLine),
                                         Definition = null,
@@ -123,7 +124,7 @@ public class TreeSitterCodeCaptureService(ITreeSitterParser treeSitterParser) : 
                                     new ReferenceCaptureItem
                                     {
                                         CaptureKey = captureKey,
-                                        RelativePath = codeFile.RelativePath,
+                                        RelativePath = codeFile.RelativePath.NormalizePath(),
                                         CaptureValue = captureValue,
                                         CodeChunk = null,
                                         Definition = captureValue,
@@ -147,7 +148,7 @@ public class TreeSitterCodeCaptureService(ITreeSitterParser treeSitterParser) : 
                                     new DefinitionCaptureItem
                                     {
                                         CaptureKey = captureKey,
-                                        RelativePath = codeFile.RelativePath,
+                                        RelativePath = codeFile.RelativePath.NormalizePath(),
                                         CaptureValue = captureValue,
                                         CodeChunk = codeChunk,
                                         Definition = null,
@@ -162,7 +163,7 @@ public class TreeSitterCodeCaptureService(ITreeSitterParser treeSitterParser) : 
                                     new DefinitionCaptureItem
                                     {
                                         CaptureKey = captureKey,
-                                        RelativePath = codeFile.RelativePath,
+                                        RelativePath = codeFile.RelativePath.NormalizePath(),
                                         CaptureValue = captureValue,
                                         CodeChunk = null,
                                         Definition = captureValue,
@@ -218,7 +219,7 @@ public class TreeSitterCodeCaptureService(ITreeSitterParser treeSitterParser) : 
                     definition.DefinitionCaptureReferences.Add(
                         new DefinitionCaptureReference
                         {
-                            RelativePath = x.RelativePath,
+                            RelativePath = x.RelativePath.NormalizePath(),
                             ReferencedValue = x.CaptureValue,
                             ReferencedUsage = x.CaptureKey,
                         }

@@ -1,4 +1,5 @@
 using System.Text;
+using BuildingBlocks.Utils;
 using TreeSitter.Bindings.Contracts;
 using TreeSitter.Bindings.CustomTypes.TreeParser;
 
@@ -10,7 +11,7 @@ public class TreeStructureGeneratorService : ITreeStructureGeneratorService
     {
         var sb = new StringBuilder();
 
-        sb.AppendLine($"{relativePath}:");
+        sb.AppendLine($"{relativePath.NormalizePath()}:");
         WriteRootCodeLine(sb, "│   ", originalCode);
 
         return sb.ToString();
@@ -20,9 +21,8 @@ public class TreeStructureGeneratorService : ITreeStructureGeneratorService
     {
         var sb = new StringBuilder();
 
-        var relativePath = definitionItems.FirstOrDefault()?.RelativePath ?? "Unknown File";
+        var relativePath = definitionItems.FirstOrDefault()?.RelativePath.NormalizePath() ?? "Unknown File";
 
-        // Add the relative path as the root node with "⋮..." to indicate omitted content
         sb.AppendLine($"{relativePath}:");
         sb.AppendLine("│");
 
@@ -31,7 +31,8 @@ public class TreeStructureGeneratorService : ITreeStructureGeneratorService
             .Select(group => new { CaptureKey = group.Key, Values = group.ToList() })
             .Where(x =>
                 x.Values.All(v =>
-                    (!string.IsNullOrEmpty(v.CodeChunk) && !isFull) || (!string.IsNullOrEmpty(v.Definition) && isFull)
+                    (!string.IsNullOrWhiteSpace(v.CodeChunk) && !isFull)
+                    || (!string.IsNullOrWhiteSpace(v.Definition) && isFull)
                 )
             )
             .OrderBy(g => g.CaptureKey)
@@ -52,15 +53,16 @@ public class TreeStructureGeneratorService : ITreeStructureGeneratorService
     {
         foreach (var item in items)
         {
-            var code = !string.IsNullOrEmpty(item.CodeChunk) ? item.CodeChunk : item.Definition;
-            if (string.IsNullOrEmpty(code))
+            var code = !string.IsNullOrWhiteSpace(item.CodeChunk) ? item.CodeChunk : item.Definition;
+            if (string.IsNullOrWhiteSpace(code))
                 continue;
 
+            // Add first line (signature or declaration) with current indentation
             WriteChildrenCodeLine(sb, indent, code);
         }
 
         // Add omitted code indicator if there are no further child nodes
-        if (items.Count > 0)
+        if (items.Count != 0)
         {
             sb.AppendLine($"{indent}⋮...");
         }
@@ -83,17 +85,32 @@ public class TreeStructureGeneratorService : ITreeStructureGeneratorService
 
     private static void WriteChildrenCodeLine(StringBuilder sb, string indent, string itemDefinition)
     {
-        var lines = itemDefinition.Trim().Split('\n');
+        // Split lines into an array while preserving leading whitespace and handling blank lines
+        var lines = itemDefinition
+            .Split('\n')
+            .Select(line => line.TrimEnd()) // Retain leading whitespace but trim trailing
+            .ToArray();
 
-        // Write first line with bullet
+        if (lines.Length == 0)
+            return;
+
+        // Write the first line (e.g., method signature or declaration) with a tree branch
         sb.AppendLine($"{indent}├── {lines[0]}");
 
-        // Write subsequent lines with additional indentation, preserving each line's original indent
+        // Apply additional indentation to method bodies or any nested blocks
         string lineIndent = indent + "│   ";
         for (int i = 1; i < lines.Length; i++)
         {
-            string formattedLine = lineIndent + lines[i];
-            sb.AppendLine(formattedLine);
+            if (string.IsNullOrWhiteSpace(lines[i]))
+            {
+                // Preserve blank lines with appropriate tree indentation
+                sb.AppendLine(lineIndent);
+            }
+            else
+            {
+                // Indent content lines correctly under the method or block
+                sb.AppendLine($"{lineIndent}{lines[i]}");
+            }
         }
     }
 

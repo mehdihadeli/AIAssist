@@ -3,10 +3,8 @@ using AIAssistant.Contracts;
 using AIAssistant.Contracts.CodeAssist;
 using AIAssistant.Models;
 using AIAssistant.Models.Options;
-using AIAssistant.Prompts;
 using BuildingBlocks.SpectreConsole.Contracts;
 using BuildingBlocks.Utils;
-using Clients.Models;
 using Humanizer;
 using Microsoft.Extensions.Options;
 using Spectre.Console;
@@ -16,42 +14,40 @@ namespace AIAssistant.Services.CodeAssistStrategies;
 
 public class EmbeddingCodeAssist(
     IEmbeddingService embeddingService,
-    ICodeFileTreeGeneratorService codeFileTreeGeneratorService,
     ILLMClientManager llmClientManager,
     ISpectreUtilities spectreUtilities,
     IChatSessionManager chatSessionManager,
     IOptions<AppOptions> appOptions,
-    IPromptCache promptCache
+    IContextService contextService,
+    IPromptManager promptManager
 ) : ICodeAssist
 {
     public async Task LoadInitCodeFiles(string contextWorkingDirectory, IList<string>? codeFiles)
     {
-        var codeFilesMap = codeFileTreeGeneratorService
-            .GetOrAddCodeTreeMapFromFiles(contextWorkingDirectory, codeFiles)
-            .ToList();
-
-        if (codeFilesMap is null || codeFilesMap.Count == 0)
-            throw new Exception("Not found any files to load.");
+        contextService.AddContextFolder(contextWorkingDirectory);
+        contextService.AddOrUpdateFiles(codeFiles);
 
         var session = chatSessionManager.GetCurrentActiveSession();
+        var files = contextService.GetAllFiles();
+        var codeFileMaps = files.Select(x => x.CodeFileMap).ToList();
 
-        await AddOrUpdateCodeFilesToCache(codeFilesMap, session);
+        await AddOrUpdateCodeFilesToCache(codeFileMaps, session);
     }
 
-    public async Task AddOrUpdateCodeFilesToCache(IList<string>? codeFiles)
+    public async Task AddOrUpdateCodeFiles(IList<string>? codeFiles)
     {
-        if (codeFiles is null || !codeFiles.Any())
+        if (codeFiles is null || codeFiles.Count == 0)
             return;
 
+        contextService.AddOrUpdateFiles(codeFiles);
+
         var session = chatSessionManager.GetCurrentActiveSession();
+        var codeFileMaps = contextService.GetFiles(codeFiles).Select(x => x.CodeFileMap).ToList();
 
-        // Update tree code map
-        var updatedCodeFilesMap = codeFileTreeGeneratorService.AddOrUpdateCodeTreeMapFromFiles(codeFiles).ToList();
-
-        await AddOrUpdateCodeFilesToCache(updatedCodeFilesMap, session);
+        await AddOrUpdateCodeFilesToCache(codeFileMaps, session);
     }
 
-    public Task<IEnumerable<string>> GetCodeTreeContentsFromCache(IList<string>? codeFiles)
+    public Task<IEnumerable<string>> GetCodeTreeContents(IList<string>? codeFiles)
     {
         if (codeFiles is null || !codeFiles.Any())
             return Task.FromResult(Enumerable.Empty<string>());
@@ -67,7 +63,7 @@ public class EmbeddingCodeAssist(
                         .Contains(doc.Metadata[nameof(CodeEmbedding.RelativeFilePath).Camelize()].NormalizePath())
             )
             .Select(x => x.TreeOriginalCode)
-            .Select(x => SharedPrompts.AddCodeBlock(x));
+            .Select(x => promptManager.AddCodeBlock(x));
 
         return Task.FromResult(filesTreeToUpdate);
     }
@@ -83,22 +79,27 @@ public class EmbeddingCodeAssist(
         }
 
         // Prepare context from relevant code snippets
-        var codeContext = SharedPrompts.CreateLLMContext(relatedEmbeddingsResult.CodeEmbeddings);
+        var embeddingOriginalTreeCodes = relatedEmbeddingsResult
+            .CodeEmbeddings.Select(x => x.TreeOriginalCode)
+            .ToList();
 
-        var systemCodeAssistPrompt = promptCache.GetPrompt(
-            CommandType.Code,
-            llmClientManager.ChatModel.ModelOption.CodeDiffType,
-            new { codeContext = codeContext, askMoreContextPrompt = string.Empty }
+        var systemPrompt = promptManager.GetSystemPrompt(
+            embeddingOriginalTreeCodes,
+            llmClientManager.ChatModel.ModelOption.CodeAssistType,
+            llmClientManager.ChatModel.ModelOption.CodeDiffType
         );
 
         // Generate a response from the language model (e.g., OpenAI or Llama)
         var completionStreams = llmClientManager.GetCompletionStreamAsync(
             userQuery: userQuery,
-            systemContext: systemCodeAssistPrompt
+            systemPrompt: systemPrompt
         );
 
         await foreach (var streamItem in completionStreams)
         {
+            if (streamItem is null)
+                continue;
+
             yield return streamItem;
         }
     }

@@ -7,10 +7,6 @@ For understanding context you should consider following rules:
 - Don't return response for `code blocks` in `tree structures` format.
 - The code files are based on a `relative path` that exists in the `root` level of tree structure for each file and your response should be based on `relativePath`.
 - You have following codes in your context:
-{{codeContext}}
-    
-{{askMoreContextPrompt}}
-    
 
 Create a Merge Conflict like format showing the specified changes to the provided code. Follow these guidelines to ensure the output is in a familiar, high-level, and flexible format:
 

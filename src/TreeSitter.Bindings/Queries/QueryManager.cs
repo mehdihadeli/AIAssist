@@ -7,7 +7,7 @@ using Humanizer;
 
 namespace TreeSitter.Bindings.Queries;
 
-public static class QueryManager
+public class QueryManager
 {
     // A thread-safe cache to store previously fetched queries
     private static readonly ConcurrentDictionary<string, string> _queryCache = new();
@@ -32,7 +32,7 @@ public static class QueryManager
                     $"{nameof(TreeSitter)}.{nameof(Bindings)}.{QueryConstants.DefaultQueries}.{templateName}";
 
                 // Render the embedded template
-                string scmQueryContentTemplate = FilesUtilities.RenderEmbeddedTemplate(assembly, fullResourceName);
+                string scmQueryContentTemplate = FilesUtilities.ReadEmbeddedResource(assembly, fullResourceName);
 
                 return scmQueryContentTemplate;
             }

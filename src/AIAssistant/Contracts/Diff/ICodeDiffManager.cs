@@ -4,6 +4,6 @@ namespace AIAssistant.Contracts.Diff;
 
 public interface ICodeDiffManager
 {
-    IList<FileChange> GetFileChanges(string diff);
-    void ApplyChanges(IList<FileChange> changes, string contextWorkingDirectory);
+    public void ApplyChanges(IList<DiffResult> diffResults, string contextWorkingDirectory);
+    IList<DiffResult> ParseDiffResults(string diffContent, string contextWorkingDirectory);
 }

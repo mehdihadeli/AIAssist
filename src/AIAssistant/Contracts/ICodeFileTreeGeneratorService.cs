@@ -4,6 +4,9 @@ namespace AIAssistant.Contracts;
 
 public interface ICodeFileTreeGeneratorService
 {
-    IEnumerable<CodeFileMap> GetOrAddCodeTreeMapFromFiles(string contextWorkingDir, IList<string>? extraFiles = null);
-    IEnumerable<CodeFileMap> AddOrUpdateCodeTreeMapFromFiles(IList<string>? files);
+    IList<CodeFileMap> GetCodeFilesMap(IList<string> files);
+    CodeFileMap? GetCodeFileMap(string file);
+    IList<CodeFileMap> AddContextCodeFilesMap(IList<string> files);
+    IList<CodeFileMap> AddOrUpdateCodeFilesMap(IList<string> files);
+    CodeFileMap? AddOrUpdateCodeFileMap(string file);
 }

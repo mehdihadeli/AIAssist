@@ -20,6 +20,8 @@ using Spectre.Console;
 
 namespace Clients;
 
+// Ref: https://github.com/ollama/ollama/blob/main/docs/api.md
+
 public class OllamaClient(
     IHttpClientFactory httpClientFactory,
     IOptions<LLMOptions> options,
@@ -30,6 +32,7 @@ public class OllamaClient(
 {
     private readonly Model _chatModel = cacheModels.GetModel(options.Value.ChatModel);
     private readonly Model _embeddingModel = cacheModels.GetModel(options.Value.EmbeddingsModel);
+    private const int MaxRequestSizeInBytes = 100 * 1024; // 100KB
 
     public async Task<ChatCompletionResponse?> GetCompletionAsync(
         ChatCompletionRequest chatCompletionRequest,
@@ -37,6 +40,7 @@ public class OllamaClient(
     )
     {
         await ValidateMaxInputToken(chatCompletionRequest);
+        ValidateRequestSizeAndContent(chatCompletionRequest);
 
         // https://github.com/ollama/ollama/blob/main/docs/api.md#generate-a-chat-completion
         var requestBody = new
@@ -52,7 +56,7 @@ public class OllamaClient(
             stream = false,
         };
 
-        var client = httpClientFactory.CreateClient("llm_client");
+        var client = httpClientFactory.CreateClient("llm_chat_client");
 
         // https://github.com/App-vNext/Polly#handing-return-values-and-policytresult
         var httpResponseMessage = await combinedPolicy.ExecuteAsync(async () =>
@@ -90,12 +94,7 @@ public class OllamaClient(
     )
     {
         await ValidateMaxInputToken(chatCompletionRequest);
-
-        foreach (var item in chatCompletionRequest.Items)
-        {
-            AnsiConsole.WriteLine(item.Prompt);
-            AnsiConsole.WriteLine("------------");
-        }
+        ValidateRequestSizeAndContent(chatCompletionRequest);
 
         // https://github.com/ollama/ollama/blob/main/docs/api.md#generate-a-chat-completion
         // https://github.com/ollama/ollama/pull/6784
@@ -113,64 +112,72 @@ public class OllamaClient(
             keep_alive = "30m",
         };
 
-        var client = httpClientFactory.CreateClient("llm_client");
+        var client = httpClientFactory.CreateClient("llm_chat_client");
 
         // Execute the policy with streaming support
         var httpResponseMessage = await combinedPolicy.ExecuteAsync(async () =>
         {
-            var request = new HttpRequestMessage(HttpMethod.Post, "api/chat")
-            {
-                Content = JsonContent.Create(requestBody),
-            };
-
-            // Send the request and get the response
-            var response = await client.SendAsync(request, HttpCompletionOption.ResponseHeadersRead, cancellationToken);
+            var response = await client.PostAsJsonAsync("api/chat", requestBody, cancellationToken: cancellationToken);
 
             return response;
         });
 
-        // https://platform.openai.com/docs/api-reference/chat/create#chat-create-stream
-        // https://cookbook.openai.com/examples/how_to_stream_completions
-        // Read the response stream
-        await using var responseStream = await httpResponseMessage.Content.ReadAsStreamAsync(cancellationToken);
-
-        using var streamReader = new StreamReader(responseStream);
-
-        while (!streamReader.EndOfStream)
+        if (httpResponseMessage.IsSuccessStatusCode)
         {
-            var jsonData = await streamReader.ReadLineAsync(cancellationToken);
+            // https://platform.openai.com/docs/api-reference/chat/create#chat-create-stream
+            // https://cookbook.openai.com/examples/how_to_stream_completions
+            // Read the response stream
+            await using var responseStream = await httpResponseMessage.Content.ReadAsStreamAsync(cancellationToken);
 
-            if (string.IsNullOrEmpty(jsonData) || string.IsNullOrWhiteSpace(jsonData))
-                continue;
+            using var streamReader = new StreamReader(responseStream);
 
-            var completionResponse = JsonSerializer.Deserialize<LlamaCompletionResponse>(
-                jsonData,
-                options: JsonObjectSerializer.SnakeCaseOptions
-            );
-
-            HandleException(httpResponseMessage, completionResponse);
-
-            var completionMessage = completionResponse.Message.Content;
-
-            if (completionResponse.Done)
+            while (!streamReader.EndOfStream)
             {
-                // https://github.com/ollama/ollama/blob/main/docs/api.md#response-9
-                var inputTokens = completionResponse.PromptEvalCount;
-                var outTokens = completionResponse.EvalCount;
-                var inputCostPerToken = _chatModel.ModelInformation.InputCostPerToken;
-                var outputCostPerToken = _chatModel.ModelInformation.OutputCostPerToken;
+                var jsonData = await streamReader.ReadLineAsync(cancellationToken);
 
-                ValidateMaxToken(inputTokens + outTokens);
+                if (string.IsNullOrEmpty(jsonData) || string.IsNullOrWhiteSpace(jsonData))
+                    continue;
 
-                yield return new ChatCompletionResponse(
-                    completionMessage,
-                    new TokenUsageResponse(inputTokens, inputCostPerToken, outTokens, outputCostPerToken)
+                var completionStreamResponse = JsonSerializer.Deserialize<LlamaCompletionResponse>(
+                    jsonData,
+                    options: JsonObjectSerializer.SnakeCaseOptions
                 );
+
+                if (completionStreamResponse is null)
+                    continue;
+
+                var completionMessage = completionStreamResponse.Message.Content;
+
+                if (completionMessage is null)
+                    continue;
+
+                if (completionStreamResponse.Done)
+                {
+                    // https://github.com/ollama/ollama/blob/main/docs/api.md#response-9
+                    var inputTokens = completionStreamResponse.PromptEvalCount;
+                    var outTokens = completionStreamResponse.EvalCount;
+                    var inputCostPerToken = _chatModel.ModelInformation.InputCostPerToken;
+                    var outputCostPerToken = _chatModel.ModelInformation.OutputCostPerToken;
+
+                    ValidateMaxToken(inputTokens + outTokens);
+
+                    yield return new ChatCompletionResponse(
+                        completionMessage,
+                        new TokenUsageResponse(inputTokens, inputCostPerToken, outTokens, outputCostPerToken)
+                    );
+                }
+                else
+                {
+                    yield return new ChatCompletionResponse(completionMessage, null);
+                }
             }
-            else
-            {
-                yield return new ChatCompletionResponse(completionMessage, null);
-            }
+        }
+        else
+        {
+            var completionResponse = await httpResponseMessage.Content.ReadFromJsonAsync<LlamaCompletionResponse>(
+                cancellationToken: cancellationToken
+            );
+            HandleException(httpResponseMessage, completionResponse);
         }
     }
 
@@ -180,6 +187,7 @@ public class OllamaClient(
     )
     {
         await ValidateMaxInputToken(input);
+        ValidateRequestSizeAndContent(input);
 
         // https://github.com/ollama/ollama/blob/main/docs/api.md#generate-embeddings
         var requestBody = new
@@ -190,7 +198,7 @@ public class OllamaClient(
             keep_alive = "30m",
         };
 
-        var client = httpClientFactory.CreateClient("llm_client");
+        var client = httpClientFactory.CreateClient("llm_embeddings_client");
 
         // https://github.com/App-vNext/Polly#handing-return-values-and-policytresult
         var httpResponseMessage = await combinedPolicy.ExecuteAsync(async () =>
@@ -270,6 +278,24 @@ public class OllamaClient(
         {
             throw new OllamaException(
                 $"'max_token' count: {maxTokenCount.FormatCommas()} is larger than configured 'max_token' count: {_chatModel.ModelInformation.MaxTokens.FormatCommas()}, if you need more token change the configuration.",
+                HttpStatusCode.BadRequest
+            );
+        }
+    }
+
+    private void ValidateRequestSizeAndContent(ChatCompletionRequest chatCompletionRequest)
+    {
+        ValidateRequestSizeAndContent(string.Concat(chatCompletionRequest.Items.Select(x => x.Prompt)));
+    }
+
+    private void ValidateRequestSizeAndContent(string input)
+    {
+        var requestBodySizeInBytes = System.Text.Encoding.UTF8.GetByteCount(input);
+
+        if (requestBodySizeInBytes > MaxRequestSizeInBytes)
+        {
+            throw new OllamaException(
+                $"Request size {requestBodySizeInBytes} bytes exceeds the 100KB limit.",
                 HttpStatusCode.BadRequest
             );
         }

@@ -53,11 +53,14 @@ public class VectorCollection<T>(string name) : IVectorCollection<T>
             .Values.Select(doc => new
             {
                 Document = doc,
-                SimilarityScore = CosineSimilarity(doc.Embeddings, queryEmbedding, doc),
+                SimilarityScore = CosineSimilarity(doc.Embeddings, queryEmbedding),
             })
             .Where(doc => metadataFilter == null || MetadataMatches(doc.Document.Metadata, metadataFilter));
 
-        query = query.OrderByDescending(result => result.SimilarityScore).ToList();
+        query = query
+            .Where(x => x.SimilarityScore >= threshold)
+            .OrderByDescending(result => result.SimilarityScore)
+            .ToList();
 
         if (!query.Any())
         {
@@ -87,17 +90,17 @@ public class VectorCollection<T>(string name) : IVectorCollection<T>
         return filter.All(kvp => documentMetadata.ContainsKey(kvp.Key) && documentMetadata[kvp.Key] == kvp.Value);
     }
 
-    private double CosineSimilarity(IList<double> vec1, IList<double> vec2, T document)
+    private decimal CosineSimilarity(IList<double> vec1, IList<double> vec2)
     {
         var dotProduct = vec1.Zip(vec2, (a, b) => a * b).Sum();
         var magnitude1 = Math.Sqrt(vec1.Sum(v => v * v));
         var magnitude2 = Math.Sqrt(vec2.Sum(v => v * v));
 
         if (magnitude1 == 0 || magnitude2 == 0)
-            return 0.0;
+            return 0.0m;
 
-        var result = dotProduct / (magnitude1 * magnitude2);
+        var result = (dotProduct / (magnitude1 * magnitude2));
 
-        return result;
+        return Convert.ToDecimal(result);
     }
 }

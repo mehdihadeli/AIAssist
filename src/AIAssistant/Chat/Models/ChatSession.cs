@@ -25,23 +25,18 @@ public class ChatSession
         return chatItem;
     }
 
-    public ChatItem TrySetSystemContext(string? systemContext)
+    public void TrySetSystemContext(string? systemPrompt)
     {
-        var systemChatHistory = ChatHistory.HistoryItems.SingleOrDefault(x => x.Role == RoleType.System);
-        if (systemChatHistory is not null)
+        if (ChatHistory.HistoryItems.Any(x => x.Role == RoleType.System))
         {
-            // system cache is first prompt in the system, and we don't update it. With adding history items we extend our context.
-            return new ChatItem(systemChatHistory.Role, systemChatHistory.Prompt);
+            return;
         }
-        else if (systemChatHistory is null && string.IsNullOrEmpty(systemContext))
+        else if (string.IsNullOrEmpty(systemPrompt))
         {
-            throw new Exception("There is not system context in the messages list.");
+            throw new Exception("There is no system prompts in the messages list.");
         }
 
-        var chatItem = new ChatItem(RoleType.System, systemContext!);
-        ChatHistory.AddToHistory(chatItem);
-
-        return chatItem;
+        ChatHistory.AddToHistory(new ChatItem(RoleType.System, systemPrompt));
     }
 
     public ChatItem AddAssistantChatItem(

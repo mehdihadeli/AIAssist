@@ -6,118 +6,212 @@ namespace AIAssistant.Diff;
 
 public class CodeDiffUpdater(ISpectreUtilities spectreUtilities) : ICodeDiffUpdater
 {
-    public void ApplyChanges(IEnumerable<FileChange> changes, string contextWorkingDirectory)
+    public void ApplyChanges(IList<DiffResult> diffResults, string contextWorkingDirectory)
     {
-        foreach (var change in changes)
-        {
-            var filePath = Path.Combine(contextWorkingDirectory, change.FilePath);
+        ArgumentNullException.ThrowIfNull(diffResults);
 
-            try
+        if (string.IsNullOrWhiteSpace(contextWorkingDirectory))
+        {
+            spectreUtilities.ErrorText("Working directory cannot be null or whitespace.");
+        }
+
+        foreach (var diffResult in diffResults)
+        {
+            if (diffResult.Replacements == null)
             {
-                switch (change.FileCodeChangeType)
+                HandleCodeChange(diffResult, contextWorkingDirectory);
+                return;
+            }
+
+            HandleReplacementFile(diffResult, contextWorkingDirectory);
+        }
+    }
+
+    private void HandleCodeChange(DiffResult diffResult, string contextWorkingDirectory)
+    {
+        ApplyFileChanges(
+            diffResult.ModifiedLines,
+            diffResult.Action,
+            diffResult.OriginalPath,
+            diffResult.ModifiedPath,
+            contextWorkingDirectory
+        );
+    }
+
+    private void HandleReplacementFile(DiffResult diffResult, string contextWorkingDirectory)
+    {
+        var noneExistPath = "/dev/null";
+
+        if (diffResult.OriginalPath == noneExistPath && diffResult.ModifiedPath != noneExistPath)
+        {
+            // New file creation
+            var modifiedFilePath = Path.Combine(contextWorkingDirectory, diffResult.ModifiedPath);
+
+            Directory.CreateDirectory(Path.GetDirectoryName(modifiedFilePath)!);
+
+            if (diffResult.Replacements is not null && diffResult.Replacements.Any())
+            {
+                var updatedLines = ApplyReplacements(new List<string>(), diffResult.Replacements);
+                File.WriteAllText(modifiedFilePath, string.Join("\n", updatedLines));
+                spectreUtilities.SuccessText($"File created: {modifiedFilePath}");
+            }
+            else
+            {
+                spectreUtilities.ErrorText("No modified lines provided for new file creation.");
+            }
+        }
+        else if (diffResult.ModifiedPath == noneExistPath && diffResult.OriginalPath != noneExistPath)
+        {
+            // File deletion
+            var originalFilePath = Path.Combine(contextWorkingDirectory, diffResult.OriginalPath);
+
+            if (File.Exists(originalFilePath) && diffResult.Replacements is not null && diffResult.Replacements.Any())
+            {
+                File.Delete(originalFilePath);
+                spectreUtilities.SuccessText($"File deleted: {originalFilePath}");
+            }
+            else
+            {
+                spectreUtilities.ErrorText($"File not found for deletion: {originalFilePath}");
+            }
+        }
+        else if (diffResult.OriginalPath != diffResult.ModifiedPath)
+        {
+            // File rename or move
+            var originalFilePath = Path.Combine(contextWorkingDirectory, diffResult.OriginalPath);
+            var modifiedFilePath = Path.Combine(contextWorkingDirectory, diffResult.ModifiedPath);
+
+            if (File.Exists(originalFilePath))
+            {
+                Directory.CreateDirectory(Path.GetDirectoryName(modifiedFilePath)!);
+                File.Move(originalFilePath, modifiedFilePath, overwrite: true);
+                if (diffResult.Replacements is not null && diffResult.Replacements.Any())
                 {
-                    case CodeChangeType.Add:
-                        HandleNewFile(change, contextWorkingDirectory);
-                        break;
-                    case CodeChangeType.Delete:
-                        HandleFileDeletion(filePath);
-                        break;
-                    case CodeChangeType.Update:
-                        HandleFileUpdate(change, contextWorkingDirectory);
-                        break;
+                    var modifiedFileLines = File.ReadAllLines(modifiedFilePath).ToList();
+                    var updatedLines = ApplyReplacements(modifiedFileLines, diffResult.Replacements);
+                    File.WriteAllText(modifiedFilePath, string.Join("\n", updatedLines));
                 }
             }
-            catch (Exception ex)
+            else
             {
-                spectreUtilities.Exception($"Failed to update file {filePath}", ex);
+                spectreUtilities.ErrorText($"Original file not found for rename/move: {originalFilePath}");
             }
         }
-    }
-
-    private void HandleNewFile(FileChange change, string contextWorkingDirectory)
-    {
-        var content = change.ChangeLines.OrderBy(l => l.LineNumber).Select(l => l.Content).ToList();
-        var fullPath = Path.Combine(contextWorkingDirectory, change.FilePath);
-        Directory.CreateDirectory(Path.GetDirectoryName(fullPath)!);
-        File.WriteAllLines(fullPath, content);
-        spectreUtilities.SuccessText($"File created: {change.FilePath}");
-    }
-
-    private void HandleFileDeletion(string filePath)
-    {
-        if (File.Exists(filePath))
+        else
         {
-            File.Delete(filePath);
-            spectreUtilities.SuccessText($"File deleted: {filePath}");
+            // File update
+            if (diffResult.Replacements is null || !diffResult.Replacements.Any())
+                return;
+
+            var originalFilePath = Path.Combine(contextWorkingDirectory, diffResult.OriginalPath);
+            var modifiedFilePath = Path.Combine(contextWorkingDirectory, diffResult.ModifiedPath);
+
+            if (!File.Exists(originalFilePath))
+            {
+                spectreUtilities.ErrorText($"Original file not found: {originalFilePath}");
+            }
+
+            var originalLines = File.ReadAllLines(originalFilePath).ToList();
+            var updatedLines = ApplyReplacements(originalLines, diffResult.Replacements);
+
+            Directory.CreateDirectory(Path.GetDirectoryName(modifiedFilePath)!);
+            File.WriteAllText(modifiedFilePath, string.Join("\n", updatedLines));
+
+            spectreUtilities.SuccessText($"File updated: {modifiedFilePath}");
         }
     }
 
-    private void HandleFileUpdate(FileChange fileChange, string contextWorkingDirectory)
+    private List<string> ApplyReplacements(List<string> originalLines, IList<Replacement> replacements)
     {
-        var filePath = Path.Combine(contextWorkingDirectory, fileChange.FilePath);
+        var updatedLines = new List<string>(originalLines);
 
-        // For complete file replacements (all changes are new)
-        if (fileChange.ChangeLines.All(l => l.LineCodeChangeType != CodeChangeType.Update))
+        // Sort replacements in descending order to avoid index shifting issues
+        var sortedReplacements = replacements.OrderByDescending(r => r.OriginalFileStartIndex).ToList();
+
+        foreach (var replacement in sortedReplacements)
         {
-            var content = fileChange
-                .ChangeLines.Where(l => l.LineCodeChangeType == CodeChangeType.Add)
-                .OrderBy(l => l.LineNumber)
-                .Select(l => l.Content)
-                .ToList();
+            // Remove the range of lines specified by StartIndex and EndIndex
+            if (replacement.OriginalFileEndIndex > replacement.OriginalFileStartIndex)
+            {
+                updatedLines.RemoveRange(
+                    replacement.OriginalFileStartIndex,
+                    replacement.OriginalFileEndIndex - replacement.OriginalFileStartIndex
+                );
+            }
 
-            Directory.CreateDirectory(Path.GetDirectoryName(filePath)!);
-            File.WriteAllLines(filePath, content);
-            spectreUtilities.SuccessText($"File replaced: {fileChange.FilePath}");
+            // Insert the new lines at the StartIndex position
+            updatedLines.InsertRange(replacement.OriginalFileStartIndex, replacement.NewLines);
+        }
+
+        return updatedLines;
+    }
+
+    private void ApplyFileChanges(
+        IEnumerable<string>? modifiedLines,
+        ActionType actionType,
+        string originalPath,
+        string modifiedPath,
+        string contextWorkingDirectory
+    )
+    {
+        if (modifiedLines is null)
             return;
-        }
 
-        // For partial updates
-        var originalLines = File.Exists(filePath) ? File.ReadAllLines(filePath).ToList() : new List<string>();
-        var updatedLines = new List<string>();
-        var currentOriginalIndex = 0;
-
-        var changesByLine = fileChange
-            .ChangeLines.OrderBy(l => l.LineNumber)
-            .GroupBy(l => l.LineNumber)
-            .ToDictionary(g => g.Key, g => g.ToList());
-
-        var maxLineNumber = changesByLine.Keys.Max();
-
-        for (int lineNumber = 1; lineNumber <= maxLineNumber; lineNumber++)
+        try
         {
-            if (changesByLine.TryGetValue(lineNumber, out var changes))
+            switch (actionType)
             {
-                foreach (var change in changes)
+                case ActionType.Add:
                 {
-                    switch (change.LineCodeChangeType)
-                    {
-                        case CodeChangeType.Add:
-                            updatedLines.Add(change.Content);
-                            break;
-                        case CodeChangeType.Delete:
-                            if (currentOriginalIndex < originalLines.Count)
-                            {
-                                currentOriginalIndex++;
-                            }
-                            break;
-                        case CodeChangeType.Update:
-                            if (currentOriginalIndex < originalLines.Count)
-                            {
-                                updatedLines.Add(change.Content);
-                            }
-                            currentOriginalIndex++;
-                            break;
-                    }
+                    var modifiedFullPath = Path.Combine(contextWorkingDirectory, modifiedPath);
+                    Directory.CreateDirectory(Path.GetDirectoryName(modifiedFullPath)!);
+                    // Normalize and write lines to prevent extra blank lines because WriteAllLines
+                    File.WriteAllText(modifiedFullPath, string.Join("\n", modifiedLines));
+                    spectreUtilities.SuccessText($"File created: {modifiedPath}");
+
+                    break;
                 }
-            }
-            else if (currentOriginalIndex < originalLines.Count)
-            {
-                updatedLines.Add(originalLines[currentOriginalIndex++]);
+
+                case ActionType.Update:
+                {
+                    var modifiedFullPath = Path.Combine(contextWorkingDirectory, modifiedPath);
+                    Directory.CreateDirectory(Path.GetDirectoryName(modifiedFullPath)!);
+                    if (File.Exists(modifiedFullPath))
+                    {
+                        // Normalize and write lines to prevent blank lines
+                        File.WriteAllText(modifiedFullPath, string.Join("\n", modifiedLines));
+                        spectreUtilities.SuccessText($"File updated: {modifiedPath}");
+                    }
+                    else
+                    {
+                        spectreUtilities.ErrorText($"File {modifiedPath} does not exist to modify.");
+                    }
+                    break;
+                }
+
+                case ActionType.Delete:
+                {
+                    var originalFullPath = Path.Combine(contextWorkingDirectory, originalPath);
+                    if (File.Exists(originalFullPath))
+                    {
+                        File.Delete(originalFullPath);
+                        spectreUtilities.SuccessText($"File deleted: {originalPath}");
+                    }
+                    else
+                    {
+                        spectreUtilities.ErrorText($"File {originalPath} not found for deletion.");
+                    }
+                    break;
+                }
+
+                default:
+                    spectreUtilities.ErrorText($"Unsupported action type: {actionType}");
+                    break;
             }
         }
-
-        Directory.CreateDirectory(Path.GetDirectoryName(filePath)!);
-        File.WriteAllLines(filePath, updatedLines);
-        spectreUtilities.SuccessText($"File updated: {fileChange.FilePath}");
+        catch (Exception ex)
+        {
+            spectreUtilities.ErrorText($"Failed to update file {modifiedPath} \n {ex.Message}");
+        }
     }
 }

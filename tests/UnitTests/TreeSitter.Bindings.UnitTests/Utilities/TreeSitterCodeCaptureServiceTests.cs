@@ -8,7 +8,9 @@ namespace TreeSitter.Bindings.UnitTests.Utilities;
 
 public class TreeSitterCodeCaptureServiceTests
 {
-    private readonly TreeSitterCodeCaptureService _treeSitterCodeCaptureService = new();
+    private readonly TreeSitterCodeCaptureService _treeSitterCodeCaptureService = new TreeSitterCodeCaptureService(
+        new TreeSitterParser()
+    );
 
     [Fact]
     public void CreateTreeSitterMap_WithValidCSharpFiles_ShouldReturnCodeFileMaps()

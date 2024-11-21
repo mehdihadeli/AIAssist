@@ -1,3 +1,4 @@
+using System.Collections;
 using AIAssistant.Models;
 
 namespace AIAssistant.Contracts.CodeAssist;
@@ -9,6 +10,6 @@ public interface ICodeAssistantManager
     Task AddOrUpdateCodeFilesToCache(IList<string>? codeFiles);
     Task<IEnumerable<string>> GetCodeTreeContentsFromCache(IList<string>? codeFiles);
     bool CheckExtraContextForResponse(string response, out IList<string> requiredFiles);
-    IList<FileChange> ParseResponseCodeBlocks(string response);
-    void ApplyChangesToFiles(IList<FileChange> codeBlocks, string contextWorkingDirectory);
+    IList<DiffResult> ParseDiffResults(string diffContent, string contextWorkingDirectory);
+    void ApplyChanges(IList<DiffResult> diffResults, string contextWorkingDirectory);
 }

@@ -100,6 +100,9 @@ public class CacheModels : ICacheModels
                         overrideModelOption?.CodeDiffType ?? modelOption?.CodeDiffType ?? CodeDiffType.CodeBlockDiff,
                     Threshold = overrideModelOption?.Threshold ?? modelOption?.Threshold ?? 0.4m,
                     Temperature = overrideModelOption?.Temperature ?? modelOption?.Temperature ?? 0.2m,
+                    ApiVersion = overrideModelOption?.ApiVersion ?? modelOption?.ApiVersion,
+                    BaseAddress = overrideModelOption?.BaseAddress ?? modelOption?.BaseAddress,
+                    DeploymentId = overrideModelOption?.DeploymentId ?? modelOption?.DeploymentId,
                 },
                 ModelInformation = new ModelInformation
                 {

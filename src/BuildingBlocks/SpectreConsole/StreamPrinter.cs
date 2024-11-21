@@ -42,7 +42,7 @@ public class StreamPrinter(IAnsiConsole console, bool useMarkdown)
             .Cropping(VerticalOverflowCropping.Top)
             .StartAsync(async ctx =>
             {
-                if (!string.IsNullOrEmpty(firstStream))
+                if (firstStream is not null)
                 {
                     await UpdateLiveDisplay(firstStream, ctx);
 

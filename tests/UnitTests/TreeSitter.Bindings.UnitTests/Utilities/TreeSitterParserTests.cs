@@ -6,6 +6,7 @@ namespace TreeSitter.Bindings.UnitTests.Utilities;
 
 public class TreeSitterParserTests
 {
+    private TreeSitterParser _treeSitterParser = new();
     private readonly string _code =
         @"
 
@@ -58,7 +59,7 @@ class Program
         ProgrammingLanguage language = ProgrammingLanguage.Csharp;
 
         // Act
-        var result = TreeSitterParser.GetRootNodeExpression(language, _code);
+        var result = _treeSitterParser.GetRootNodeExpression(language, _code);
 
         // Assert
         result.Should().NotBeNullOrEmpty("because the root node expression should be generated");
@@ -73,7 +74,7 @@ class Program
         unsafe
         {
             // Act
-            var result = TreeSitterParser.GetParser(language);
+            var result = _treeSitterParser.GetParser(language);
 
             var parser = *result;
 
@@ -91,7 +92,7 @@ class Program
         unsafe
         {
             // Act
-            var result = TreeSitterParser.GetLanguage(language);
+            var result = _treeSitterParser.GetLanguage(language);
             var tsLanguage = *result;
 
             // Assert
@@ -110,7 +111,7 @@ class Program
         unsafe
         {
             // Act
-            var result = TreeSitterParser.GetLanguage(unsupportedLanguage);
+            var result = _treeSitterParser.GetLanguage(unsupportedLanguage);
             Assert.True(result == null);
         }
     }

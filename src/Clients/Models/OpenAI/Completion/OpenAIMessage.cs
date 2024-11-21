@@ -7,5 +7,5 @@ public class OpenAIMessage
 {
     [JsonConverter(typeof(RoleTypeConverter))]
     public RoleType Role { get; set; }
-    public string Content { get; set; } = string.Empty;
+    public string? Content { get; set; } = string.Empty;
 }

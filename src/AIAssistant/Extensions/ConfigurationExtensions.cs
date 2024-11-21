@@ -14,8 +14,8 @@ public static class ConfigurationExtensions
 
         AddEmbeddedConfiguration(builder);
 
-        // load `config.json` from `current working directory`
-        builder.Configuration.AddJsonFile("config.json", optional: true, reloadOnChange: true);
+        // load `aiassist-config.json` from `current working directory`
+        builder.Configuration.AddJsonFile("aiassist-config.json", optional: true, reloadOnChange: true);
 
         return builder;
     }
@@ -23,7 +23,7 @@ public static class ConfigurationExtensions
     private static void AddEmbeddedConfiguration(HostApplicationBuilder builder)
     {
         var assembly = Assembly.GetExecutingAssembly();
-        var resourceName = $"{nameof(AIAssistant)}.default-config.json";
+        var resourceName = $"{nameof(AIAssistant)}.aiassist-config.json";
 
         using var stream = assembly.GetManifestResourceStream(resourceName);
 
@@ -37,7 +37,7 @@ public static class ConfigurationExtensions
         }
         else
         {
-            Console.WriteLine("Embedded default-config.json not found.");
+            Console.WriteLine("Embedded 'aiassist-config.json' not found.");
         }
     }
 }
