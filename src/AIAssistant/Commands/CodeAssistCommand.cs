@@ -45,10 +45,6 @@ public class CodeAssistCommand(
         [Description("[grey] llm model for chatting with ai. for example llama3.1.[/].")]
         public string? ChatModel { get; set; }
 
-        [CommandOption("-t|--code-assist-type <code-assist-type>")]
-        [Description("[grey] the type of code assist. it can be `embedding` or `summary`.[/].")]
-        public CodeAssistType? CodeAssistType { get; set; }
-
         [CommandOption("-e|--embedding-model <embedding-model>")]
         [Description("[grey] llm model for embedding purpose. for example mxbai_embed_large.[/].")]
         public string? EmbeddingModel { get; set; }
@@ -59,9 +55,23 @@ public class CodeAssistCommand(
 
         [CommandOption("-d|--diff <diff-type>")]
         [Description(
-            "[grey] the diff tool for showing changes. it can be `unifieddiff`, `codeblockdiff` and `mergeconflictdiff`.[/]."
+            "[grey] the diff tool for showing changes. it can be `unified-diff`, `code-block-diff` and `search-replace-diff`.[/]."
         )]
         public CodeDiffType? CodeDiffType { get; set; }
+
+        [CommandOption("-t|--code-assist-type <code-assist-type>")]
+        [Description("[grey] the type of code assist. it can be `embedding` or `summary`.[/].")]
+        public CodeAssistType? CodeAssistType { get; set; }
+
+        [CommandOption("--threshold <threshold")]
+        [Description("[grey] the threshold is a value for using in the `embedding`.[/].")]
+        public decimal? Threshold { get; set; }
+
+        [CommandOption("--temperature <temperature")]
+        [Description(
+            "[grey] the temperature is a value for controlling creativity or randomness on the llm response.[/]."
+        )]
+        public decimal? Temperature { get; set; }
 
         [CommandOption("--chat-api-key <key>")]
         [Description("[grey] the chat model api key.[/].")]
@@ -245,32 +255,33 @@ public class CodeAssistCommand(
         if (settings.CodeDiffType is not null)
         {
             ArgumentException.ThrowIfNullOrEmpty(_llmOptions.ChatModel);
-            var model = cacheModels.GetModel(_llmOptions.ChatModel);
-
-            switch (settings.CodeDiffType)
-            {
-                case CodeDiffType.UnifiedDiff:
-                    model.ModelOption.CodeDiffType = CodeDiffType.UnifiedDiff;
-                    break;
-                case CodeDiffType.CodeBlockDiff:
-                    model.ModelOption.CodeDiffType = CodeDiffType.CodeBlockDiff;
-                    break;
-            }
+            var chatModel = cacheModels.GetModel(_llmOptions.ChatModel);
+            chatModel.ModelOption.CodeDiffType = settings.CodeDiffType.Value;
         }
 
         if (settings.CodeAssistType is not null)
         {
             ArgumentException.ThrowIfNullOrEmpty(_llmOptions.ChatModel);
-            var model = cacheModels.GetModel(_llmOptions.ChatModel);
-            switch (settings.CodeAssistType)
-            {
-                case CodeAssistType.Embedding:
-                    model.ModelOption.CodeAssistType = CodeAssistType.Embedding;
-                    break;
-                case CodeAssistType.Summary:
-                    model.ModelOption.CodeAssistType = CodeAssistType.Summary;
-                    break;
-            }
+            var chatModel = cacheModels.GetModel(_llmOptions.ChatModel);
+            chatModel.ModelOption.CodeAssistType = settings.CodeAssistType.Value;
+        }
+
+        if (settings.Threshold is not null)
+        {
+            ArgumentException.ThrowIfNullOrEmpty(_llmOptions.EmbeddingsModel);
+            var embeddingsModel = cacheModels.GetModel(_llmOptions.EmbeddingsModel);
+            embeddingsModel.ModelOption.Threshold = settings.Threshold.Value;
+        }
+
+        if (settings.Temperature is not null)
+        {
+            ArgumentException.ThrowIfNullOrEmpty(_llmOptions.ChatModel);
+            var chatModel = cacheModels.GetModel(_llmOptions.ChatModel);
+            chatModel.ModelOption.Temperature = settings.Temperature.Value;
+
+            ArgumentException.ThrowIfNullOrEmpty(_llmOptions.EmbeddingsModel);
+            var embeddingsModel = cacheModels.GetModel(_llmOptions.EmbeddingsModel);
+            embeddingsModel.ModelOption.Temperature = settings.Temperature.Value;
         }
     }
 }

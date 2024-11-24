@@ -37,7 +37,7 @@ public class AnthropicClient(
         CancellationToken cancellationToken = default
     )
     {
-        await ValidateMaxInputToken(chatCompletionRequest);
+        await ValidateChatMaxInputToken(chatCompletionRequest);
         ValidateRequestSizeAndContent(chatCompletionRequest);
 
         var requestBody = new
@@ -80,7 +80,7 @@ public class AnthropicClient(
         var inputCostPerToken = _chatModel.ModelInformation.InputCostPerToken;
         var outputCostPerToken = _chatModel.ModelInformation.OutputCostPerToken;
 
-        ValidateMaxToken(inputTokens + outTokens);
+        ValidateChatMaxToken(inputTokens + outTokens);
 
         return new ChatCompletionResponse(
             completionMessage,
@@ -93,7 +93,7 @@ public class AnthropicClient(
         [EnumeratorCancellation] CancellationToken cancellationToken = default
     )
     {
-        await ValidateMaxInputToken(chatCompletionRequest);
+        await ValidateChatMaxInputToken(chatCompletionRequest);
         ValidateRequestSizeAndContent(chatCompletionRequest);
 
         var requestBody = new
@@ -165,7 +165,7 @@ public class AnthropicClient(
                         var inputCostPerToken = _chatModel.ModelInformation.InputCostPerToken;
                         var outputCostPerToken = _chatModel.ModelInformation.OutputCostPerToken;
 
-                        ValidateMaxToken(inputTokens + outTokens);
+                        ValidateChatMaxToken(inputTokens + outTokens);
 
                         yield return new ChatCompletionResponse(
                             null,
@@ -193,7 +193,11 @@ public class AnthropicClient(
         }
     }
 
-    public Task<EmbeddingsResponse?> GetEmbeddingAsync(string input, CancellationToken cancellationToken = default)
+    public Task<EmbeddingsResponse?> GetEmbeddingAsync(
+        string input,
+        string? path,
+        CancellationToken cancellationToken = default
+    )
     {
         throw new NotImplementedException();
     }
@@ -228,14 +232,11 @@ public class AnthropicClient(
         }
     }
 
-    private Task ValidateMaxInputToken(ChatCompletionRequest chatCompletionRequest)
+    private async Task ValidateChatMaxInputToken(ChatCompletionRequest chatCompletionRequest)
     {
-        return ValidateMaxInputToken(string.Concat(chatCompletionRequest.Items.Select(x => x.Prompt)));
-    }
-
-    private async Task ValidateMaxInputToken(string input)
-    {
-        var inputTokenCount = await tokenizer.GetTokenCount(input);
+        var inputTokenCount = await tokenizer.GetTokenCount(
+            string.Concat(chatCompletionRequest.Items.Select(x => x.Prompt))
+        );
 
         if (
             _chatModel.ModelInformation.MaxInputTokens > 0
@@ -247,14 +248,14 @@ public class AnthropicClient(
                 {
                     StatusCode = (int)HttpStatusCode.BadRequest,
                     Message =
-                        $"'max_input_token' count: {inputTokenCount.FormatCommas()} is larger than configured 'max_input_token' count: {_chatModel.ModelInformation.MaxInputTokens.FormatCommas()}, if you need more tokens change the configuration.",
+                        $"current chat 'max_input_token' count: {inputTokenCount.FormatCommas()} is larger than configured 'max_input_token' count: {_chatModel.ModelInformation.MaxInputTokens.FormatCommas()}",
                 },
                 HttpStatusCode.BadRequest
             );
         }
     }
 
-    private void ValidateMaxToken(int maxTokenCount)
+    private void ValidateChatMaxToken(int maxTokenCount)
     {
         if (_chatModel.ModelInformation.MaxTokens > 0 && maxTokenCount > _chatModel.ModelInformation.MaxTokens)
         {
@@ -263,7 +264,7 @@ public class AnthropicClient(
                 {
                     StatusCode = (int)HttpStatusCode.BadRequest,
                     Message =
-                        $"'max_token' count: {maxTokenCount.FormatCommas()} is larger than configured 'max_token' count: {_chatModel.ModelInformation.MaxTokens.FormatCommas()}, if you need more tokens change the configuration.",
+                        $"current chat 'max_token' count: {maxTokenCount.FormatCommas()} is larger than configured 'max_token' count: {_chatModel.ModelInformation.MaxTokens.FormatCommas()}.",
                 },
                 HttpStatusCode.BadRequest
             );

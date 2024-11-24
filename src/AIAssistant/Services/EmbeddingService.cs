@@ -3,7 +3,8 @@ using AIAssistant.Contracts;
 using AIAssistant.Data;
 using AIAssistant.Dtos;
 using AIAssistant.Models;
-using AIAssistant.Prompts;
+using BuildingBlocks.LLM;
+using BuildingBlocks.Utils;
 using TreeSitter.Bindings.CustomTypes.TreeParser;
 
 namespace AIAssistant.Services;
@@ -23,10 +24,11 @@ public class EmbeddingService(
         decimal totalCost = 0;
 
         IList<CodeEmbedding> codeEmbeddings = new List<CodeEmbedding>();
+
         foreach (var codeFileMap in codeFilesMap)
         {
-            var input = promptManager.AddEmbeddingInputString(codeFileMap.TreeSitterFullCode);
-            var embeddingResult = await llmClientManager.GetEmbeddingAsync(input);
+            var input = promptManager.GetEmbeddingInputString(codeFileMap.TreeSitterFullCode);
+            var embeddingResult = await llmClientManager.GetEmbeddingAsync(input, codeFileMap.RelativePath);
 
             codeEmbeddings.Add(
                 new CodeEmbedding
@@ -80,6 +82,6 @@ public class EmbeddingService(
 
     public async Task<GetEmbeddingResult> GenerateEmbeddingForUserInput(string userInput)
     {
-        return await llmClientManager.GetEmbeddingAsync(userInput);
+        return await llmClientManager.GetEmbeddingAsync(userInput, null);
     }
 }

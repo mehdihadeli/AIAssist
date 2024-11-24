@@ -88,11 +88,15 @@ public class LLMClientManager : ILLMClientManager
         );
     }
 
-    public async Task<GetEmbeddingResult> GetEmbeddingAsync(string input, CancellationToken cancellationToken = default)
+    public async Task<GetEmbeddingResult> GetEmbeddingAsync(
+        string input,
+        string? path,
+        CancellationToken cancellationToken = default
+    )
     {
         var llmClientStratgey = _clientFactory.CreateClient(EmbeddingModel.ModelInformation.AIProvider);
 
-        var embeddingResponse = await llmClientStratgey.GetEmbeddingAsync(input, cancellationToken);
+        var embeddingResponse = await llmClientStratgey.GetEmbeddingAsync(input, path, cancellationToken);
 
         // in embedding output tokens and its cost is 0
         var inputTokens = embeddingResponse?.TokenUsage?.InputTokens ?? await _tokenizer.GetTokenCount(input);

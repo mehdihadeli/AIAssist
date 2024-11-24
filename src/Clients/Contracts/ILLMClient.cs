@@ -13,5 +13,9 @@ public interface ILLMClient
         ChatCompletionRequest chatCompletionRequest,
         CancellationToken cancellationToken = default
     );
-    Task<EmbeddingsResponse?> GetEmbeddingAsync(string input, CancellationToken cancellationToken = default);
+    Task<EmbeddingsResponse?> GetEmbeddingAsync(
+        string input,
+        string? path,
+        CancellationToken cancellationToken = default
+    );
 }

@@ -393,3 +393,45 @@ temp/
 aiassist-config.json
 .aiassistignore
 .gitignore
+
+# Ignore common image file types
+*.jpg
+*.jpeg
+*.png
+*.gif
+*.bmp
+*.tiff
+*.tif
+*.webp
+*.ico
+*.svg
+
+# Ignore common video file types
+*.mp4
+*.mov
+*.avi
+*.mkv
+*.flv
+*.wmv
+*.webm
+*.mpeg
+*.mpg
+*.m4v
+*.3gp
+*.3g2
+
+# Ignore common document file types
+*.doc
+*.docx
+*.xls
+*.xlsx
+*.ppt
+*.pptx
+*.pdf
+*.txt
+*.rtf
+*.odt
+*.ods
+*.odp
+*.csv
+*.tsv

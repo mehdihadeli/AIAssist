@@ -13,5 +13,9 @@ public interface ILLMClientManager
         string? systemPrompt,
         CancellationToken cancellationToken = default
     );
-    Task<GetEmbeddingResult> GetEmbeddingAsync(string input, CancellationToken cancellationToken = default);
+    Task<GetEmbeddingResult> GetEmbeddingAsync(
+        string input,
+        string? path,
+        CancellationToken cancellationToken = default
+    );
 }

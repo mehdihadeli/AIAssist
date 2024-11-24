@@ -25,6 +25,8 @@ public class ContextService(
         {
             _currentContext.ContextItems.Add(folderItemContext);
         }
+
+        ValidateLoadedFilesLimit();
     }
 
     public void AddOrUpdateFolder(IList<string>? foldersRelativePath)
@@ -57,6 +59,8 @@ public class ContextService(
                 _currentContext.ContextItems.Add(folderItemsContext);
             }
         }
+
+        ValidateLoadedFilesLimit();
     }
 
     public void AddOrUpdateFiles(IList<string>? filesRelativePath)
@@ -86,6 +90,8 @@ public class ContextService(
                 _currentContext.ContextItems.Add(fileItemContext);
             }
         }
+
+        ValidateLoadedFilesLimit();
     }
 
     public void AddOrUpdateUrls(IList<string>? urls)
@@ -152,6 +158,16 @@ public class ContextService(
         return matchingFiles;
     }
 
+    public void ValidateLoadedFilesLimit()
+    {
+        if (GetAllFiles().Count == _appOptions.NumberOfFilesLimit)
+        {
+            throw new Exception(
+                $"File limit count {appOptions.Value.NumberOfFilesLimit} exceeded. You can ignore files and folders that are not necessary with adding them to '.aiassistignore' file or change the level of loading folders by setting 'AppOption.TreeLevel'"
+            );
+        }
+    }
+
     private void CollectFilesFromFolder(FolderItemContext folder, List<FileItemContext> fileList)
     {
         // Add all files from the folder
@@ -192,11 +208,20 @@ public class ContextService(
         try
         {
             var validFolders = folders.Where(folder => !fileService.IsPathIgnored(folder)).ToList();
+            int treeLevel = _appOptions.TreeLevel;
 
             foreach (var folderPath in validFolders)
             {
                 currentFolder = folderPath;
-                var subFoldersItemContext = InitSubFoldersItemContext(folderPath, contextWorkingDir, useShortSummary);
+
+                // Start recursion with current depth set to 1
+                var subFoldersItemContext = InitSubFoldersItemContext(
+                    folderPath,
+                    contextWorkingDir,
+                    useShortSummary,
+                    1,
+                    treeLevel
+                );
                 var filesItemsContext = InitFilesItemContext(folderPath, contextWorkingDir, useShortSummary);
 
                 var folderRelativePath = Path.GetRelativePath(contextWorkingDir, folderPath).NormalizePath();
@@ -230,7 +255,9 @@ public class ContextService(
     private IList<FolderItemContext> InitSubFoldersItemContext(
         string folderPath,
         string contextWorkingDir,
-        bool useShortSummary
+        bool useShortSummary,
+        int currentDepth,
+        int treeLevel
     )
     {
         IList<FolderItemContext> subFolders = new List<FolderItemContext>();
@@ -238,6 +265,13 @@ public class ContextService(
 
         try
         {
+            // Stop recursion if the tree level is exceeded
+            if (treeLevel > 0 && currentDepth >= treeLevel)
+            {
+                // Return empty list as no deeper levels are loaded
+                return subFolders;
+            }
+
             foreach (
                 var subFolder in Directory
                     .GetDirectories(folderPath)
@@ -249,11 +283,17 @@ public class ContextService(
                 var subFolderFilesItemContext = InitFilesItemContext(subFolder, contextWorkingDir, useShortSummary);
                 var subFolderRelativePath = Path.GetRelativePath(contextWorkingDir, subFolder).NormalizePath();
 
-                // Recursive call for each subfolder
+                // Recursive call for each subfolder, incrementing the depth
                 var subFolderContext = new FolderItemContext(
                     subFolder,
                     subFolderRelativePath,
-                    InitSubFoldersItemContext(subFolder, contextWorkingDir, useShortSummary),
+                    InitSubFoldersItemContext(
+                        subFolder,
+                        contextWorkingDir,
+                        useShortSummary,
+                        currentDepth + 1,
+                        treeLevel
+                    ),
                     subFolderFilesItemContext
                 );
 

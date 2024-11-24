@@ -113,7 +113,7 @@ public class PromptManager(IFileService fileService) : IPromptManager
         return renderBlock;
     }
 
-    public string AddEmbeddingInputString(string treeSitterCode)
+    public string GetEmbeddingInputString(string treeSitterCode)
     {
         return RenderPromptTemplate(
             AIAssistantConstants.Prompts.CodeEmbeddingTemplate,

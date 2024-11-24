@@ -31,7 +31,7 @@ public class EmbeddingCodeAssist(
         var files = contextService.GetAllFiles();
         var codeFileMaps = files.Select(x => x.CodeFileMap).ToList();
 
-        await AddOrUpdateCodeFilesToCache(codeFileMaps, session);
+        await AddOrUpdateEmbeddingsForFiles(codeFileMaps, session);
     }
 
     public async Task AddOrUpdateCodeFiles(IList<string>? codeFiles)
@@ -44,7 +44,7 @@ public class EmbeddingCodeAssist(
         var session = chatSessionManager.GetCurrentActiveSession();
         var codeFileMaps = contextService.GetFiles(codeFiles).Select(x => x.CodeFileMap).ToList();
 
-        await AddOrUpdateCodeFilesToCache(codeFileMaps, session);
+        await AddOrUpdateEmbeddingsForFiles(codeFileMaps, session);
     }
 
     public Task<IEnumerable<string>> GetCodeTreeContents(IList<string>? codeFiles)
@@ -104,15 +104,15 @@ public class EmbeddingCodeAssist(
         }
     }
 
-    private async Task AddOrUpdateCodeFilesToCache(IList<CodeFileMap> codeFileMaps, ChatSession chatSession)
+    private async Task AddOrUpdateEmbeddingsForFiles(IList<CodeFileMap> codeFileMaps, ChatSession chatSession)
     {
         // generate embeddings data with using llms embeddings apis
         // https://ollama.com/blog/embedding-models
         // https://github.com/microsoft/semantic-kernel/blob/main/dotnet/notebooks/06-memory-and-embeddings.ipynb
         // https://github.com/chroma-core/chroma
-        var relatedEmbeddingsResult = await embeddingService.AddOrUpdateEmbeddingsForFiles(codeFileMaps, chatSession);
+        var filesEmbedding = await embeddingService.AddOrUpdateEmbeddingsForFiles(codeFileMaps, chatSession);
 
-        PrintEmbeddingCost(relatedEmbeddingsResult.TotalTokensCount, relatedEmbeddingsResult.TotalCost);
+        PrintEmbeddingCost(filesEmbedding.TotalTokensCount, filesEmbedding.TotalCost);
     }
 
     private void PrintEmbeddingCost(int totalCount, decimal totalCost)

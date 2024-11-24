@@ -15,7 +15,7 @@ public interface IPromptManager
     void AddPrompt(string embeddedResourceName, CommandType commandType, CodeDiffType? diffType);
     string GetPrompt(CommandType commandType, CodeDiffType? diffType, object? parameters);
     string AddCodeBlock(string treeSitterCode);
-    string AddEmbeddingInputString(string treeSitterCode);
+    string GetEmbeddingInputString(string treeSitterCode);
     string CreateLLMContext(IEnumerable<string> codeBlocks);
     string FilesAddedToChat(IEnumerable<string> fullFileContents);
     string? GetSystemPrompt(IList<string>? codes, CodeAssistType codeAssistType, CodeDiffType diffType);

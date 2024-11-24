@@ -38,7 +38,7 @@ public class OpenAiClient(
         CancellationToken cancellationToken = default
     )
     {
-        await ValidateMaxInputToken(chatCompletionRequest);
+        await ValidateChatMaxInputToken(chatCompletionRequest);
         ValidateRequestSizeAndContent(chatCompletionRequest);
 
         // https://platform.openai.com/docs/api-reference/chat/create
@@ -84,7 +84,7 @@ public class OpenAiClient(
         var inputCostPerToken = _chatModel.ModelInformation.InputCostPerToken;
         var outputCostPerToken = _chatModel.ModelInformation.OutputCostPerToken;
 
-        ValidateMaxToken(inputTokens + outTokens);
+        ValidateChatMaxToken(inputTokens + outTokens);
 
         return new ChatCompletionResponse(
             completionMessage,
@@ -97,7 +97,7 @@ public class OpenAiClient(
         [EnumeratorCancellation] CancellationToken cancellationToken = default
     )
     {
-        await ValidateMaxInputToken(chatCompletionRequest);
+        await ValidateChatMaxInputToken(chatCompletionRequest);
         ValidateRequestSizeAndContent(chatCompletionRequest);
 
         var requestBody = new
@@ -184,7 +184,7 @@ public class OpenAiClient(
                         var inputCostPerToken = _chatModel.ModelInformation.InputCostPerToken;
                         var outputCostPerToken = _chatModel.ModelInformation.OutputCostPerToken;
 
-                        ValidateMaxToken(inputTokens + outTokens);
+                        ValidateChatMaxToken(inputTokens + outTokens);
 
                         yield return new ChatCompletionResponse(
                             null,
@@ -205,10 +205,11 @@ public class OpenAiClient(
 
     public async Task<EmbeddingsResponse?> GetEmbeddingAsync(
         string input,
+        string? path,
         CancellationToken cancellationToken = default
     )
     {
-        await ValidateMaxInputToken(input);
+        await ValidateEmbeddingMaxInputToken(input, path);
         ValidateRequestSizeAndContent(input);
 
         var requestBody = new { input = new[] { input }, model = _embeddingModel.Name.Trim() };
@@ -242,7 +243,7 @@ public class OpenAiClient(
         var inputCostPerToken = _embeddingModel.ModelInformation.InputCostPerToken;
         var outputCostPerToken = _embeddingModel.ModelInformation.OutputCostPerToken;
 
-        ValidateMaxToken(inputTokens + outTokens);
+        ValidateEmbeddingMaxToken(inputTokens + outTokens, path);
 
         return new EmbeddingsResponse(
             embedding,
@@ -277,14 +278,11 @@ public class OpenAiClient(
         }
     }
 
-    private Task ValidateMaxInputToken(ChatCompletionRequest chatCompletionRequest)
+    private async Task ValidateChatMaxInputToken(ChatCompletionRequest chatCompletionRequest)
     {
-        return ValidateMaxInputToken(string.Concat(chatCompletionRequest.Items.Select(x => x.Prompt)));
-    }
-
-    private async Task ValidateMaxInputToken(string input)
-    {
-        var inputTokenCount = await tokenizer.GetTokenCount(input);
+        var inputTokenCount = await tokenizer.GetTokenCount(
+            string.Concat(chatCompletionRequest.Items.Select(x => x.Prompt))
+        );
 
         if (
             _chatModel.ModelInformation.MaxInputTokens > 0
@@ -296,14 +294,41 @@ public class OpenAiClient(
                 {
                     StatusCode = (int)HttpStatusCode.BadRequest,
                     Message =
-                        $"'max_input_token' count: {inputTokenCount.FormatCommas()} is larger than configured 'max_input_token' count: {_chatModel.ModelInformation.MaxInputTokens.FormatCommas()}, if you need more tokens change the configuration.",
+                        $"current chat 'max_input_token' count: {inputTokenCount.FormatCommas()} is larger than configured 'max_input_token' count: {_chatModel.ModelInformation.MaxInputTokens.FormatCommas()}",
                 },
                 HttpStatusCode.BadRequest
             );
         }
     }
 
-    private void ValidateMaxToken(int maxTokenCount)
+    private async Task ValidateEmbeddingMaxInputToken(string input, string? path = null)
+    {
+        var inputTokenCount = await tokenizer.GetTokenCount(input);
+
+        if (
+            _embeddingModel.ModelInformation.MaxInputTokens > 0
+            && inputTokenCount > _embeddingModel.ModelInformation.MaxInputTokens
+        )
+        {
+            var moreInfo = path is not null
+                ? $"if file '{
+                                   path
+                               }' is not required for embedding you can ignore that by adding file or folder to '.aiassistignore'"
+                : "";
+
+            throw new OpenAIException(
+                new OpenAIError
+                {
+                    StatusCode = (int)HttpStatusCode.BadRequest,
+                    Message =
+                        $"embedding {path} 'max_input_token' count: {inputTokenCount.FormatCommas()} is larger than configured 'max_input_token' count: {_embeddingModel.ModelInformation.MaxInputTokens.FormatCommas()}. {moreInfo}",
+                },
+                HttpStatusCode.BadRequest
+            );
+        }
+    }
+
+    private void ValidateChatMaxToken(int maxTokenCount)
     {
         if (_chatModel.ModelInformation.MaxTokens > 0 && maxTokenCount > _chatModel.ModelInformation.MaxTokens)
         {
@@ -312,7 +337,26 @@ public class OpenAiClient(
                 {
                     StatusCode = (int)HttpStatusCode.BadRequest,
                     Message =
-                        $"'max_token' count: {maxTokenCount.FormatCommas()} is larger than configured 'max_token' count: {_chatModel.ModelInformation.MaxTokens.FormatCommas()}, if you need more tokens change the configuration.",
+                        $"current chat 'max_token' count: {maxTokenCount.FormatCommas()} is larger than configured 'max_token' count: {_chatModel.ModelInformation.MaxTokens.FormatCommas()}.",
+                },
+                HttpStatusCode.BadRequest
+            );
+        }
+    }
+
+    private void ValidateEmbeddingMaxToken(int maxTokenCount, string? path)
+    {
+        if (
+            _embeddingModel.ModelInformation.MaxTokens > 0
+            && maxTokenCount > _embeddingModel.ModelInformation.MaxTokens
+        )
+        {
+            throw new OpenAIException(
+                new OpenAIError
+                {
+                    StatusCode = (int)HttpStatusCode.BadRequest,
+                    Message =
+                        $"embedding {path} 'max_token' count: {maxTokenCount.FormatCommas()} is larger than configured 'max_token' count: {_chatModel.ModelInformation.MaxTokens.FormatCommas()}.",
                 },
                 HttpStatusCode.BadRequest
             );
