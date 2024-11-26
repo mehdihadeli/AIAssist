@@ -1,4 +1,4 @@
-namespace BuildingBlocks.DotEnv;
+namespace BuildingBlocks.Environments;
 
 public static class DotEnv
 {
