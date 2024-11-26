@@ -9,6 +9,7 @@ on:
     - nuget-package
     paths-ignore:
     - 'tests/**'
+    
 env:
   GHC_SOURCE: ${{ vars.GHC_SOURCE }}
   #  FEED_SOURCE: https://api.nuget.org/v3/index.json

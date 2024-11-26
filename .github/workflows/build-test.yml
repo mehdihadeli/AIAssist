@@ -8,12 +8,15 @@ on:
     branches:
       - "main"
       - "nuget-package"
+    paths-ignore:
+      - 'tree-sitter/**'
+      - 'scripts/**'
   pull_request:
     branches:
       - "main"
-  paths-ignore:
-    - 'tree-sitter/**'
-    - 'scripts/**'
+    paths-ignore:
+      - 'tree-sitter/**'
+      - 'scripts/**'
     
 env:
   DOTNET_VERSION: "8.0.*"
