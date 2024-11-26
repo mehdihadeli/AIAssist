@@ -3,21 +3,21 @@ name: Publish-Nuget
 on:
   push:
     tags:
-      - v* # for publish package after each release to nuget
+    - 'v*' # Matches tag names like v1.0.0 for releases
     branches:
-      - main # for publish package and each commit to github
-      - nuget-package
+    - main
+    - nuget-package
     paths-ignore:
-      - 'tests/**'
+    - 'tests/**'
 env:
   GHC_SOURCE: ${{ vars.GHC_SOURCE }}
-#  FEED_SOURCE: https://api.nuget.org/v3/index.json
-#  FEED_API_KEY: ${{ secrets.FEED_API_KEY }}
+  #  FEED_SOURCE: https://api.nuget.org/v3/index.json
+  #  FEED_API_KEY: ${{ secrets.FEED_API_KEY }}
   GHC_API_KEY: ${{ secrets.GHC_TOKEN }}
   NuGetDirectory: ${{ github.workspace }}/nuget
 
 jobs:
-  
+
   build-tree-sitter:
     name: Build Tree-Sitter Binaries
     runs-on: ${{ matrix.os }}
@@ -26,131 +26,129 @@ jobs:
         os: [ ubuntu-latest, windows-latest ]
 
     steps:
-      - name: Checkout repository
-        uses: actions/checkout@v4
+    - name: Checkout repository
+      uses: actions/checkout@v4
 
-      - name: Set up GCC (Linux only)
-        if: runner.os == 'Linux'
-        run: sudo apt-get update && sudo apt-get install -y gcc
+    - name: Set up GCC (Linux only)
+      if: runner.os == 'Linux'
+      run: sudo apt-get update && sudo apt-get install -y gcc
 
-      - name: Set up GCC (Windows only)
-        if: runner.os == 'Windows'
-        uses: actions/setup-msys2@v2
-        with:
-          msystem: MINGW64
-          install: gcc
+    - name: Set up GCC (Windows only)
+      if: runner.os == 'Windows'
+      uses: actions/setup-msys2@v2
+      with:
+        msystem: MINGW64
+        install: gcc
 
-      - name: Build Tree-Sitter binaries on ${{ matrix.os }}
-        run: |
-          chmod +x ./scripts/install_tree_sitter.sh
-          ./scripts/install_tree_sitter.sh
+    - name: Build Tree-Sitter binaries on ${{ matrix.os }}
+      run: |
+        chmod +x ./scripts/install_tree_sitter.sh
+        ./scripts/install_tree_sitter.sh
 
-      - name: Upload compiled binaries
-        uses: actions/upload-artifact@v4
-        with:
-          name: tree-sitter-binaries-${{ matrix.os }}
-          path: tree-sitter/bins/*
-          
+    - name: Upload compiled binaries
+      uses: actions/upload-artifact@v4
+      with:
+        name: tree-sitter-binaries-${{ matrix.os }}
+        path: tree-sitter/bins/*
+
   create-nuget:
     runs-on: ubuntu-latest
-      
-    needs: [build-tree-sitter]
+
+    needs: [ build-tree-sitter ]
 
     steps:
-      - uses: actions/checkout@v4
-        with:
-          # https://github.com/dotnet/Nerdbank.GitVersioning/blob/main/doc/cloudbuild.md#github-actions
-          fetch-depth: 0 # avoid shallow clone so nbgv can do its work.
-      - name: Setup .NET
-        uses: actions/setup-dotnet@v4
-        with:
-          dotnet-version: "8.0.x"
+    - uses: actions/checkout@v4
+      with:
+        # https://github.com/dotnet/Nerdbank.GitVersioning/blob/main/doc/cloudbuild.md#github-actions
+        fetch-depth: 0 # avoid shallow clone so nbgv can do its work.
+    - name: Setup .NET
+      uses: actions/setup-dotnet@v4
+      with:
+        dotnet-version: "8.0.x"
 
-      - name: Cache NuGet Packages
-        uses: actions/cache@v4
-        with:
-          key: ai-assist-nuget
-          path: ~/.nuget/packages
+    - name: Cache NuGet Packages
+      uses: actions/cache@v4
+      with:
+        key: ai-assist-nuget
+        path: ~/.nuget/packages
 
-      - name: Download Linux binaries
-        uses: actions/download-artifact@v4
-        with:
-          name: tree-sitter-binaries-ubuntu-latest
-          path: ${{ env.NuGetDirectory }}
-      
-      - name: Download Windows binaries
-        uses: actions/download-artifact@v4
-        with:
-          name: tree-sitter-binaries-windows-latest
-          path: ${{ env.NuGetDirectory }}
-      
-      # https://github.com/dotnet/Nerdbank.GitVersioning/blob/main/doc/nbgv-cli.md
-      - name: Install Nerdbank.GitVersioning
-        run: dotnet tool install -g nbgv
+    - name: Download Linux binaries
+      uses: actions/download-artifact@v4
+      with:
+        name: tree-sitter-binaries-ubuntu-latest
+        path: ${{ env.NuGetDirectory }}
 
-      - name: Get NuGetPackageVersion
-        id: get_version
-        run: |
-          nugetVersion=$(nbgv get-version | grep "NuGetPackageVersion" | awk -F': ' '{print $2}' | xargs)
-          echo "NuGetPackageVersion: $nugetVersion"
-          echo "::set-output name=nuget_version::$nugetVersion"
+    - name: Download Windows binaries
+      uses: actions/download-artifact@v4
+      with:
+        name: tree-sitter-binaries-windows-latest
+        path: ${{ env.NuGetDirectory }}
 
-      - name: Restore dependencies
-        run: dotnet restore AIAssistant.sln
+    # https://github.com/dotnet/Nerdbank.GitVersioning/blob/main/doc/nbgv-cli.md
+    - name: Install Nerdbank.GitVersioning
+      run: dotnet tool install -g nbgv
 
-      - name: Build Version
-        run: dotnet build AIAssistant.sln -c Release --no-restore
+    - name: Get NuGetPackageVersion
+      id: get_version
+      run: |
+        nugetVersion=$(nbgv get-version | grep "NuGetPackageVersion" | awk -F': ' '{print $2}' | xargs)
+        echo "NuGetPackageVersion: $nugetVersion"
+        echo "::set-output name=nuget_version::$nugetVersion"
 
-      # https://learn.microsoft.com/en-us/dotnet/core/tools/dotnet-pack
-      - name: Pack NuGet Package Version ${{ steps.get_version.outputs.nuget_version }}
-        run: dotnet pack --no-restore src/AIAssist/AIAssist.csproj -c Release -o ${{ env.NuGetDirectory }}
-        
-        # Publish the NuGet package as an artifact, so they can be used in the following jobs
-      - uses: actions/upload-artifact@v4
-        with:
-          name: nuget
-          if-no-files-found: error
-          retention-days: 7
-          path: ${{ env.NuGetDirectory }}/*.nupkg
+    - name: Restore dependencies
+      run: dotnet restore AIAssistant.sln
+
+    - name: Build Version
+      run: dotnet build AIAssistant.sln -c Release --no-restore
+
+    # https://learn.microsoft.com/en-us/dotnet/core/tools/dotnet-pack
+    - name: Pack NuGet Package Version ${{ steps.get_version.outputs.nuget_version }}
+      run: dotnet pack --no-restore src/AIAssist/AIAssist.csproj -c Release -o ${{ env.NuGetDirectory }}
+      # Publish the NuGet package as an artifact, so they can be used in the following jobs
+    - uses: actions/upload-artifact@v4
+      with:
+        name: nuget
+        if-no-files-found: error
+        retention-days: 7
+        path: ${{ env.NuGetDirectory }}/*.nupkg
 
   deploy-nuget:
     runs-on: ubuntu-latest
 
     # https://docs.github.com/en/repositories/releasing-projects-on-github/managing-releases-in-a-repository
-    needs: [create-nuget]
+    needs: [ create-nuget ]
     steps:
-      - uses: actions/checkout@v4
-        with:
-          # https://github.com/dotnet/Nerdbank.GitVersioning/blob/main/doc/cloudbuild.md#github-actions
-          fetch-depth: 0 # avoid shallow clone so nbgv can do its work.
-      # Download the NuGet package created in the previous job and copy in the root
-      - uses: actions/download-artifact@v4
-        with:
-          name: nuget
-          ## Optional. Default is $GITHUB_WORKSPACE
-          path: ${{ github.workspace}}
+    - uses: actions/checkout@v4
+      with:
+        # https://github.com/dotnet/Nerdbank.GitVersioning/blob/main/doc/cloudbuild.md#github-actions
+        fetch-depth: 0 # avoid shallow clone so nbgv can do its work.
+    # Download the NuGet package created in the previous job and copy in the root
+    - uses: actions/download-artifact@v4
+      with:
+        name: nuget
+        ## Optional. Default is $GITHUB_WORKSPACE
+        path: ${{ github.workspace}}
 
-      # Install the .NET SDK indicated in the global.json file
-      - name: Setup .NET Core
-        uses: actions/setup-dotnet@v4
-        with:
-          dotnet-version: "8.0.x"
+    # Install the .NET SDK indicated in the global.json file
+    - name: Setup .NET Core
+      uses: actions/setup-dotnet@v4
+      with:
+        dotnet-version: "8.0.x"
 
-      # https://github.com/dotnet/Nerdbank.GitVersioning/blob/main/doc/nbgv-cli.md
-      - name: Install Nerdbank.GitVersioning
-        run: dotnet tool install -g nbgv
+    # https://github.com/dotnet/Nerdbank.GitVersioning/blob/main/doc/nbgv-cli.md
+    - name: Install Nerdbank.GitVersioning
+      run: dotnet tool install -g nbgv
 
-      - name: Get NuGetPackageVersion
-        id: get_version
-        run: |
-          nugetVersion=$(nbgv get-version | grep "NuGetPackageVersion" | awk -F': ' '{print $2}' | xargs)
-          echo "NuGetPackageVersion: $nugetVersion"
-          echo "::set-output name=nuget_version::$nugetVersion"
-
-        # for publish package to github for each commit
-      - name: Publish NuGet Package Version ${{ steps.get_version.outputs.nuget_version }} to GitHub
-        run: dotnet nuget push *.nupkg --skip-duplicate --api-key ${{ env.GHC_API_KEY }} --source ${{ env.GHC_SOURCE }}
-        if: github.event_name == 'push' && (startswith(github.ref, 'refs/heads') || startswith(github.ref, 'refs/tags'))
+    - name: Get NuGetPackageVersion
+      id: get_version
+      run: |
+        nugetVersion=$(nbgv get-version | grep "NuGetPackageVersion" | awk -F': ' '{print $2}' | xargs)
+        echo "NuGetPackageVersion: $nugetVersion"
+        echo "::set-output name=nuget_version::$nugetVersion"
+      # for publish package to github for each commit
+    - name: Publish NuGet Package Version ${{ steps.get_version.outputs.nuget_version }} to GitHub
+      run: dotnet nuget push *.nupkg --skip-duplicate --api-key ${{ env.GHC_API_KEY }} --source ${{ env.GHC_SOURCE }}
+      if: github.event_name == 'push' && (startswith(github.ref, 'refs/heads') || startswith(github.ref, 'refs/tags'))
 
 #      # Publish all NuGet packages to NuGet.org
 #      # Use --skip-duplicate to prevent errors if a package with the same version already exists.
