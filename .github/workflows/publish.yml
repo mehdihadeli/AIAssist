@@ -20,7 +20,6 @@ env:
 jobs:
 
   build-tree-sitter:
-    
     runs-on: ${{ matrix.os }}
     strategy:
       matrix:
@@ -29,6 +28,7 @@ jobs:
     steps:
     - uses: actions/checkout@v4
       with:
+        submodules: true
         # https://github.com/dotnet/Nerdbank.GitVersioning/blob/main/doc/cloudbuild.md#github-actions
         fetch-depth: 0 # doing deep clone and avoid shallow clone so nbgv can do its work.
 
