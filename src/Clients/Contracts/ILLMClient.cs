@@ -1,5 +1,4 @@
 using Clients.Dtos;
-using Clients.Models;
 
 namespace Clients.Contracts;
 
@@ -14,7 +13,7 @@ public interface ILLMClient
         CancellationToken cancellationToken = default
     );
     Task<EmbeddingsResponse?> GetEmbeddingAsync(
-        string input,
+        IList<string> inputs,
         string? path,
         CancellationToken cancellationToken = default
     );

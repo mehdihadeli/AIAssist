@@ -18,7 +18,8 @@
     "InputCostPerToken": 0.00000013,
     "OutputCostPerToken": 0.000000,
     "AIProvider": "Openai",
-    "ModelType": "Embedding"
+    "ModelType": "Embedding",
+    "EmbeddingDimensions": 1024
   },
   "text-embedding-3-small": {
     "MaxTokens": 8191,
@@ -27,7 +28,8 @@
     "InputCostPerToken": 0.00000002,
     "OutputCostPerToken": 0.000000,
     "AIProvider": "Openai",
-    "ModelType": "Embedding"
+    "ModelType": "Embedding",
+    "EmbeddingDimensions": 512
   },
   "azure/gpt-4o": {
     "MaxTokens": 8192,
@@ -46,7 +48,8 @@
     "InputCostPerToken": 0.00000013,
     "OutputCostPerToken": 0.000000,
     "AIProvider": "Azure",
-    "ModelType": "Embedding"
+    "ModelType": "Embedding",
+    "EmbeddingDimensions": 1024
   },
   "azure/text-embedding-3-small": {
     "MaxTokens": 8191,
@@ -54,7 +57,8 @@
     "InputCostPerToken": 0.00000002,
     "OutputCostPerToken": 0.000000,
     "AIProvider": "Azure",
-    "ModelType": "Embedding"
+    "ModelType": "Embedding",
+    "EmbeddingDimensions": 512
   },
   "ollama/codegeex4": {
     "MaxTokens": 32768,
@@ -134,9 +138,9 @@
     "SupportsFunctionCalling": true
   },
   "ollama/llama3.2": {
-    "MaxTokens": 32768,
-    "MaxInputTokens": 8192,
-    "MaxOutputTokens": 8192,
+    "MaxTokens": 128000,
+    "MaxInputTokens": 128000,
+    "MaxOutputTokens": 4000,
     "InputCostPerToken": 0.0,
     "OutputCostPerToken": 0.0,
     "AIProvider": "Ollama",
@@ -153,8 +157,8 @@
     "ModelType": "Chat"
   },
   "ollama/nomic-embed-text": {
-    "MaxTokens": 2048,
-    "MaxInputTokens": 2048,
+    "MaxTokens": 8192,
+    "MaxInputTokens": 8192,
     "InputCostPerToken": 0.0,
     "OutputCostPerToken": 0.0,
     "AIProvider": "Ollama",
@@ -162,8 +166,8 @@
     "EmbeddingDimensions": 512
   },
   "ollama/mxbai-embed-large": {
-    "MaxTokens": 4096,
-    "MaxInputTokens": 2048,
+    "MaxTokens": 8192,
+    "MaxInputTokens": 8192,
     "InputCostPerToken": 0.0,
     "OutputCostPerToken": 0.0,
     "AIProvider": "Ollama",

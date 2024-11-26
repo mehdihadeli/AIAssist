@@ -1,3 +1,4 @@
+using System.Collections;
 using AIAssistant.Chat.Models;
 using AIAssistant.Data;
 using AIAssistant.Dtos;
@@ -9,7 +10,7 @@ namespace AIAssistant.Contracts;
 public interface IEmbeddingService
 {
     Task<AddEmbeddingsForFilesResult> AddOrUpdateEmbeddingsForFiles(
-        IEnumerable<CodeFileMap> codeFilesMap,
+        IList<CodeFileMap> codeFilesMap,
         ChatSession chatSession
     );
     Task<GetRelatedEmbeddingsResult> GetRelatedEmbeddings(string userQuery, ChatSession chatSession);

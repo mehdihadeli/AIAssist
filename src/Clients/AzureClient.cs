@@ -239,15 +239,20 @@ public class AzureClient(
     }
 
     public async Task<EmbeddingsResponse?> GetEmbeddingAsync(
-        string input,
+        IList<string> inputs,
         string? path,
         CancellationToken cancellationToken = default
     )
     {
-        await ValidateEmbeddingMaxInputToken(input);
-        ValidateRequestSizeAndContent(input);
+        await ValidateEmbeddingMaxInputToken(string.Concat(inputs));
+        ValidateRequestSizeAndContent(string.Concat(inputs));
 
-        var requestBody = new { input = new[] { input }, model = _embeddingModel.Name.Trim() };
+        var requestBody = new
+        {
+            input = inputs,
+            model = _embeddingModel.Name.Trim(),
+            dimensions = _embeddingModel.ModelInformation.EmbeddingDimensions,
+        };
 
         var client = httpClientFactory.CreateClient("llm_embeddings_client");
 
@@ -288,14 +293,14 @@ public class AzureClient(
 
         HandleException(httpResponseMessage, embeddingResponse);
 
-        var embedding = embeddingResponse.Data.FirstOrDefault()?.Embedding ?? new List<double>();
-
         var inputTokens = embeddingResponse.Usage?.PromptTokens ?? 0;
         var outTokens = embeddingResponse.Usage?.CompletionTokens ?? 0;
         var inputCostPerToken = _embeddingModel.ModelInformation.InputCostPerToken;
         var outputCostPerToken = _embeddingModel.ModelInformation.OutputCostPerToken;
 
         ValidateEmbeddingMaxToken(inputTokens + outTokens, path);
+
+        var embedding = embeddingResponse.Data?.Select(x => x.Embedding).ToList() ?? new List<IList<double>>();
 
         return new EmbeddingsResponse(
             embedding,

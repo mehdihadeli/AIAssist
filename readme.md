@@ -1,11 +1,13 @@
 # AI Assist
 
-> AI assistant for coding, chat, code explanation, review with supporting local and online language models.
+> `Context Aware` AI assistant for coding, chat, code explanation, review with supporting local and online language models.
 
 `AIAssist` is compatible with [OpenAI](https://platform.openai.com/docs/api-reference/introduction) and [Azure AI Services](https://azure.microsoft.com/en-us/products/ai-services) through apis or [Ollama models](https://ollama.com/search) through [ollama engine](https://ollama.com/) locally.
 
 > [!TIP]
 > You can use ollama and its models that are more compatible with code like [deepseek-v2.5](https://ollama.com/library/deepseek-v2.5) or [qwen2.5-coder](https://ollama.com/library/qwen2.5-coder) locally. To use local models, you will need to run [Ollama](https://github.com/ollama/ollama) process first. For running ollama you can use [ollama docker](https://ollama.com/blog/ollama-is-now-available-as-an-official-docker-image) container.
+
+Note: `vscode` and `jetbrains` plugins are in the plan and I will add them soon.
 
 ## Features
 
