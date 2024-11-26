@@ -194,7 +194,7 @@ public class AnthropicClient(
     }
 
     public Task<EmbeddingsResponse?> GetEmbeddingAsync(
-        string input,
+        IList<string> inputs,
         string? path,
         CancellationToken cancellationToken = default
     )

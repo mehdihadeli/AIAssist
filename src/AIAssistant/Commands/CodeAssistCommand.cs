@@ -63,17 +63,17 @@ public class CodeAssistCommand(
         [Description("[grey] the type of code assist. it can be `embedding` or `summary`.[/].")]
         public CodeAssistType? CodeAssistType { get; set; }
 
-        [CommandOption("--threshold <threshold")]
+        [CommandOption("--threshold <threshold>")]
         [Description("[grey] the threshold is a value for using in the `embedding`.[/].")]
         public decimal? Threshold { get; set; }
 
-        [CommandOption("--temperature <temperature")]
+        [CommandOption("--temperature <temperature>")]
         [Description(
             "[grey] the temperature is a value for controlling creativity or randomness on the llm response.[/]."
         )]
         public decimal? Temperature { get; set; }
 
-        [CommandOption("--chat-api-key <key>")]
+        [CommandOption("--chat-api-key <chat-api-key>")]
         [Description("[grey] the chat model api key.[/].")]
         public string? ChatModelApiKey { get; set; }
 
@@ -159,7 +159,7 @@ public class CodeAssistCommand(
 
             console.Write(new Rule());
 
-            userInput = "can you remove all comments from Add.cs file?";
+            //userInput = "can you remove all comments from Add.cs file?";
             _running = await internalCommandProcessor.ProcessCommand(userInput, scope);
         }
 

@@ -182,18 +182,18 @@ public class OllamaClient(
     }
 
     public async Task<EmbeddingsResponse?> GetEmbeddingAsync(
-        string input,
+        IList<string> inputs,
         string? path,
         CancellationToken cancellationToken = default
     )
     {
-        await ValidateEmbeddingMaxInputToken(input, path);
-        ValidateRequestSizeAndContent(input);
+        await ValidateEmbeddingMaxInputToken(string.Concat(inputs), path);
+        ValidateRequestSizeAndContent(string.Concat(inputs));
 
         // https://github.com/ollama/ollama/blob/main/docs/api.md#generate-embeddings
         var requestBody = new
         {
-            input = new[] { input },
+            input = inputs,
             model = _embeddingModel.Name,
             options = new { temperature = _embeddingModel.ModelOption.Temperature },
             keep_alive = "30m",
@@ -219,14 +219,14 @@ public class OllamaClient(
 
         HandleException(httpResponseMessage, embeddingResponse);
 
-        var embedding = embeddingResponse.Embeddings.FirstOrDefault() ?? new List<double>();
-
         var inputTokens = embeddingResponse.PromptEvalCount;
         var outTokens = embeddingResponse.EvalCount;
         var inputCostPerToken = _embeddingModel.ModelInformation.InputCostPerToken;
         var outputCostPerToken = _embeddingModel.ModelInformation.OutputCostPerToken;
 
         ValidateEmbeddingMaxToken(inputTokens + outTokens, path);
+
+        var embedding = embeddingResponse.Embeddings ?? new List<IList<double>>();
 
         return new EmbeddingsResponse(
             embedding,

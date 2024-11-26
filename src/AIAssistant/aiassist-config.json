@@ -1,23 +1,12 @@
 {
   "Test":"Test1",
-  "ModelsOptions": {
-    "azure/gpt-4o": {
-      "CodeDiffType": "CodeBlockDiff",
-      "CodeAssistType": "Embedding",
-      "Temperature": 0.2
-    },
-    "azure/text-embedding-3-large": {
-      "Threshold": 0.3,
-      "Temperature": 0.2
-    }
-  },
   "AppOptions": {
     "ThemeName": "dracula",
     "PrintCostEnabled": true
   },
   "LLMOptions": {
-    "ChatModel": "azure/gpt-4o",
-    "EmbeddingsModel": "azure/text-embedding-3-large"
+    "ChatModel": "ollama/llama3",
+    "EmbeddingsModel": "ollama/nomic-embed-text"
   },
   "Serilog": {
     "MinimumLevel": {

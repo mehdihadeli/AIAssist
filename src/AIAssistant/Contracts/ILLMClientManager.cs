@@ -14,7 +14,7 @@ public interface ILLMClientManager
         CancellationToken cancellationToken = default
     );
     Task<GetEmbeddingResult> GetEmbeddingAsync(
-        string input,
+        IList<string> inputs,
         string? path,
         CancellationToken cancellationToken = default
     );
