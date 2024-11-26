@@ -1,4 +1,3 @@
-using AIAssistant.Chat.Models;
 using Clients.Contracts;
 using Clients.Dtos;
 using Clients.Models;

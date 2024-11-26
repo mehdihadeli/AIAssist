@@ -1,9 +1,8 @@
-using AIAssistant.Models.Options;
-using AIAssistant.Services;
 using FluentAssertions;
 using Microsoft.Extensions.Options;
 
 namespace AIAssistant.UnitTests.Services;
+
 
 //
 // public class CodeLoaderServiceTests : IAsyncLifetime

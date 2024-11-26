@@ -26,7 +26,7 @@ lib_src="tree-sitter/tree-sitter/lib/src/lib.c"
 treesitter_bin_output="tree-sitter/bins"
 test_bin_path="tests/UnitTests/TreeSitter.Bindings.UnitTests/bin/${mode}/$dotnet_version"
 ai_assist_integration_test_bin_path="tests/IntegrationTests/AIAssistant.IntegrationTests/bin/${mode}/$dotnet_version"
-app_bin_path="src/App/bin/${mode}/$dotnet_version"
+app_bin_path="src/AIAssist/bin/${mode}/$dotnet_version"
     
 # Create the directory if it doesn't exist
 mkdir -p "${test_bin_path}"

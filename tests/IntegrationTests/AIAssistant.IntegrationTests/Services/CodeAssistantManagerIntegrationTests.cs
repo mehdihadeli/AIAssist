@@ -1,7 +1,6 @@
 using System.Text;
-using AIAssistant.Chat.Models;
-using AIAssistant.Contracts;
-using AIAssistant.Contracts.CodeAssist;
+using AIAssist.Contracts;
+using AIAssist.Contracts.CodeAssist;
 using FluentAssertions;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Hosting;
