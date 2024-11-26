@@ -48,6 +48,6 @@ jobs:
     - name: Build Version
       run: dotnet build AIAssistant.sln -c Release --no-restore
 
-#      - name: Test Version
-#        run: |
-#          dotnet test AIAssistant.sln  -c Release --no-restore  --no-build
+    - name: Test Version
+      run: |
+        dotnet test AIAssistant.sln  -c Release --no-restore  --no-build

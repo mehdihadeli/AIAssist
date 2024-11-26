@@ -16,7 +16,6 @@
     <AnalysisModeSecurity>All</AnalysisModeSecurity>
   </PropertyGroup>
 
-
   <ItemGroup>
     <PackageReference Include="Meziantou.Analyzer" Condition="$(MSBuildProjectExtension) == '.csproj'" PrivateAssets="all">
       <PrivateAssets>all</PrivateAssets>
@@ -24,27 +23,4 @@
     </PackageReference>
   </ItemGroup>
 
-  <PropertyGroup>
-    <Product>AIAssist</Product>
-    <Title>AIAssist</Title>
-    <Authors>Mehdi Hadeli</Authors>
-    <Description>Context aware AI coding assistant inside terminal to help in code development, code explanation, code refactor and review, bug fix and chat with supporting local and online language models.</Description>
-    <PackageTags>ai ollama gpt pgt-4o dotnet csharp azure-ai</PackageTags>
-    <PackageOutputPath>$(SolutionDir)nugets</PackageOutputPath>
-    <PackageReadmeFile>readme.md</PackageReadmeFile>
-    <PackageIcon>aiassist.png</PackageIcon>
-    <PackageLicenseExpression>Apache-2.0</PackageLicenseExpression>
-    <PackageProjectUrl>https://github.com/mehdihadeli/AIAssist</PackageProjectUrl>
-    <RepositoryUrl>https://github.com/mehdihadeli/AIAssist</RepositoryUrl>
-    <RepositoryType>git</RepositoryType>
-    <RepositoryBranch>main</RepositoryBranch>
-    <PublishRepositoryUrl>true</PublishRepositoryUrl>
-    <EnablePackageValidation>true</EnablePackageValidation>
-  </PropertyGroup>
-
-  <ItemGroup>
-    <None Include="..\readme.md" Pack="true" PackagePath="\" />
-    <!--        <None Include="..\assets\logo\aiassist.png" Pack="true" PackagePath="" />-->
-  </ItemGroup>
-  
 </Project>
