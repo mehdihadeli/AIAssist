@@ -36,7 +36,7 @@ jobs:
 
     - name: Set up GCC (Windows only)
       if: runner.os == 'Windows'
-      uses: actions/setup-msys2@v2
+      uses: msys2/setup-msys2@v2
       with:
         msystem: MINGW64
         install: gcc
