@@ -20,14 +20,13 @@ env:
 jobs:
 
   build-tree-sitter:
-    name: Build Tree-Sitter Binaries
+    
     runs-on: ${{ matrix.os }}
     strategy:
       matrix:
         os: [ ubuntu-latest, windows-latest ]
 
     steps:
-    - name: Checkout repository
     - uses: actions/checkout@v4
       with:
         # https://github.com/dotnet/Nerdbank.GitVersioning/blob/main/doc/cloudbuild.md#github-actions
