@@ -27,15 +27,16 @@ treesitter_bin_output="tree-sitter/bins"
 test_bin_path="tests/UnitTests/TreeSitter.Bindings.UnitTests/bin/${mode}/$dotnet_version"
 ai_assist_integration_test_bin_path="tests/IntegrationTests/AIAssistant.IntegrationTests/bin/${mode}/$dotnet_version"
 app_bin_path="src/AIAssist/bin/${mode}/$dotnet_version"
-    
+
 # Create the directory if it doesn't exist
 mkdir -p "${test_bin_path}"
+mkdir -p "${ai_assist_integration_test_bin_path}"
 mkdir -p "${app_bin_path}"
-    
+
 # Check for Linux
 if [[ "$OS" == "Linux" ]]; then
     echo "Detected Linux OS. Compiling for Linux..."
-    
+
     # Array of output files
     linux_tree_sitter_output_files=("${treesitter_bin_output}/tree-sitter.so" "${app_bin_path}/tree-sitter.so" "${test_bin_path}/tree-sitter.so" "${ai_assist_integration_test_bin_path}/tree-sitter.so")
 
@@ -53,7 +54,7 @@ if [[ "$OS" == "Linux" ]]; then
 # Check for Windows (MINGW or MSYS environments)
 elif [[ "$OS" == "MINGW"* || "$OS" == "MSYS"* ]]; then
     echo "Detected Windows OS. Compiling for Windows..."
-    
+
     # Array of output files
     windows_tree_sitter_output_files=("${treesitter_bin_output}/tree-sitter.dll" "${app_bin_path}/tree-sitter.dll" "${test_bin_path}/tree-sitter.dll" "${ai_assist_integration_test_bin_path}/tree-sitter.dll")
 
@@ -88,12 +89,12 @@ repos=()
 while IFS= read -r line; do
     # Trim leading/trailing whitespace and check if the line is empty
     trimmed_line=$(echo "$line" | xargs)
-    
+
     if [ -z "$trimmed_line" ]; then
         # Stop parsing when an empty line is encountered
         break
     fi
-    
+
     # Add the non-empty line to the repos array
     repos+=("$trimmed_line")
 done < "$grammar_file"
@@ -105,7 +106,7 @@ for repo in "${repos[@]}"; do
 
     # Get the repository name from the URL by extracting everything after the last /
     repo_name=$(basename "$repo")
-    
+
     # Trim any trailing or leading whitespace (including newlines) from repo_name
     repo_name=$(echo "$repo_name" | tr -d '[:space:]')
 

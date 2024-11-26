@@ -45,8 +45,11 @@ jobs:
 
     - name: Build Tree-Sitter binaries on ${{ matrix.os }}
       run: |
-        chmod +x ./scripts/install_tree_sitter.sh
-        ./scripts/install_tree_sitter.sh
+        if [[ "$(uname)" == "Linux" ]]; then
+          chmod +x ./scripts/install_tree_sitter.sh
+        fi
+        ./scripts/install_tree_sitter.sh Release net8.0
+      shell: bash
 
     - name: Upload compiled binaries
       uses: actions/upload-artifact@v4
