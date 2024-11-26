@@ -5,11 +5,11 @@ on:
     tags:
     - 'v*' # Matches tag names like v1.0.0 for releases
     branches:
-    - main
-    - nuget-package
+    - "main"
+    - "ci/nuget-package"
     paths-ignore:
-    - 'tests/**'
-    
+    - "tests/**"
+
 env:
   GHC_SOURCE: ${{ vars.GHC_SOURCE }}
   #  FEED_SOURCE: https://api.nuget.org/v3/index.json
