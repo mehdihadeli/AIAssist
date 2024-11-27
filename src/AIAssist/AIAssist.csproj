@@ -1,6 +1,12 @@
 ﻿<Project Sdk="Microsoft.NET.Sdk">
 
+<!--    dotnet tool install &#45;&#45;global AIAssist &#45;&#45;version 1.0.0 &#45;&#45;add-source .-->
+<!--    dotnet tool uninstall &#45;&#45;global AIAssist &#45;&#45;version 1.0.0-->
+<!--    dotnet pack AIAssist.csproj -o nuget -c Debug-->
+    
     <PropertyGroup>
+        <PackAsTool>true</PackAsTool>
+        <ToolCommandName>aiassist</ToolCommandName>
         <OutputType>Exe</OutputType>
         <RootNamespace>AIAssist</RootNamespace>
     </PropertyGroup>
@@ -39,4 +45,29 @@
         <EmbeddedResource Include=".aiassistignore" />
     </ItemGroup>
 
+<!--    <ItemGroup>-->
+<!--        <None Remove="DotnetToolSettings.xml" />-->
+<!--        <Content Include="DotnetToolSettings.xml">-->
+<!--            <CopyToOutputDirectory>Always</CopyToOutputDirectory>-->
+<!--        </Content>-->
+<!--    </ItemGroup>-->
+    
+    <ItemGroup>
+        <!--    <None Include="assets/aiassist.png" Visible="false" Pack="true" PackagePath="" />-->
+        <None Include="../../LICENSE" Visible="false" Pack="true" PackagePath=""/>
+        <None Include="../../README.md"  Pack="true" PackagePath=""/>
+    </ItemGroup>
+
+    <!-- Include native libraries during pack -->
+    <ItemGroup>
+        <Content Include="bin\$(Configuration)\$(TargetFramework)\tree-sitter*.dll">
+            <Pack>true</Pack>
+            <PackagePath>tools\$(TargetFramework)\any</PackagePath>
+        </Content>
+        <Content Include="bin\$(Configuration)\$(TargetFramework)\tree-sitter*.so">
+            <Pack>true</Pack>
+            <PackagePath>tools\$(TargetFramework)\any</PackagePath>
+        </Content>
+    </ItemGroup>
+    
 </Project>

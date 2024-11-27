@@ -15,7 +15,8 @@ env:
   #  FEED_SOURCE: https://api.nuget.org/v3/index.json
   #  FEED_API_KEY: ${{ secrets.FEED_API_KEY }}
   GHC_API_KEY: ${{ secrets.GHC_TOKEN }}
-  NuGetDirectory: ${{ github.workspace }}/nuget
+  NuGetDirectory: nuget
+  BuildOutput: bin/Release/net8.0/
 
 jobs:
 
@@ -46,16 +47,18 @@ jobs:
     - name: Build Tree-Sitter binaries on ${{ matrix.os }}
       run: |
         if [[ "$(uname)" == "Linux" ]]; then
-          chmod +x ./scripts/install_tree_sitter.sh
+          chmod +x ./scripts/ci_install_tree_sitter.sh
         fi
-        ./scripts/install_tree_sitter.sh Release net8.0
+        ./scripts/ci_install_tree_sitter.sh
       shell: bash
 
     - name: Upload compiled binaries
       uses: actions/upload-artifact@v4
       with:
         name: tree-sitter-binaries-${{ matrix.os }}
-        path: tree-sitter/bins/*
+        path: |
+          tree-sitter/bins/*
+          tree-sitter/grammars/bins/*
 
   create-nuget:
     runs-on: ubuntu-latest
@@ -82,13 +85,13 @@ jobs:
       uses: actions/download-artifact@v4
       with:
         name: tree-sitter-binaries-ubuntu-latest
-        path: ${{ env.NuGetDirectory }}
+        path: ${{ env.BuildOutput }}
 
     - name: Download Windows binaries
       uses: actions/download-artifact@v4
       with:
         name: tree-sitter-binaries-windows-latest
-        path: ${{ env.NuGetDirectory }}
+        path: -o ${{ env.BuildOutput }}
 
     # https://github.com/dotnet/Nerdbank.GitVersioning/blob/main/doc/nbgv-cli.md
     - name: Install Nerdbank.GitVersioning
@@ -102,14 +105,19 @@ jobs:
         echo "::set-output name=nuget_version::$nugetVersion"
 
     - name: Restore dependencies
-      run: dotnet restore AIAssistant.sln
+      run: dotnet restore src/AIAssist/AIAssist.csproj
 
     - name: Build Version
-      run: dotnet build AIAssistant.sln -c Release --no-restore
+      run: dotnet build src/AIAssist/AIAssist.csproj -o ${{ env.BuildOutput }} -c Release --no-restore
+
+    - name: List files in BuildOutput
+      run: |
+        echo "Listing files in ${{ env.BuildOutput }}:"
+        ls -la ${{ env.BuildOutput }}
 
     # https://learn.microsoft.com/en-us/dotnet/core/tools/dotnet-pack
     - name: Pack NuGet Package Version ${{ steps.get_version.outputs.nuget_version }}
-      run: dotnet pack --no-restore src/AIAssist/AIAssist.csproj -c Release -o ${{ env.NuGetDirectory }}
+      run: dotnet pack src/AIAssist/AIAssist.csproj -o ${{ env.NuGetDirectory }} -c Release --no-restore --no-build
       # Publish the NuGet package as an artifact, so they can be used in the following jobs
     - uses: actions/upload-artifact@v4
       with:
@@ -151,6 +159,7 @@ jobs:
         nugetVersion=$(nbgv get-version | grep "NuGetPackageVersion" | awk -F': ' '{print $2}' | xargs)
         echo "NuGetPackageVersion: $nugetVersion"
         echo "::set-output name=nuget_version::$nugetVersion"
+        
       # for publish package to github for each commit
     - name: Publish NuGet Package Version ${{ steps.get_version.outputs.nuget_version }} to GitHub
       run: dotnet nuget push *.nupkg --skip-duplicate --api-key ${{ env.GHC_API_KEY }} --source ${{ env.GHC_SOURCE }}

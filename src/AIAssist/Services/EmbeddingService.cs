@@ -32,6 +32,7 @@ public class EmbeddingService(
         {
             var batchInputs = batch.GetBatchInputs();
             var embeddingResult = await llmClientManager.GetEmbeddingAsync(batchInputs, null).ConfigureAwait(false);
+            await Task.Delay(TimeSpan.FromSeconds(1)).ConfigureAwait(false);
 
             int resultIndex = 0;
             foreach (var fileChunkGroup in batch.Files)

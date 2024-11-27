@@ -1,36 +1,30 @@
 ﻿<?xml version="1.0" encoding="utf-8"?>
 <Project ToolsVersion="Current" xmlns="http://schemas.microsoft.com/developer/msbuild/2003">
 
-  <PropertyGroup>
-    <RepositoryType>git</RepositoryType>
-    <PackageId>$(AssemblyName)</PackageId>
-    <Product>AIAssist</Product>
-    <Title>AIAssist</Title>
-    <Authors>Mehdi Hadeli</Authors>
-    <Description>Context aware AI coding assistant inside terminal to help in code development, code explanation, code refactor and review, bug fix and chat with supporting local and online language models.</Description>
-    <PackageTags>ai ollama gpt pgt-4o dotnet csharp azure-ai</PackageTags>
-    <PackageOutputPath>$(SolutionDir)nugets</PackageOutputPath>
-    <PackageReadmeFile>readme.md</PackageReadmeFile>
-    <PackageIcon>aiassist.png</PackageIcon>
-    <PackageLicenseFile>LICENSE</PackageLicenseFile>
-    <PackageLicenseExpression>Apache-2.0</PackageLicenseExpression>
-    <PackageProjectUrl>https://github.com/mehdihadeli/AIAssist</PackageProjectUrl>
-    <RepositoryUrl>https://github.com/mehdihadeli/AIAssist</RepositoryUrl>
-    <RepositoryType>git</RepositoryType>
-    <RepositoryBranch>main</RepositoryBranch>
-    <PublishRepositoryUrl>true</PublishRepositoryUrl>
-    <EnablePackageValidation>true</EnablePackageValidation>
-    <Copyright>Copyright (c) 2024 Mehdi Hadeli</Copyright>
-  </PropertyGroup>
+    <PropertyGroup>
+        <RepositoryType>git</RepositoryType>
+        <PackageId>$(AssemblyName)</PackageId>
+        <Product>AIAssist</Product>
+        <Title>AIAssist</Title>
+        <Authors>Mehdi Hadeli</Authors>
+        <Description>Context aware AI coding assistant inside terminal to help in code development, code explanation, code refactor and review, bug fix and chat with supporting local and online language models.</Description>
+        <PackageTags>ai ollama gpt pgt-4o dotnet csharp azure-ai</PackageTags>
+        <PackageOutputPath>$(SolutionDir)nugets</PackageOutputPath>
+        <PackageReadmeFile>readme.md</PackageReadmeFile>
+        <PackageIcon>aiassist.png</PackageIcon>
+        <PackageLicenseFile>LICENSE</PackageLicenseFile>
+        <PackageLicenseExpression>Apache-2.0</PackageLicenseExpression>
+        <PackageProjectUrl>https://github.com/mehdihadeli/AIAssist</PackageProjectUrl>
+        <RepositoryUrl>https://github.com/mehdihadeli/AIAssist</RepositoryUrl>
+        <RepositoryType>git</RepositoryType>
+        <RepositoryBranch>main</RepositoryBranch>
+        <PublishRepositoryUrl>true</PublishRepositoryUrl>
+        <EnablePackageValidation>true</EnablePackageValidation>
+        <Copyright>Copyright (c) 2024 Mehdi Hadeli</Copyright>
+    </PropertyGroup>
 
-  <ItemGroup>
-<!--    <None Include="assets/aiassist.png" Visible="false" Pack="true" PackagePath="" />-->
-    <None Include="LICENSE" Visible="false" Pack="true" PackagePath="" />
-    <None Include="README.md" Visible="false" Pack="true" PackagePath="" />
-  </ItemGroup>
-
-  <ItemGroup>
-    <PackageReference Include="Nerdbank.GitVersioning" Version="3.6.146" PrivateAssets="all" Condition="!Exists('packages.config')"/>
-  </ItemGroup>
+    <ItemGroup>
+        <PackageReference Include="Nerdbank.GitVersioning" Version="3.6.146" PrivateAssets="all" Condition="!Exists('packages.config')"/>
+    </ItemGroup>
 
 </Project>

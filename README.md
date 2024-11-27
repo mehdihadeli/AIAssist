@@ -7,7 +7,8 @@
 > [!TIP]
 > You can use ollama and its models that are more compatible with code like [deepseek-v2.5](https://ollama.com/library/deepseek-v2.5) or [qwen2.5-coder](https://ollama.com/library/qwen2.5-coder) locally. To use local models, you will need to run [Ollama](https://github.com/ollama/ollama) process first. For running ollama you can use [ollama docker](https://ollama.com/blog/ollama-is-now-available-as-an-official-docker-image) container.
 
-Note: `vscode` and `jetbrains` plugins are in the plan and I will add them soon.
+> [!NOTE]
+> Development of `vscode` and `jetbrains` plugins are in the plan and I will add them soon.
 
 ## Features
 

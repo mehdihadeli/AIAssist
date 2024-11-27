@@ -36,6 +36,7 @@ Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "scripts", "scripts", "{0A4F
 	ProjectSection(SolutionItems) = preProject
 		scripts\install_tree_sitter.sh = scripts\install_tree_sitter.sh
 		scripts\generate_tree_sitter_bindings.sh = scripts\generate_tree_sitter_bindings.sh
+		scripts\ci_install_tree_sitter.sh = scripts\ci_install_tree_sitter.sh
 	EndProjectSection
 EndProject
 Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "TreeSitter.Bindings", "TreeSitter.Bindings", "{E295F56D-BF6F-4725-96E5-617DED7E0E21}"
