@@ -15,8 +15,8 @@ env:
   #  FEED_SOURCE: https://api.nuget.org/v3/index.json
   #  FEED_API_KEY: ${{ secrets.FEED_API_KEY }}
   GHC_API_KEY: ${{ secrets.GHC_TOKEN }}
-  NuGetDirectory: nuget
-  BuildOutput: bin/Release/net8.0/
+  NuGetDirectory: ${{ github.workspace }}/nuget
+  BuildOutput: ${{ github.workspace }}/bin/Release/net8.0/
 
 jobs:
 
