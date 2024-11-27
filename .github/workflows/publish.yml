@@ -131,8 +131,6 @@ jobs:
 
     - name: List files
       run: |
-        echo "Listing files in DownloadOutput:"
-        ls -R  ${{ env.DownloadOutput }}
         echo "Listing files in AIAssistBuildOutput:"
         ls -R  ${{ env.AIAssistBuildOutput }}
 
