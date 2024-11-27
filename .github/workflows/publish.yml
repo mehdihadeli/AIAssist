@@ -106,19 +106,6 @@ jobs:
         name: tree-sitter-windows-binaries
         path: ${{ env.DownloadOutput }}
 
-    - name: Flatten downloaded binaries
-      run: |
-        mv ${{ env.DownloadOutput }}/bins/*  ${{ env.AIAssistBuildOutput }}
-        mv ${{ env.DownloadOutput }}/grammars/bins/*  ${{ env.AIAssistBuildOutput }}
-        rm -rf ${{ env.DownloadOutput }}
-        
-    - name: List files
-      run: |
-        echo "Listing files in DownloadOutput:"
-        ls -R  ${{ env.DownloadOutput }}
-        echo "Listing files in AIAssistBuildOutput:"
-        ls -R  ${{ env.AIAssistBuildOutput }}
-
     # https://github.com/dotnet/Nerdbank.GitVersioning/blob/main/doc/nbgv-cli.md
     - name: Install Nerdbank.GitVersioning
       run: dotnet tool install -g nbgv
@@ -136,10 +123,18 @@ jobs:
     - name: Build Version ${{ steps.get_version.outputs.nuget_version }}
       run: dotnet build AIAssistant.sln -c Release --no-restore
 
-    - name: List files in AIAssistBuildOutput
+    - name: Flatten tree-sitter binaries to AIAssistBuildOutput
       run: |
-        echo "Listing files in ${{ env.AIAssistBuildOutput }}:"
-        ls -R ${{ env.AIAssistBuildOutput }}
+        mv ${{ env.DownloadOutput }}/bins/*  ${{ env.AIAssistBuildOutput }}
+        mv ${{ env.DownloadOutput }}/grammars/bins/*  ${{ env.AIAssistBuildOutput }}
+        rm -rf ${{ env.DownloadOutput }}
+
+    - name: List files
+      run: |
+        echo "Listing files in DownloadOutput:"
+        ls -R  ${{ env.DownloadOutput }}
+        echo "Listing files in AIAssistBuildOutput:"
+        ls -R  ${{ env.AIAssistBuildOutput }}
 
     # https://learn.microsoft.com/en-us/dotnet/core/tools/dotnet-pack
     - name: Pack NuGet Package Version ${{ steps.get_version.outputs.nuget_version }}
