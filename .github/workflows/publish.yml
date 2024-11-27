@@ -17,6 +17,7 @@ env:
   GHC_API_KEY: ${{ secrets.GHC_TOKEN }}
   NuGetDirectory: nuget
   AIAssistBuildOutput: src/AIAssist/bin/Release/net8.0/
+  DownloadOutput: download
 
 jobs:
 
@@ -52,14 +53,24 @@ jobs:
         ./scripts/ci_install_tree_sitter.sh
       shell: bash
 
-    - name: Upload compiled binaries
+    - name: Upload all Linux binaries
+      if: matrix.os == 'ubuntu-latest'
       uses: actions/upload-artifact@v4
       with:
-        name: tree-sitter-binaries-${{ matrix.os }}
+        retention-days: 7
+        name: tree-sitter-ubuntu-binaries
         path: |
           tree-sitter/bins/*.so
-          tree-sitter/bins/*.dll
           tree-sitter/grammars/bins/*.so
+  
+    - name: Upload all Windows binaries
+      if: matrix.os == 'windows-latest'
+      uses: actions/upload-artifact@v4
+      with:
+        name: tree-sitter-windows-binaries
+        retention-days: 7
+        path: |
+          tree-sitter/bins/*.dll
           tree-sitter/grammars/bins/*.dll
 
   create-nuget:
@@ -86,13 +97,13 @@ jobs:
     - name: Download Linux binaries
       uses: actions/download-artifact@v4
       with:
-        name: tree-sitter-binaries-ubuntu-latest
+        name: tree-sitter-ubuntu-binaries
         path: ${{ env.AIAssistBuildOutput }}
 
     - name: Download Windows binaries
       uses: actions/download-artifact@v4
       with:
-        name: tree-sitter-binaries-windows-latest
+        name: tree-sitter-windows-binaries
         path: ${{ env.AIAssistBuildOutput }}
 
     - name: List files
