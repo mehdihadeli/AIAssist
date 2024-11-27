@@ -98,16 +98,24 @@ jobs:
       uses: actions/download-artifact@v4
       with:
         name: tree-sitter-ubuntu-binaries
-        path: ${{ env.AIAssistBuildOutput }}
+        path: ${{ env.DownloadOutput }}
 
     - name: Download Windows binaries
       uses: actions/download-artifact@v4
       with:
         name: tree-sitter-windows-binaries
-        path: ${{ env.AIAssistBuildOutput }}
+        path: ${{ env.DownloadOutput }}
 
+    - name: Flatten downloaded binaries
+      run: |
+        mv ${{ env.DownloadOutput }}/bins/*  ${{ env.AIAssistBuildOutput }}/
+        mv ${{ env.DownloadOutput }}/grammars/bins/*  ${{ env.AIAssistBuildOutput }}/
+        rm -rf ${{ env.DownloadOutput }}
+        
     - name: List files
       run: |
+        echo "Listing files in DownloadOutput:"
+        ls -R  ${{ env.DownloadOutput }}
         echo "Listing files in AIAssistBuildOutput:"
         ls -R  ${{ env.AIAssistBuildOutput }}
 
