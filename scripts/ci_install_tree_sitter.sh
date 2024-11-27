@@ -9,6 +9,7 @@ OS=$(uname -s)
 
 # Define paths for the source files and output binary
 lib_src="tree-sitter/tree-sitter/lib/src/lib.c"
+treesitter_bin_output="tree-sitter/bins"
 
 # Check for Linux
 if [[ "$OS" == "Linux" ]]; then
