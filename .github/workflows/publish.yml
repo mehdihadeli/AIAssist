@@ -16,7 +16,7 @@ env:
   #  FEED_API_KEY: ${{ secrets.FEED_API_KEY }}
   GHC_API_KEY: ${{ secrets.GHC_TOKEN }}
   NuGetDirectory: nuget
-  AIAssistBuildOutput: src/AIAssist/bin/Release/net8.0/
+  AIAssistBuildOutput: src/AIAssist/bin/Release/net8.0
   DownloadOutput: download
 
 jobs:
@@ -108,8 +108,8 @@ jobs:
 
     - name: Flatten downloaded binaries
       run: |
-        mv ${{ env.DownloadOutput }}/bins/*  ${{ env.AIAssistBuildOutput }}/
-        mv ${{ env.DownloadOutput }}/grammars/bins/*  ${{ env.AIAssistBuildOutput }}/
+        mv ${{ env.DownloadOutput }}/bins/*  ${{ env.AIAssistBuildOutput }}
+        mv ${{ env.DownloadOutput }}/grammars/bins/*  ${{ env.AIAssistBuildOutput }}
         rm -rf ${{ env.DownloadOutput }}
         
     - name: List files
