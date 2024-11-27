@@ -15,8 +15,8 @@ env:
   #  FEED_SOURCE: https://api.nuget.org/v3/index.json
   #  FEED_API_KEY: ${{ secrets.FEED_API_KEY }}
   GHC_API_KEY: ${{ secrets.GHC_TOKEN }}
-  NuGetDirectory: ${{ github.workspace }}/nuget
-  BuildOutput: ${{ github.workspace }}/bin/Release/net8.0/
+  NuGetDirectory: nuget
+  AIAssistBuildOutput: src/AIAssist/bin/Release/net8.0/
 
 jobs:
 
@@ -85,13 +85,13 @@ jobs:
       uses: actions/download-artifact@v4
       with:
         name: tree-sitter-binaries-ubuntu-latest
-        path: ${{ env.BuildOutput }}
+        path: ${{ env.AIAssistBuildOutput }}
 
     - name: Download Windows binaries
       uses: actions/download-artifact@v4
       with:
         name: tree-sitter-binaries-windows-latest
-        path: -o ${{ env.BuildOutput }}
+        path: -o ${{ env.AIAssistBuildOutput }}
 
     # https://github.com/dotnet/Nerdbank.GitVersioning/blob/main/doc/nbgv-cli.md
     - name: Install Nerdbank.GitVersioning
@@ -105,19 +105,20 @@ jobs:
         echo "::set-output name=nuget_version::$nugetVersion"
 
     - name: Restore dependencies
-      run: dotnet restore src/AIAssist/AIAssist.csproj
+      run: dotnet restore AIAssistant.sln
 
-    - name: Build Version
-      run: dotnet build src/AIAssist/AIAssist.csproj -o ${{ env.BuildOutput }} -c Release --no-restore
+    - name: Build Version ${{ steps.get_version.outputs.nuget_version }}
+      run: dotnet build AIAssistant.sln -c Release --no-restore
 
-    - name: List files in BuildOutput
+    - name: List files in AIAssistBuildOutput
       run: |
-        echo "Listing files in ${{ env.BuildOutput }}:"
-        ls -la ${{ env.BuildOutput }}
+        echo "Listing files in ${{ env.AIAssistBuildOutput }}:"
+        ls -la ${{ env.AIAssistBuildOutput }}
 
     # https://learn.microsoft.com/en-us/dotnet/core/tools/dotnet-pack
     - name: Pack NuGet Package Version ${{ steps.get_version.outputs.nuget_version }}
       run: dotnet pack src/AIAssist/AIAssist.csproj -o ${{ env.NuGetDirectory }} -c Release --no-restore --no-build
+      
       # Publish the NuGet package as an artifact, so they can be used in the following jobs
     - uses: actions/upload-artifact@v4
       with:
