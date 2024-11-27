@@ -52,6 +52,13 @@ jobs:
         ./scripts/ci_install_tree_sitter.sh
       shell: bash
 
+    - name: List files 
+      run: |
+        echo "Listing files in tree-sitter/bins:"
+        ls -la  tree-sitter/bins
+        echo "Listing files in tree-sitter/grammars/bins:"
+        ls -la  tree-sitter/grammars/bins/
+
     - name: Upload compiled binaries
       uses: actions/upload-artifact@v4
       with:
@@ -91,7 +98,12 @@ jobs:
       uses: actions/download-artifact@v4
       with:
         name: tree-sitter-binaries-windows-latest
-        path: -o ${{ env.AIAssistBuildOutput }}
+        path: ${{ env.AIAssistBuildOutput }}
+
+    - name: List files
+      run: |
+        echo "Listing files in AIAssistBuildOutput:"
+        ls -la  ${{ env.AIAssistBuildOutput }}
 
     # https://github.com/dotnet/Nerdbank.GitVersioning/blob/main/doc/nbgv-cli.md
     - name: Install Nerdbank.GitVersioning
