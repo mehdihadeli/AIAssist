@@ -57,8 +57,10 @@ jobs:
       with:
         name: tree-sitter-binaries-${{ matrix.os }}
         path: |
-          tree-sitter/bins/*
-          tree-sitter/grammars/bins/*
+          tree-sitter/bins/*.so
+          tree-sitter/bins/*.dll
+          tree-sitter/grammars/bins/*.so
+          tree-sitter/grammars/bins/*.dll
 
   create-nuget:
     runs-on: ubuntu-latest
