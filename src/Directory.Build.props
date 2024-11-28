@@ -26,8 +26,8 @@
     <Description>Context aware AI coding assistant inside terminal to help in code development, code explanation, code refactor and review, bug fix and chat with supporting local and online language models.</Description>
     <PackageTags>ai ollama gpt pgt-4o dotnet csharp azure-ai</PackageTags>
     <PackageOutputPath>$(SolutionDir)nugets</PackageOutputPath>
-    <PackageReadmeFile>readme.md</PackageReadmeFile>
-    <PackageIcon>aiassist.png</PackageIcon>
+    <PackageReadmeFile>README.md</PackageReadmeFile>
+    <!-- <PackageIcon>aiassist.png</PackageIcon>-->
     <PackageLicenseExpression>Apache-2.0</PackageLicenseExpression>
     <PackageProjectUrl>https://github.com/mehdihadeli/AIAssist</PackageProjectUrl>
     <RepositoryUrl>https://github.com/mehdihadeli/AIAssist</RepositoryUrl>
