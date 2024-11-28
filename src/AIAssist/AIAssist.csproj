@@ -1,0 +1,73 @@
+﻿<Project Sdk="Microsoft.NET.Sdk">
+
+<!--    dotnet tool install &#45;&#45;global AIAssist &#45;&#45;version 1.0.0 &#45;&#45;add-source .-->
+<!--    dotnet tool uninstall &#45;&#45;global AIAssist &#45;&#45;version 1.0.0-->
+<!--    dotnet pack AIAssist.csproj -o nuget -c Debug-->
+    
+    <PropertyGroup>
+        <PackAsTool>true</PackAsTool>
+        <ToolCommandName>aiassist</ToolCommandName>
+        <OutputType>Exe</OutputType>
+        <RootNamespace>AIAssist</RootNamespace>
+    </PropertyGroup>
+
+    <ItemGroup>
+        <ProjectReference Include="..\BuildingBlocks\BuildingBlocks.csproj"/>
+        <ProjectReference Include="..\Clients\Clients.csproj"/>
+        <ProjectReference Include="..\TreeSitter.Bindings\TreeSitter.Bindings.csproj"/>
+    </ItemGroup>
+
+    <ItemGroup>
+        <InternalsVisibleTo Include="AIAssistant.IntegrationTests"/>
+    </ItemGroup>
+
+    <ItemGroup>
+        <None Remove="Prompts\Templates\code-block.template"/>
+        <None Remove="Prompts\Templates\code-assistant-unified-diff.template"/>
+        <None Remove="Prompts\Templates\code-assistant-code-block-diff.template" />
+        <None Remove="Prompts\Templates\code-embedding.template"/>
+        <None Remove="Prompts\Templates\ask-more-context.template" />
+        <None Remove="Prompts\Templates\code-assist-search-replace-diff.template" />
+        <None Remove="Prompts\Templates\code-context.template" />
+        <None Remove="aiassist-config.json" />
+        <None Remove=".aiassistignore" />
+    </ItemGroup>
+
+    <ItemGroup>
+        <EmbeddedResource Include="Prompts\Templates\code-assistant-unified-diff.template" />
+        <EmbeddedResource Include="Prompts\Templates\code-assistant-code-block-diff.template" />
+        <EmbeddedResource Include="Prompts\Templates\code-block.template" />
+        <EmbeddedResource Include="Prompts\Templates\code-embedding.template" />
+        <EmbeddedResource Include="Prompts\Templates\ask-more-context.template" />
+        <EmbeddedResource Include="Prompts\Templates\code-assist-search-replace-diff.template" />
+        <EmbeddedResource Include="Prompts\Templates\code-context.template" />
+        <EmbeddedResource Include="aiassist-config.json" />
+        <EmbeddedResource Include=".aiassistignore" />
+    </ItemGroup>
+
+<!--    <ItemGroup>-->
+<!--        <None Remove="DotnetToolSettings.xml" />-->
+<!--        <Content Include="DotnetToolSettings.xml">-->
+<!--            <CopyToOutputDirectory>Always</CopyToOutputDirectory>-->
+<!--        </Content>-->
+<!--    </ItemGroup>-->
+    
+    <ItemGroup>
+        <!--    <None Include="assets/aiassist.png" Visible="false" Pack="true" PackagePath="" />-->
+        <None Include="../../LICENSE" Visible="false" Pack="true" PackagePath=""/>
+        <None Include="../../README.md" Visible="false" Pack="true" PackagePath=""/>
+    </ItemGroup>
+
+    <!-- Include native libraries during pack -->
+    <ItemGroup>
+        <Content Include="bin\$(Configuration)\$(TargetFramework)\tree-sitter*.dll">
+            <Pack>true</Pack>
+            <PackagePath>tools\$(TargetFramework)\any</PackagePath>
+        </Content>
+        <Content Include="bin\$(Configuration)\$(TargetFramework)\tree-sitter*.so">
+            <Pack>true</Pack>
+            <PackagePath>tools\$(TargetFramework)\any</PackagePath>
+        </Content>
+    </ItemGroup>
+    
+</Project>

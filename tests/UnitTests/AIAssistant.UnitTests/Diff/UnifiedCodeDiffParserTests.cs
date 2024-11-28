@@ -1,5 +1,5 @@
-using AIAssistant.Diff;
-using AIAssistant.Models;
+using AIAssist.Diff;
+using AIAssist.Models;
 using FluentAssertions;
 
 namespace AIAssistant.UnitTests.Diff;

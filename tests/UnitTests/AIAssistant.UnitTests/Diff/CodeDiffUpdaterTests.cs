@@ -1,5 +1,5 @@
-using AIAssistant.Contracts.Diff;
-using AIAssistant.Diff;
+using AIAssist.Contracts.Diff;
+using AIAssist.Diff;
 using BuildingBlocks.SpectreConsole;
 using FluentAssertions;
 using Spectre.Console;

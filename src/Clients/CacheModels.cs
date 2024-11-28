@@ -24,8 +24,11 @@ public class CacheModels : ICacheModels
         InitCache();
     }
 
-    public Model GetModel(string modelName)
+    public Model? GetModel(string? modelName)
     {
+        if (string.IsNullOrEmpty(modelName))
+            return null;
+
         if (_models.Count == 0)
         {
             throw new InvalidOperationException("Model cache is empty. Ensure models are initialized.");
@@ -36,7 +39,7 @@ public class CacheModels : ICacheModels
             return model;
         }
 
-        throw new KeyNotFoundException($"Model '{modelName}' not found in the ModelCache.");
+        return null;
     }
 
     private bool TryGetModelWithFallback(string modelName, out Model model)

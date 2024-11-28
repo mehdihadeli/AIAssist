@@ -1,4 +1,4 @@
-using AIAssistant.Extensions;
+using AIAssist.Extensions;
 
 namespace AIAssistant.IntegrationTests;
 

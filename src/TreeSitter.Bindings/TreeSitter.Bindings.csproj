@@ -4,10 +4,7 @@
         <AllowUnsafeBlocks>true</AllowUnsafeBlocks>
     </PropertyGroup>
 
-    <ItemGroup>
-      <Folder Include="Queries\Default\" />
-    </ItemGroup>
-
+    
     <ItemGroup>
       <None Remove="Queries\Defaults\csharp.scm" />
       <EmbeddedResource Include="Queries\Default\csharp.scm" />

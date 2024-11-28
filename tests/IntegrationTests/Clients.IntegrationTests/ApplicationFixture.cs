@@ -1,4 +1,4 @@
-using AIAssistant.Extensions;
+using AIAssist.Extensions;
 using Microsoft.Extensions.Hosting;
 
 namespace Clients.IntegrationTests;

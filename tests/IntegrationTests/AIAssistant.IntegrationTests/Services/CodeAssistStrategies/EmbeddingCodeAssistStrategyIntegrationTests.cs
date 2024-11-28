@@ -1,5 +1,5 @@
-using AIAssistant.Contracts;
-using AIAssistant.Contracts.CodeAssist;
+using AIAssist.Contracts;
+using AIAssist.Contracts.CodeAssist;
 using Clients.Models;
 using FluentAssertions;
 using Microsoft.Extensions.DependencyInjection;

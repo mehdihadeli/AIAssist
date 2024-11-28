@@ -7,6 +7,7 @@
     <TargetFramework>net8.0</TargetFramework>
     <ImplicitUsings>enable</ImplicitUsings>
     <Nullable>enable</Nullable>
+    <PlatformTarget>x64</PlatformTarget>
   </PropertyGroup>
 
   <!-- https://endjin.com/blog/2022/01/raising-coding-standard-dotnet-analyzers -->
@@ -16,8 +17,30 @@
     <AnalysisModeSecurity>All</AnalysisModeSecurity>
   </PropertyGroup>
 
+  <PropertyGroup>
+    <RepositoryType>git</RepositoryType>
+    <PackageId>$(AssemblyName)</PackageId>
+    <Product>AIAssist</Product>
+    <Title>AIAssist</Title>
+    <Authors>Mehdi Hadeli</Authors>
+    <Description>Context aware AI coding assistant inside terminal to help in code development, code explanation, code refactor and review, bug fix and chat with supporting local and online language models.</Description>
+    <PackageTags>ai ollama gpt pgt-4o dotnet csharp azure-ai</PackageTags>
+    <PackageOutputPath>$(SolutionDir)nugets</PackageOutputPath>
+    <PackageReadmeFile>readme.md</PackageReadmeFile>
+    <PackageIcon>aiassist.png</PackageIcon>
+    <PackageLicenseFile>LICENSE</PackageLicenseFile>
+    <PackageLicenseExpression>Apache-2.0</PackageLicenseExpression>
+    <PackageProjectUrl>https://github.com/mehdihadeli/AIAssist</PackageProjectUrl>
+    <RepositoryUrl>https://github.com/mehdihadeli/AIAssist</RepositoryUrl>
+    <RepositoryType>git</RepositoryType>
+    <RepositoryBranch>main</RepositoryBranch>
+    <PublishRepositoryUrl>true</PublishRepositoryUrl>
+    <EnablePackageValidation>true</EnablePackageValidation>
+    <Copyright>Copyright (c) 2024 Mehdi Hadeli</Copyright>
+  </PropertyGroup>
 
   <ItemGroup>
+    <PackageReference Include="Nerdbank.GitVersioning" PrivateAssets="all" Condition="!Exists('packages.config')"/>
     <PackageReference Include="Meziantou.Analyzer" Condition="$(MSBuildProjectExtension) == '.csproj'" PrivateAssets="all">
       <PrivateAssets>all</PrivateAssets>
       <IncludeAssets>runtime; build; native; contentfiles; analyzers; buildtransitive</IncludeAssets>
