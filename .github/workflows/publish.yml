@@ -16,7 +16,8 @@ env:
   NuGetDirectory: nuget
   AIAssistBuildOutput: src/AIAssist/bin/Release/net8.0
   DownloadOutput: download
-
+  DOTNET_VERSION: "8.0.*"
+  
 jobs:
 
   build-tree-sitter:
@@ -84,7 +85,7 @@ jobs:
     - name: Setup .NET
       uses: actions/setup-dotnet@v4
       with:
-        dotnet-version: "8.0.x"
+        dotnet-version: ${{ env.DOTNET_VERSION }}
 
     - name: Cache NuGet packages
       uses: actions/cache@v4
@@ -159,7 +160,7 @@ jobs:
     - name: Setup .NET Core
       uses: actions/setup-dotnet@v4
       with:
-        dotnet-version: "8.0.x"
+        dotnet-version: ${{ env.DOTNET_VERSION }}
 
     # https://github.com/dotnet/Nerdbank.GitVersioning/blob/main/doc/nbgv-cli.md
     - name: Install Nerdbank.GitVersioning
