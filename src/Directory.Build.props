@@ -28,7 +28,6 @@
     <PackageOutputPath>$(SolutionDir)nugets</PackageOutputPath>
     <PackageReadmeFile>readme.md</PackageReadmeFile>
     <PackageIcon>aiassist.png</PackageIcon>
-    <PackageLicenseFile>LICENSE</PackageLicenseFile>
     <PackageLicenseExpression>Apache-2.0</PackageLicenseExpression>
     <PackageProjectUrl>https://github.com/mehdihadeli/AIAssist</PackageProjectUrl>
     <RepositoryUrl>https://github.com/mehdihadeli/AIAssist</RepositoryUrl>
