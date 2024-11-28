@@ -13,7 +13,6 @@ env:
   GHC_SOURCE: ${{ vars.GHC_SOURCE }}
   FEED_SOURCE: https://api.nuget.org/v3/index.json
   FEED_API_KEY: ${{ secrets.FEED_API_KEY }}
-  GHC_API_KEY: ${{ secrets.GHC_TOKEN }}
   NuGetDirectory: nuget
   AIAssistBuildOutput: src/AIAssist/bin/Release/net8.0
   DownloadOutput: download
@@ -61,7 +60,7 @@ jobs:
         path: |
           tree-sitter/bins/*.so
           tree-sitter/grammars/bins/*.so
-  
+
     - name: Upload all Windows binaries
       if: matrix.os == 'windows-latest'
       uses: actions/upload-artifact@v4
@@ -127,11 +126,10 @@ jobs:
         mv ${{ env.DownloadOutput }}/bins/*  ${{ env.AIAssistBuildOutput }}
         mv ${{ env.DownloadOutput }}/grammars/bins/*  ${{ env.AIAssistBuildOutput }}
         rm -rf ${{ env.DownloadOutput }}
-        
+
     # https://learn.microsoft.com/en-us/dotnet/core/tools/dotnet-pack
     - name: Pack NuGet Package Version ${{ steps.get_version.outputs.nuget_version }}
       run: dotnet pack src/AIAssist/AIAssist.csproj -o ${{ env.NuGetDirectory }} -c Release --no-restore --no-build
-      
       # Publish the NuGet package as an artifact, so they can be used in the following jobs
     - uses: actions/upload-artifact@v4
       with:
@@ -173,11 +171,6 @@ jobs:
         nugetVersion=$(nbgv get-version | grep "NuGetPackageVersion" | awk -F': ' '{print $2}' | xargs)
         echo "NuGetPackageVersion: $nugetVersion"
         echo "::set-output name=nuget_version::$nugetVersion"
-        
-      # for publish package to github for each commit
-    - name: Publish NuGet Package Version ${{ steps.get_version.outputs.nuget_version }} to GitHub
-      run: dotnet nuget push *.nupkg --skip-duplicate --api-key ${{ env.GHC_API_KEY }} --source ${{ env.GHC_SOURCE }}
-      if: github.event_name == 'push' && (startswith(github.ref, 'refs/heads') || startswith(github.ref, 'refs/tags'))
 
     # Publish all NuGet packages to NuGet.org
     # Use --skip-duplicate to prevent errors if a package with the same version already exists.
