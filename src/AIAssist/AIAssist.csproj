@@ -55,7 +55,7 @@
     <ItemGroup>
         <!--    <None Include="assets/aiassist.png" Visible="false" Pack="true" PackagePath="" />-->
         <None Include="../../LICENSE" Visible="false" Pack="true" PackagePath=""/>
-        <None Include="../../README.md"  Pack="true" PackagePath=""/>
+        <None Include="../../README.md" Visible="false" Pack="true" PackagePath=""/>
     </ItemGroup>
 
     <!-- Include native libraries during pack -->

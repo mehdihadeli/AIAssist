@@ -45,4 +45,7 @@
   <ItemGroup>
     <PackageVersion Include="Meziantou.Analyzer" Version="1.0.692" />
   </ItemGroup>
+  <ItemGroup>
+    <PackageVersion Include="Nerdbank.GitVersioning" Version="3.6.146" />
+  </ItemGroup>
 </Project>
