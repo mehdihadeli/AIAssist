@@ -17,7 +17,7 @@ public class CodeAssistantManager(ICodeAssist codeAssist, ICodeDiffManager diffM
         return codeAssist.QueryChatCompletionAsync(userQuery);
     }
 
-    public Task AddOrUpdateCodeFilesToCache(IList<string>? codeFiles)
+    public Task AddOrUpdateCodeFiles(IList<string>? codeFiles)
     {
         return codeAssist.AddOrUpdateCodeFiles(codeFiles);
     }

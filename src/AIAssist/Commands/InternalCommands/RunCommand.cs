@@ -46,7 +46,7 @@ public class RunCommand(
 
             if (confirmation)
             {
-                await codeAssistantManager.AddOrUpdateCodeFilesToCache(requiredFiles);
+                await codeAssistantManager.AddOrUpdateCodeFiles(requiredFiles);
                 var fullFilesContentForContext = await codeAssistantManager.GetCodeTreeContentsFromCache(requiredFiles);
 
                 var newQueryWithAddedFiles = promptManager.FilesAddedToChat(fullFilesContentForContext);
@@ -54,6 +54,8 @@ public class RunCommand(
                     $"{string.Join(",", requiredFiles.Select(file => $"'{file}'"))} added to the context."
                 );
 
+                // wait a second before query with more provided context by user.
+                await Task.Delay(TimeSpan.FromSeconds(1));
                 await ExecuteAsync(scope, newQueryWithAddedFiles);
             }
         }
@@ -69,7 +71,7 @@ public class RunCommand(
             if (confirmation)
             {
                 codeAssistantManager.ApplyChanges([diffResult], appOptions.ContextWorkingDirectory);
-                await codeAssistantManager.AddOrUpdateCodeFilesToCache([diffResult.ModifiedPath]);
+                await codeAssistantManager.AddOrUpdateCodeFiles([diffResult.ModifiedPath]);
             }
         }
 

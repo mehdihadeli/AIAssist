@@ -4,5 +4,5 @@ namespace Clients.Contracts;
 
 public interface ICacheModels
 {
-    Model GetModel(string modelName);
+    Model? GetModel(string? modelName);
 }

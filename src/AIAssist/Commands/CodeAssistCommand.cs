@@ -28,6 +28,11 @@ public class CodeAssistCommand(
 {
     private readonly LLMOptions _llmOptions = llmOptions.Value;
     private readonly AppOptions _appOptions = appOptions.Value;
+    private readonly Model _chatModel =
+        cacheModels.GetModel(llmOptions.Value.ChatModel)
+        ?? throw new KeyNotFoundException($"Model '{llmOptions.Value.ChatModel}' not found in the ModelCache.");
+    private readonly Model? _embeddingModel = cacheModels.GetModel(llmOptions.Value.EmbeddingsModel);
+
     private static bool _running = true;
 
     public sealed class Settings : CommandSettings
@@ -114,11 +119,20 @@ public class CodeAssistCommand(
         using var scope = serviceScopeFactory.CreateScope();
         var codeAssistantManager = scope.ServiceProvider.GetRequiredService<ICodeAssistantManager>();
 
+        SetupOptions(settings);
+
         spectreUtilities.InformationText("Code assist mode is activated!");
+        spectreUtilities.InformationText($"Chat model: {_chatModel.Name}");
+
+        if (_embeddingModel is not null)
+        {
+            spectreUtilities.InformationText($"Embedding model: {_embeddingModel.Name}");
+        }
+
+        spectreUtilities.InformationText($"CodeAssistType: {_chatModel.ModelOption.CodeAssistType}");
+        spectreUtilities.InformationText($"CodeDiffType: {_chatModel.ModelOption.CodeDiffType}");
         spectreUtilities.InformationText("Please 'Ctrl+H' to see all available commands in the code assist mode.");
         spectreUtilities.WriteRule();
-
-        SetupOptions(settings);
 
         await AnsiConsole
             .Console.Status()
@@ -181,58 +195,42 @@ public class CodeAssistCommand(
 
         if (!string.IsNullOrEmpty(settings.ChatModelApiKey))
         {
-            ArgumentException.ThrowIfNullOrEmpty(_llmOptions.ChatModel);
-            var chatModel = cacheModels.GetModel(_llmOptions.ChatModel);
-            chatModel.ModelOption.ApiKey = settings.ChatModelApiKey.Trim();
+            _chatModel.ModelOption.ApiKey = settings.ChatModelApiKey.Trim();
         }
 
         if (!string.IsNullOrEmpty(settings.ChatApiVersion))
         {
-            ArgumentException.ThrowIfNullOrEmpty(_llmOptions.ChatModel);
-            var chatModel = cacheModels.GetModel(_llmOptions.ChatModel);
-            chatModel.ModelOption.ApiVersion = settings.ChatApiVersion.Trim();
+            _chatModel.ModelOption.ApiVersion = settings.ChatApiVersion.Trim();
         }
 
         if (!string.IsNullOrEmpty(settings.ChatDeploymentId))
         {
-            ArgumentException.ThrowIfNullOrEmpty(_llmOptions.ChatModel);
-            var chatModel = cacheModels.GetModel(_llmOptions.ChatModel);
-            chatModel.ModelOption.DeploymentId = settings.ChatDeploymentId.Trim();
+            _chatModel.ModelOption.DeploymentId = settings.ChatDeploymentId.Trim();
         }
 
         if (!string.IsNullOrEmpty(settings.ChatBaseAddress))
         {
-            ArgumentException.ThrowIfNullOrEmpty(_llmOptions.ChatModel);
-            var chatModel = cacheModels.GetModel(_llmOptions.ChatModel);
-            chatModel.ModelOption.BaseAddress = settings.ChatBaseAddress.Trim();
+            _chatModel.ModelOption.BaseAddress = settings.ChatBaseAddress.Trim();
         }
 
-        if (!string.IsNullOrEmpty(settings.EmbeddingsModelApiKey))
+        if (!string.IsNullOrEmpty(settings.EmbeddingsModelApiKey) && _embeddingModel is not null)
         {
-            ArgumentException.ThrowIfNullOrEmpty(_llmOptions.EmbeddingsModel);
-            var embeddingModel = cacheModels.GetModel(_llmOptions.EmbeddingsModel);
-            embeddingModel.ModelOption.ApiKey = settings.EmbeddingsModelApiKey.Trim();
+            _embeddingModel.ModelOption.ApiKey = settings.EmbeddingsModelApiKey.Trim();
         }
 
-        if (!string.IsNullOrEmpty(settings.EmbeddingsApiVersion))
+        if (!string.IsNullOrEmpty(settings.EmbeddingsApiVersion) && _embeddingModel is not null)
         {
-            ArgumentException.ThrowIfNullOrEmpty(_llmOptions.EmbeddingsModel);
-            var embeddingModel = cacheModels.GetModel(_llmOptions.EmbeddingsModel);
-            embeddingModel.ModelOption.ApiVersion = settings.EmbeddingsApiVersion.Trim();
+            _embeddingModel.ModelOption.ApiVersion = settings.EmbeddingsApiVersion.Trim();
         }
 
-        if (!string.IsNullOrEmpty(settings.EmbeddingsDeploymentId))
+        if (!string.IsNullOrEmpty(settings.EmbeddingsDeploymentId) && _embeddingModel is not null)
         {
-            ArgumentException.ThrowIfNullOrEmpty(_llmOptions.EmbeddingsModel);
-            var embeddingModel = cacheModels.GetModel(_llmOptions.EmbeddingsModel);
-            embeddingModel.ModelOption.DeploymentId = settings.EmbeddingsDeploymentId.Trim();
+            _embeddingModel.ModelOption.DeploymentId = settings.EmbeddingsDeploymentId.Trim();
         }
 
-        if (!string.IsNullOrEmpty(settings.EmbeddingsBaseAddress))
+        if (!string.IsNullOrEmpty(settings.EmbeddingsBaseAddress) && _embeddingModel is not null)
         {
-            ArgumentException.ThrowIfNullOrEmpty(_llmOptions.EmbeddingsModel);
-            var embeddingModel = cacheModels.GetModel(_llmOptions.EmbeddingsModel);
-            embeddingModel.ModelOption.BaseAddress = settings.EmbeddingsBaseAddress.Trim();
+            _embeddingModel.ModelOption.BaseAddress = settings.EmbeddingsBaseAddress.Trim();
         }
 
         _appOptions.ContextWorkingDirectory = !string.IsNullOrEmpty(settings.ContextWorkingDirectory)
@@ -253,34 +251,25 @@ public class CodeAssistCommand(
 
         if (settings.CodeDiffType is not null)
         {
-            ArgumentException.ThrowIfNullOrEmpty(_llmOptions.ChatModel);
-            var chatModel = cacheModels.GetModel(_llmOptions.ChatModel);
-            chatModel.ModelOption.CodeDiffType = settings.CodeDiffType.Value;
+            _chatModel.ModelOption.CodeDiffType = settings.CodeDiffType.Value;
         }
 
         if (settings.CodeAssistType is not null)
         {
-            ArgumentException.ThrowIfNullOrEmpty(_llmOptions.ChatModel);
-            var chatModel = cacheModels.GetModel(_llmOptions.ChatModel);
-            chatModel.ModelOption.CodeAssistType = settings.CodeAssistType.Value;
+            _chatModel.ModelOption.CodeAssistType = settings.CodeAssistType.Value;
         }
 
-        if (settings.Threshold is not null)
+        if (settings.Threshold is not null && _embeddingModel is not null)
         {
-            ArgumentException.ThrowIfNullOrEmpty(_llmOptions.EmbeddingsModel);
-            var embeddingsModel = cacheModels.GetModel(_llmOptions.EmbeddingsModel);
-            embeddingsModel.ModelOption.Threshold = settings.Threshold.Value;
+            _embeddingModel.ModelOption.Threshold = settings.Threshold.Value;
         }
 
         if (settings.Temperature is not null)
         {
-            ArgumentException.ThrowIfNullOrEmpty(_llmOptions.ChatModel);
-            var chatModel = cacheModels.GetModel(_llmOptions.ChatModel);
-            chatModel.ModelOption.Temperature = settings.Temperature.Value;
+            _chatModel.ModelOption.Temperature = settings.Temperature.Value;
 
-            ArgumentException.ThrowIfNullOrEmpty(_llmOptions.EmbeddingsModel);
-            var embeddingsModel = cacheModels.GetModel(_llmOptions.EmbeddingsModel);
-            embeddingsModel.ModelOption.Temperature = settings.Temperature.Value;
+            if (_embeddingModel is not null)
+                _embeddingModel.ModelOption.Temperature = settings.Temperature.Value;
         }
     }
 }
