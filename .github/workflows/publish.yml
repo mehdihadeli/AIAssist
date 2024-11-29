@@ -131,8 +131,10 @@ jobs:
     # https://learn.microsoft.com/en-us/dotnet/core/tools/dotnet-pack
     - name: Pack NuGet Package Version ${{ steps.get_version.outputs.nuget_version }}
       run: dotnet pack src/AIAssist/AIAssist.csproj -o ${{ env.NuGetDirectory }} -c Release --no-restore --no-build
+      
       # Publish the NuGet package as an artifact, so they can be used in the following jobs
-    - uses: actions/upload-artifact@v4
+    - name: Upload Package Version ${{ steps.get_version.outputs.nuget_version }}
+      uses: actions/upload-artifact@v4
       with:
         name: nuget
         if-no-files-found: error
@@ -149,8 +151,10 @@ jobs:
       with:
         # https://github.com/dotnet/Nerdbank.GitVersioning/blob/main/doc/cloudbuild.md#github-actions
         fetch-depth: 0 # doing deep clone and avoid shallow clone so nbgv can do its work.
+        
     # Download the NuGet package created in the previous job and copy in the root
-    - uses: actions/download-artifact@v4
+    - name: Download Nuget
+      uses: actions/download-artifact@v4
       with:
         name: nuget
         ## Optional. Default is $GITHUB_WORKSPACE

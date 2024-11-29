@@ -24,14 +24,16 @@ namespace Clients;
 
 public class OllamaClient(
     IHttpClientFactory httpClientFactory,
-    IOptions<LLMOptions> options,
+    IOptions<LLMOptions> llmOptions,
     ICacheModels cacheModels,
     ITokenizer tokenizer,
     AsyncPolicyWrap<HttpResponseMessage> combinedPolicy
 ) : ILLMClient
 {
-    private readonly Model _chatModel = cacheModels.GetModel(options.Value.ChatModel);
-    private readonly Model _embeddingModel = cacheModels.GetModel(options.Value.EmbeddingsModel);
+    private readonly Model _chatModel =
+        cacheModels.GetModel(llmOptions.Value.ChatModel)
+        ?? throw new KeyNotFoundException($"Model '{llmOptions.Value.ChatModel}' not found in the ModelCache.");
+    private readonly Model? _embeddingModel = cacheModels.GetModel(llmOptions.Value.EmbeddingsModel);
     private const int MaxRequestSizeInBytes = 100 * 1024; // 100KB
 
     public async Task<ChatCompletionResponse?> GetCompletionAsync(
@@ -189,6 +191,8 @@ public class OllamaClient(
     {
         await ValidateEmbeddingMaxInputToken(string.Concat(inputs), path);
         ValidateRequestSizeAndContent(string.Concat(inputs));
+
+        ArgumentNullException.ThrowIfNull(_embeddingModel);
 
         // https://github.com/ollama/ollama/blob/main/docs/api.md#generate-embeddings
         var requestBody = new

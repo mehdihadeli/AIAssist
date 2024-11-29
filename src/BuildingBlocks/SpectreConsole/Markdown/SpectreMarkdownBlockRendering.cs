@@ -36,84 +36,53 @@ internal class SpectreMarkdownBlockRendering : IDisposable
         bool suppressNewLine = false
     )
     {
-        IRenderable? result = null;
-        switch (markdigBlock)
+        return markdigBlock switch
         {
-            case CustomContainer:
-            case MathBlock:
-            case Footnote:
-            case FootnoteGroup:
-            case FootnoteLinkReferenceDefinition:
-            case Figure:
-            case FigureCaption:
-            case YamlFrontMatterBlock:
-            case Abbreviation:
-            case FooterBlock:
-            case HtmlBlock:
-            case DefinitionItem:
-            case DefinitionList:
-            case DefinitionTerm:
-                break;
+            BlankLineBlock => new Text(Environment.NewLine),
+            EmptyBlock => new Text(string.Empty),
+            Table table => AppendBreakAfter(RenderTableBlock(table, style)),
+            FencedCodeBlock fencedCodeBlock => AppendBreakAfter(RenderFenceBlock(fencedCodeBlock)),
+            CodeBlock codeBlock => AppendBreakAfter(RenderCodeBlock(codeBlock)),
+            ListBlock listBlock => AppendBreakBeforeAfter(
+                RenderListBlock(listBlock, CreateStyle(_colorTheme.ListStyle, style))
+            ),
+            ListItemBlock listItemBlock => RenderListItemBlock(listItemBlock, style),
+            QuoteBlock quoteBlock => AppendBreakAfter(
+                RenderQuoteBlock(quoteBlock, CreateStyle(_colorTheme.BlockQuoteStyle, style))
+            ),
+            HeadingBlock headingBlock => AppendBreakAfter(
+                RenderHeadingBlock(headingBlock, CreateStyle(_colorTheme.HeadStyle, style))
+            ),
+            ParagraphBlock paragraphBlock => RenderParagraphBlock(
+                paragraphBlock,
+                alignment,
+                CreateStyle(_colorTheme.ParagraphStyle, style),
+                suppressNewLine
+            ),
+            ThematicBreakBlock thematicBreakBlock => new Text(thematicBreakBlock.Content.Text),
+            _ => Text.Empty,
+        };
+    }
 
-            // No point rendering these as the definitions are already reconciled by the parser.
-            case HeadingLinkReferenceDefinition:
-            case LinkReferenceDefinitionGroup:
-            case LinkReferenceDefinition:
-                break;
+    private IRenderable AppendBreakAfter(IRenderable renderable)
+    {
+        return new SpectreVerticalCompositeRenderable(
+            new List<IRenderable> { renderable, new Text(Environment.NewLine) }
+        );
+    }
 
-            case BlankLineBlock:
-                return new Text(Environment.NewLine);
-            case EmptyBlock:
-                return new Text(Environment.NewLine);
-            case Table table:
-                result = RenderTableBlock(table);
-                break;
-            case FencedCodeBlock fencedCodeBlock:
-                return RenderFenceBlock(fencedCodeBlock);
-            case CodeBlock codeBlock:
-                var blockContents = codeBlock.Lines.ToString();
-                result = new Panel(blockContents)
-                {
-                    Header = new PanelHeader("code"),
-                    Expand = true,
-                    Border = BoxBorder.Rounded,
-                };
-                break;
-            case ListBlock listBlock:
-                result = RenderListBlock(listBlock, CreateStyle(_colorTheme.ListStyle, style));
-                break;
-            case ListItemBlock listItemBlock:
-                result = RenderListItemBlock(listItemBlock, style);
-                break;
-            case QuoteBlock quoteBlock:
-                result = RenderQuoteBlock(quoteBlock, CreateStyle(_colorTheme.BlockQuoteStyle, style));
-                break;
-            case HeadingBlock headingBlock:
-                result = RenderHeadingBlock(headingBlock, CreateStyle(_colorTheme.HeadStyle, style));
-                break;
-            case ParagraphBlock paragraphBlock:
-                if (suppressNewLine)
-                    return RenderParagraphBlock(
-                        paragraphBlock,
-                        alignment,
-                        CreateStyle(_colorTheme.ParagraphStyle, style),
-                        suppressNewLine
-                    );
-                result = RenderParagraphBlock(
-                    paragraphBlock,
-                    alignment,
-                    CreateStyle(_colorTheme.ParagraphStyle, style),
-                    suppressNewLine
-                );
-                break;
-            case ThematicBreakBlock thematicBreakBlock:
-                return new Text(thematicBreakBlock.Content.Text);
-        }
+    private IRenderable AppendBreakBefore(IRenderable renderable)
+    {
+        return new SpectreVerticalCompositeRenderable(
+            new List<IRenderable> { new Text(Environment.NewLine), renderable }
+        );
+    }
 
-        if (result is not null)
-            return new SpectreCompositeRenderable(new List<IRenderable> { result, new Text(Environment.NewLine) });
-
-        return Text.Empty;
+    private IRenderable AppendBreakBeforeAfter(IRenderable renderable)
+    {
+        return new SpectreVerticalCompositeRenderable(
+            new List<IRenderable> { new Text(Environment.NewLine), renderable, new Text(Environment.NewLine) }
+        );
     }
 
     private IRenderable RenderFenceBlock(FencedCodeBlock fencedCodeBlock)
@@ -131,11 +100,22 @@ internal class SpectreMarkdownBlockRendering : IDisposable
         ).PadLeft(_colorTheme.CodeBlockStyle.Margin);
     }
 
+    private IRenderable RenderCodeBlock(CodeBlock codeBlock)
+    {
+        var blockContents = codeBlock.Lines.ToString();
+        return new Panel(blockContents)
+        {
+            Header = new PanelHeader("code"),
+            Expand = true,
+            Border = BoxBorder.Rounded,
+        };
+    }
+
     private IRenderable RenderQuoteBlock(QuoteBlock quoteBlock, Style style)
     {
         foreach (var subBlock in quoteBlock)
             if (subBlock is ParagraphBlock paragraph)
-                return new SpectreCompositeRenderable(
+                return new SpectreVerticalCompositeRenderable(
                     new List<IRenderable>
                     {
                         new Markup(
@@ -146,41 +126,57 @@ internal class SpectreMarkdownBlockRendering : IDisposable
                     }
                 );
 
-        return new Text("");
+        return Text.Empty;
     }
 
-    private IRenderable RenderListBlock(ListBlock listBlock, Style style)
+    private IRenderable RenderListBlock(ListBlock listBlock, Style style, int indentLevel = 0)
     {
-        IEnumerable<string>? itemPrefixes;
-        if (listBlock.IsOrdered)
-        {
-            var startNum = int.Parse(listBlock.OrderedStart);
-            var orderedDelimiter = listBlock.OrderedDelimiter;
-            itemPrefixes = Enumerable.Range(startNum, listBlock.Count).Select(num => $"{num}{orderedDelimiter}");
-        }
-        else
-        {
-            itemPrefixes = Enumerable.Repeat(
-                _colorTheme.ListStyle.BlockPrefix ?? CharacterSet.ListBullet,
-                listBlock.Count
+        int startNumber = int.TryParse(listBlock.OrderedStart, out var parsedNumber) ? parsedNumber : 1;
+
+        // Generate item prefixes
+        var itemPrefixes = listBlock.IsOrdered
+            ? Enumerable.Range(startNumber, listBlock.Count).Select(num => $"{num}{listBlock.OrderedDelimiter}")
+            : Enumerable.Repeat(_colorTheme.ListStyle.BlockPrefix ?? CharacterSet.ListBullet, listBlock.Count);
+
+        var renderedItems = listBlock
+            .OfType<ListItemBlock>()
+            .Select(
+                (itemBlock, index) =>
+                {
+                    // Generate the prefix for the current list item
+                    var prefix = new Text(
+                        $"{new string(' ', indentLevel * 4)}{itemPrefixes.ElementAt(index)} ",
+                        style: Style.Parse(_colorTheme.ListStyle.PrefixForeground ?? "default")
+                    );
+
+                    var itemContent = RenderListItemBlock(itemBlock, style, indentLevel);
+
+                    // Combine the prefix and content
+                    return new SpectreVerticalCompositeRenderable([prefix, itemContent]);
+                }
             );
-        }
 
-        var paddedItemPrefixes = itemPrefixes.Select(x => new Text(
-            $"  {x} ",
-            style: Style.Parse(_colorTheme.ListStyle.PrefixForeground ?? "default")
-        ));
-
-        return new SpectreCompositeRenderable(
-            [.. Interleave(paddedItemPrefixes, listBlock.Select(x => RenderBlock(x, style: style)))]
-        );
+        // Combine all rendered items without introducing extra line break
+        return new SpectreHorizontalCompositeRenderable(renderedItems);
     }
 
-    private IRenderable RenderListItemBlock(ListItemBlock listItemBlock, Style? style = null)
+    private IRenderable RenderListItemBlock(ListItemBlock listItemBlock, Style? style = null, int indentLevel = 0)
     {
-        return new SpectreCompositeRenderable(
-            listItemBlock.Select(x => RenderBlock(x, suppressNewLine: true, style: style))
-        );
+        // Render children blocks for the list item
+        var renderedChildren = listItemBlock.Select(child =>
+        {
+            if (child is ListBlock nestedList)
+            {
+                // Indent nested lists
+                return RenderListBlock(nestedList, style ?? Style.Plain, indentLevel + 1);
+            }
+
+            // Maintain indentation for other blocks
+            return RenderBlock(child, suppressNewLine: true, style: style);
+        });
+
+        // Combine all child blocks without unnecessary line break
+        return new SpectreHorizontalCompositeRenderable(renderedChildren);
     }
 
     private IRenderable RenderTableBlock(Table table, Style? style = null)
@@ -189,7 +185,6 @@ internal class SpectreMarkdownBlockRendering : IDisposable
         {
             var renderedTable = new Spectre.Console.Table();
 
-            // Safe to unconditionally cast to TableRow as IsValid() ensures this is the case under the hood
             foreach (var tableRow in table.Cast<TableRow>())
                 if (tableRow.IsHeader)
                     AddColumnsToTable(tableRow, table.ColumnDefinitions, renderedTable, style);
@@ -209,7 +204,6 @@ internal class SpectreMarkdownBlockRendering : IDisposable
         Style? style = null
     )
     {
-        // Safe to unconditionally cast to TableCell as IsValid() ensures this is the case under the hood
         foreach (var (cell, def) in tableRow.Cast<TableCell>().Zip(columnDefinitions))
             renderedTable.AddColumn(new TableColumn(RenderTableCell(cell, def.Alignment, style)));
     }
@@ -221,11 +215,11 @@ internal class SpectreMarkdownBlockRendering : IDisposable
         Style? style = null
     )
     {
-        var renderedRow = new List<IRenderable>();
-
-        // Safe to unconditionally cast to TableCell as IsValid() ensures this is the case under the hood
-        foreach (var (cell, def) in tableRow.Cast<TableCell>().Zip(columnDefinitions))
-            renderedRow.Add(RenderTableCell(cell, def.Alignment, style));
+        var renderedRow = tableRow
+            .Cast<TableCell>()
+            .Zip(columnDefinitions)
+            .Select(cellDef => RenderTableCell(cellDef.First, cellDef.Second.Alignment, style))
+            .ToList();
 
         renderedTable.AddRow(renderedRow);
     }
@@ -238,16 +232,20 @@ internal class SpectreMarkdownBlockRendering : IDisposable
             TableColumnAlign.Center => Justify.Center,
             TableColumnAlign.Right => Justify.Right,
             null => Justify.Left,
-            _ => throw new ArgumentOutOfRangeException(
-                nameof(markdownAlignment),
-                markdownAlignment,
-                "Unable to convert between Markdig alignment and Spectre.Console alignment"
-            ),
+            _ => throw new ArgumentOutOfRangeException(),
         };
 
-        return new SpectreCompositeRenderable(
-            tableCell.Select(x => RenderBlock(x, consoleAlignment, style: style, true))
+        return new SpectreVerticalCompositeRenderable(
+            tableCell.Select(x => RenderBlock(x, consoleAlignment, style, true))
         );
+    }
+
+    private IRenderable RenderHeadingBlock(HeadingBlock headingBlock, Style style)
+    {
+        var headingText = headingBlock.Inline?.GetInlineContent() ?? string.Empty;
+        var prefix = new string('#', headingBlock.Level);
+
+        return new Markup($" {prefix} {headingText} ", style);
     }
 
     private IRenderable RenderParagraphBlock(
@@ -259,47 +257,12 @@ internal class SpectreMarkdownBlockRendering : IDisposable
     {
         var text = _inlineRendering.RenderContainerInline(paragraphBlock.Inline, style, alignment: alignment);
 
-        if (!suppressNewLine)
-        {
-            return new SpectreCompositeRenderable(new List<IRenderable> { text, new Text(Environment.NewLine) });
-        }
-
-        return new SpectreCompositeRenderable(new List<IRenderable> { text });
-    }
-
-    private IRenderable RenderHeadingBlock(HeadingBlock headingBlock, Style style)
-    {
-        var headingText = headingBlock.Inline?.GetInlineContent() ?? string.Empty;
-
-        var prefix = new string('#', headingBlock.Level);
-
-        return new SpectreCompositeRenderable(
-            new List<IRenderable> { new Markup($" {prefix} {headingText} ", style), new Text(Environment.NewLine) }
-        );
-    }
-
-    // write items for each bullet
-    private static IEnumerable<T> Interleave<T>(IEnumerable<T> seqA, IEnumerable<T> seqB)
-    {
-        using var enumeratorA = seqA.GetEnumerator();
-        using var enumeratorB = seqB.GetEnumerator();
-
-        while (enumeratorA.MoveNext())
-        {
-            yield return enumeratorA.Current;
-
-            if (enumeratorB.MoveNext())
-                yield return enumeratorB.Current;
-        }
-
-        while (enumeratorB.MoveNext())
-            yield return enumeratorB.Current;
+        return suppressNewLine ? text : AppendBreakAfter(text);
     }
 
     private Style CreateStyle(StyleBase styleBase, Style? style = null)
     {
         style ??= Style.Parse(CreateStringStyle(styleBase));
-
         return style;
     }
 
@@ -309,20 +272,7 @@ internal class SpectreMarkdownBlockRendering : IDisposable
         var bold = styleBase.Bold ? "bold" : "default";
         var underline = styleBase.Underline ? "underline" : "default";
 
-        var style =
-            $"{
-                styleBase.Foreground ?? "default"
-            } on {
-                styleBase.Background ?? "default"
-            } {
-                italic
-            } {
-                bold
-            } {
-                underline
-            }";
-
-        return style;
+        return $"{styleBase.Foreground ?? "default"} on {styleBase.Background ?? "default"} {italic} {bold} {underline}";
     }
 
     public void Dispose()

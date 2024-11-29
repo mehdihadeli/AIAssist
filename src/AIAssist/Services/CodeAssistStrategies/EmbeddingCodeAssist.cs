@@ -121,5 +121,6 @@ public class EmbeddingCodeAssist(
             message: $"Total Embedding Tokens: {totalCount.FormatCommas()} | Total Embedding Cost: ${totalCost.FormatCommas()}",
             justify: Justify.Right
         );
+        spectreUtilities.WriteRule();
     }
 }

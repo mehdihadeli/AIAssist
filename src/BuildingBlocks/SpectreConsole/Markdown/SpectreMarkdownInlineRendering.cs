@@ -21,7 +21,6 @@ internal sealed class SpectreMarkdownInlineRendering(ColorTheme colorTheme)
     {
         switch (inline)
         {
-            // TODO: These features are less adopted in practice and the MarkdownPipeline isn't configured to generate them - feel free to add support!
             case JiraLink jiraLink:
             case SmartyPant smartyPant:
             case MathInline mathInline:
@@ -90,7 +89,9 @@ internal sealed class SpectreMarkdownInlineRendering(ColorTheme colorTheme)
         Justify alignment = Justify.Left
     )
     {
-        return new SpectreCompositeRenderable(inline.Select(x => RenderInline(x, style ?? Style.Plain, alignment)));
+        return new SpectreVerticalCompositeRenderable(
+            inline.Select(x => RenderInline(x, style ?? Style.Plain, alignment))
+        );
     }
 
     private Markup WriteCodeInline(CodeInline code, Style style)

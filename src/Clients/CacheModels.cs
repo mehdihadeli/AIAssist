@@ -14,12 +14,18 @@ public class CacheModels : ICacheModels
 {
     private readonly ModelsInformationOptions _modelsInformation;
     private readonly ModelsOptions _modelOptions;
+    private readonly LLMOptions _llmOptions;
     private readonly Dictionary<string, Model> _models = new();
 
-    public CacheModels(IOptions<ModelsOptions> modelOptions, IOptions<ModelsInformationOptions> modelsInformation)
+    public CacheModels(
+        IOptions<ModelsOptions> modelOptions,
+        IOptions<ModelsInformationOptions> modelsInformation,
+        IOptions<LLMOptions> llmOptions
+    )
     {
         _modelsInformation = modelsInformation.Value;
         _modelOptions = modelOptions.Value;
+        _llmOptions = llmOptions.Value;
 
         InitCache();
     }
@@ -85,9 +91,12 @@ public class CacheModels : ICacheModels
             options
         )!;
 
-        foreach (var (originalName, information) in predefinedModelsInformation.Where(x => x.Value.Enabled))
+        foreach (
+            var (originalName, predefinedModelInformation) in predefinedModelsInformation.Where(x => x.Value.Enabled)
+        )
         {
-            var modelOption = predefinedModelOptions.GetValueOrDefault(originalName);
+            var predefinedModelOption = predefinedModelOptions.GetValueOrDefault(originalName);
+
             var overrideModelOption = _modelOptions.GetValueOrDefault(originalName);
             var overrideModelInformation = _modelsInformation.GetValueOrDefault(originalName);
 
@@ -98,39 +107,62 @@ public class CacheModels : ICacheModels
                 ModelOption = new ModelOption
                 {
                     CodeAssistType =
-                        overrideModelOption?.CodeAssistType ?? modelOption?.CodeAssistType ?? CodeAssistType.Embedding,
+                        overrideModelOption?.CodeAssistType
+                        ?? _llmOptions.CodeAssistType
+                        ?? predefinedModelOption?.CodeAssistType
+                        ?? CodeAssistType.Embedding,
                     CodeDiffType =
-                        overrideModelOption?.CodeDiffType ?? modelOption?.CodeDiffType ?? CodeDiffType.CodeBlockDiff,
-                    Threshold = overrideModelOption?.Threshold ?? modelOption?.Threshold ?? 0.4m,
-                    Temperature = overrideModelOption?.Temperature ?? modelOption?.Temperature ?? 0.2m,
-                    ApiVersion = overrideModelOption?.ApiVersion ?? modelOption?.ApiVersion,
-                    BaseAddress = overrideModelOption?.BaseAddress ?? modelOption?.BaseAddress,
-                    DeploymentId = overrideModelOption?.DeploymentId ?? modelOption?.DeploymentId,
+                        overrideModelOption?.CodeDiffType
+                        ?? _llmOptions.CodeDiffType
+                        ?? predefinedModelOption?.CodeDiffType
+                        ?? CodeDiffType.CodeBlockDiff,
+                    Threshold =
+                        overrideModelOption?.Threshold
+                        ?? _llmOptions.Threshold
+                        ?? predefinedModelOption?.Threshold
+                        ?? 0.4m,
+                    Temperature =
+                        overrideModelOption?.Temperature
+                        ?? _llmOptions.Temperature
+                        ?? predefinedModelOption?.Temperature
+                        ?? 0.2m,
+                    ApiVersion = overrideModelOption?.ApiVersion ?? predefinedModelOption?.ApiVersion,
+                    BaseAddress = overrideModelOption?.BaseAddress ?? predefinedModelOption?.BaseAddress,
+                    DeploymentId = overrideModelOption?.DeploymentId ?? predefinedModelOption?.DeploymentId,
                 },
                 ModelInformation = new ModelInformation
                 {
-                    AIProvider = overrideModelInformation?.AIProvider ?? information.AIProvider,
-                    ModelType = overrideModelInformation?.ModelType ?? information.ModelType,
-                    MaxTokens = overrideModelInformation?.MaxTokens ?? information.MaxTokens,
-                    MaxInputTokens = overrideModelInformation?.MaxInputTokens ?? information.MaxInputTokens,
-                    MaxOutputTokens = overrideModelInformation?.MaxOutputTokens ?? information.MaxOutputTokens,
-                    InputCostPerToken = overrideModelInformation?.InputCostPerToken ?? information.InputCostPerToken,
-                    OutputCostPerToken = overrideModelInformation?.OutputCostPerToken ?? information.OutputCostPerToken,
-                    OutputVectorSize = overrideModelInformation?.OutputVectorSize ?? information.OutputVectorSize,
-                    Enabled = overrideModelInformation?.Enabled ?? information.Enabled,
+                    AIProvider = overrideModelInformation?.AIProvider ?? predefinedModelInformation.AIProvider,
+                    ModelType = overrideModelInformation?.ModelType ?? predefinedModelInformation.ModelType,
+                    MaxTokens = overrideModelInformation?.MaxTokens ?? predefinedModelInformation.MaxTokens,
+                    MaxInputTokens =
+                        overrideModelInformation?.MaxInputTokens ?? predefinedModelInformation.MaxInputTokens,
+                    MaxOutputTokens =
+                        overrideModelInformation?.MaxOutputTokens ?? predefinedModelInformation.MaxOutputTokens,
+                    InputCostPerToken =
+                        overrideModelInformation?.InputCostPerToken ?? predefinedModelInformation.InputCostPerToken,
+                    OutputCostPerToken =
+                        overrideModelInformation?.OutputCostPerToken ?? predefinedModelInformation.OutputCostPerToken,
+                    OutputVectorSize =
+                        overrideModelInformation?.OutputVectorSize ?? predefinedModelInformation.OutputVectorSize,
+                    Enabled = overrideModelInformation?.Enabled ?? predefinedModelInformation.Enabled,
                     SupportsFunctionCalling =
-                        overrideModelInformation?.SupportsFunctionCalling ?? information.SupportsFunctionCalling,
+                        overrideModelInformation?.SupportsFunctionCalling
+                        ?? predefinedModelInformation.SupportsFunctionCalling,
                     SupportsParallelFunctionCalling =
                         overrideModelInformation?.SupportsParallelFunctionCalling
-                        ?? information.SupportsParallelFunctionCalling,
-                    SupportsVision = overrideModelInformation?.SupportsVision ?? information.SupportsVision,
+                        ?? predefinedModelInformation.SupportsParallelFunctionCalling,
+                    SupportsVision =
+                        overrideModelInformation?.SupportsVision ?? predefinedModelInformation.SupportsVision,
                     EmbeddingDimensions =
-                        overrideModelInformation?.EmbeddingDimensions ?? information.EmbeddingDimensions,
-                    SupportsAudioInput = overrideModelInformation?.SupportsAudioInput ?? information.SupportsAudioInput,
+                        overrideModelInformation?.EmbeddingDimensions ?? predefinedModelInformation.EmbeddingDimensions,
+                    SupportsAudioInput =
+                        overrideModelInformation?.SupportsAudioInput ?? predefinedModelInformation.SupportsAudioInput,
                     SupportsAudioOutput =
-                        overrideModelInformation?.SupportsAudioOutput ?? information.SupportsAudioOutput,
+                        overrideModelInformation?.SupportsAudioOutput ?? predefinedModelInformation.SupportsAudioOutput,
                     SupportsPromptCaching =
-                        overrideModelInformation?.SupportsPromptCaching ?? information.SupportsPromptCaching,
+                        overrideModelInformation?.SupportsPromptCaching
+                        ?? predefinedModelInformation.SupportsPromptCaching,
                 },
             };
 

@@ -50,7 +50,7 @@ public class RunCommand(
                 var fullFilesContentForContext = await codeAssistantManager.GetCodeTreeContentsFromCache(requiredFiles);
 
                 var newQueryWithAddedFiles = promptManager.FilesAddedToChat(fullFilesContentForContext);
-                spectreUtilities.SuccessText(
+                spectreUtilities.SuccessTextLine(
                     $"{string.Join(",", requiredFiles.Select(file => $"'{file}'"))} added to the context."
                 );
 
@@ -84,5 +84,6 @@ public class RunCommand(
             return;
         spectreUtilities.WriteRule();
         spectreUtilities.InformationText(message: lastChatHistoryItem.ChatCost.ToString(), justify: Justify.Right);
+        spectreUtilities.WriteRule();
     }
 }

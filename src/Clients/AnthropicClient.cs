@@ -23,13 +23,16 @@ namespace Clients;
 
 public class AnthropicClient(
     IHttpClientFactory httpClientFactory,
-    IOptions<LLMOptions> options,
+    IOptions<LLMOptions> llmOptions,
     ICacheModels cacheModels,
     ITokenizer tokenizer,
     AsyncPolicyWrap<HttpResponseMessage> combinedPolicy
 ) : ILLMClient
 {
-    private readonly Model _chatModel = cacheModels.GetModel(options.Value.ChatModel);
+    private readonly Model _chatModel =
+        cacheModels.GetModel(llmOptions.Value.ChatModel)
+        ?? throw new KeyNotFoundException($"Model '{llmOptions.Value.ChatModel}' not found in the ModelCache.");
+    private readonly Model? _embeddingModel = cacheModels.GetModel(llmOptions.Value.EmbeddingsModel);
     private const int MaxRequestSizeInBytes = 100 * 1024; // 100KB
 
     public async Task<ChatCompletionResponse?> GetCompletionAsync(

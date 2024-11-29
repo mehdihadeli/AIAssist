@@ -38,7 +38,7 @@ public class AddFileCommand(ISpectreUtilities spectreUtilities, AppOptions appOp
             }
             else
             {
-                spectreUtilities.ErrorText($"The specified path does not exist: {path}");
+                spectreUtilities.ErrorTextLine($"The specified path does not exist: {path}");
             }
         }
 
@@ -56,7 +56,7 @@ public class AddFileCommand(ISpectreUtilities spectreUtilities, AppOptions appOp
             }
         }
 
-        spectreUtilities.InformationText(
+        spectreUtilities.InformationTextLine(
             filesToAdd.Count != 0 ? $"Files added: {string.Join(", ", filesToAdd)}" : "No files were added."
         );
 

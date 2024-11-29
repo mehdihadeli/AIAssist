@@ -17,6 +17,12 @@
     "confirmation": {
       "foreground": "#8be9fd" 
     },
+    "summary": {
+      "foreground": "#8be9fd"
+    },
+    "highlight": {
+      "foreground": "#ff79c6"
+    },
     "error": {
       "foreground": "#ff5555"
     },

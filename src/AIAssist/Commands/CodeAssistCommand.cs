@@ -121,17 +121,11 @@ public class CodeAssistCommand(
 
         SetupOptions(settings);
 
-        spectreUtilities.InformationText("Code assist mode is activated!");
-        spectreUtilities.InformationText($"Chat model: {_chatModel.Name}");
-
-        if (_embeddingModel is not null)
-        {
-            spectreUtilities.InformationText($"Embedding model: {_embeddingModel.Name}");
-        }
-
-        spectreUtilities.InformationText($"CodeAssistType: {_chatModel.ModelOption.CodeAssistType}");
-        spectreUtilities.InformationText($"CodeDiffType: {_chatModel.ModelOption.CodeDiffType}");
-        spectreUtilities.InformationText("Please 'Ctrl+H' to see all available commands in the code assist mode.");
+        spectreUtilities.SummaryTextLine("Code assist mode is activated!");
+        spectreUtilities.SummaryTextLine(
+            $"Chat model: {_chatModel.Name} | Embedding model: {_embeddingModel?.Name ?? "-"} | CodeAssistType: {_chatModel.ModelOption.CodeAssistType} | CodeDiffType: {_chatModel.ModelOption.CodeDiffType}"
+        );
+        spectreUtilities.SummaryTextLine("Please 'Ctrl+H' to see all available commands in the code assist mode.");
         spectreUtilities.WriteRule();
 
         await AnsiConsole
@@ -166,7 +160,7 @@ public class CodeAssistCommand(
 
             if (string.IsNullOrEmpty(userInput))
             {
-                spectreUtilities.ErrorText("Input can't be null or empty string.");
+                spectreUtilities.ErrorTextLine("Input can't be null or empty string.");
                 continue;
             }
 
@@ -251,25 +245,22 @@ public class CodeAssistCommand(
 
         if (settings.CodeDiffType is not null)
         {
-            _chatModel.ModelOption.CodeDiffType = settings.CodeDiffType.Value;
+            _llmOptions.CodeDiffType = settings.CodeDiffType.Value;
         }
 
         if (settings.CodeAssistType is not null)
         {
-            _chatModel.ModelOption.CodeAssistType = settings.CodeAssistType.Value;
+            _llmOptions.CodeAssistType = settings.CodeAssistType.Value;
         }
 
         if (settings.Threshold is not null && _embeddingModel is not null)
         {
-            _embeddingModel.ModelOption.Threshold = settings.Threshold.Value;
+            _llmOptions.Threshold = settings.Threshold.Value;
         }
 
         if (settings.Temperature is not null)
         {
-            _chatModel.ModelOption.Temperature = settings.Temperature.Value;
-
-            if (_embeddingModel is not null)
-                _embeddingModel.ModelOption.Temperature = settings.Temperature.Value;
+            _llmOptions.Temperature = settings.Temperature.Value;
         }
     }
 }

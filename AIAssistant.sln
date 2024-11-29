@@ -82,6 +82,8 @@ Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "AIAssist", "AIAssist", "{4F
 EndProject
 Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "AIAssist", "src\AIAssist\AIAssist.csproj", "{A4801AE4-5836-47CF-8AA4-DF99918BE2CC}"
 EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "BuildingBlocks.UnitTests", "tests\UnitTests\BuildingBlocks.UnitTests\BuildingBlocks.UnitTests.csproj", "{496F9F39-89E5-4F9F-9DF4-8D5A86236C1D}"
+EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
 		Debug|Any CPU = Debug|Any CPU
@@ -105,6 +107,7 @@ Global
 		{FA8BD80F-036B-4D0C-BE2D-62EA5FAF9C8C} = {6456834B-EA6C-48EA-9434-A4185D70F65F}
 		{4FAC7598-86FC-495F-B310-C641F424A904} = {97D741A1-DEFC-4241-99BC-7123A2D981E4}
 		{A4801AE4-5836-47CF-8AA4-DF99918BE2CC} = {4FAC7598-86FC-495F-B310-C641F424A904}
+		{496F9F39-89E5-4F9F-9DF4-8D5A86236C1D} = {CF49F264-D5C4-4A9F-BF9C-8706559CFC53}
 	EndGlobalSection
 	GlobalSection(ProjectConfigurationPlatforms) = postSolution
 		{4973B5D3-67CE-47CC-A0C7-55EC268A2268}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
@@ -123,5 +126,9 @@ Global
 		{A4801AE4-5836-47CF-8AA4-DF99918BE2CC}.Debug|Any CPU.Build.0 = Debug|Any CPU
 		{A4801AE4-5836-47CF-8AA4-DF99918BE2CC}.Release|Any CPU.ActiveCfg = Release|Any CPU
 		{A4801AE4-5836-47CF-8AA4-DF99918BE2CC}.Release|Any CPU.Build.0 = Release|Any CPU
+		{496F9F39-89E5-4F9F-9DF4-8D5A86236C1D}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{496F9F39-89E5-4F9F-9DF4-8D5A86236C1D}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{496F9F39-89E5-4F9F-9DF4-8D5A86236C1D}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{496F9F39-89E5-4F9F-9DF4-8D5A86236C1D}.Release|Any CPU.Build.0 = Release|Any CPU
 	EndGlobalSection
 EndGlobal
