@@ -30,7 +30,7 @@ public class CodeAssistCommand(
     private readonly AppOptions _appOptions = appOptions.Value;
     private readonly Model _chatModel =
         cacheModels.GetModel(llmOptions.Value.ChatModel)
-        ?? throw new KeyNotFoundException($"Model '{llmOptions.Value.ChatModel}' not found in the ModelCache.");
+        ?? throw new ArgumentNullException($"Model '{llmOptions.Value.ChatModel}' not found in the ModelCache.");
     private readonly Model? _embeddingModel = cacheModels.GetModel(llmOptions.Value.EmbeddingsModel);
 
     private static bool _running = true;
@@ -122,10 +122,22 @@ public class CodeAssistCommand(
         SetupOptions(settings);
 
         spectreUtilities.SummaryTextLine("Code assist mode is activated!");
-        spectreUtilities.SummaryTextLine(
-            $"Chat model: {_chatModel.Name} | Embedding model: {_embeddingModel?.Name ?? "-"} | CodeAssistType: {_chatModel.ModelOption.CodeAssistType} | CodeDiffType: {_chatModel.ModelOption.CodeDiffType}"
+        spectreUtilities.NormalText("Chat model: ");
+        spectreUtilities.HighlightTextLine(_chatModel.Name);
+
+        spectreUtilities.NormalText("Embedding model: ");
+        spectreUtilities.HighlightTextLine(_embeddingModel?.Name ?? "-");
+
+        spectreUtilities.NormalText("CodeAssistType: ");
+        spectreUtilities.HighlightTextLine(_chatModel.CodeAssistType.ToString());
+
+        spectreUtilities.NormalText("CodeDiffType: ");
+        spectreUtilities.HighlightTextLine(_chatModel.CodeDiffType.ToString());
+
+        spectreUtilities.NormalTextLine(
+            "Please 'Ctrl+H' to see all available commands in the code assist mode.",
+            decoration: Decoration.Bold
         );
-        spectreUtilities.SummaryTextLine("Please 'Ctrl+H' to see all available commands in the code assist mode.");
         spectreUtilities.WriteRule();
 
         await AnsiConsole
@@ -189,42 +201,42 @@ public class CodeAssistCommand(
 
         if (!string.IsNullOrEmpty(settings.ChatModelApiKey))
         {
-            _chatModel.ModelOption.ApiKey = settings.ChatModelApiKey.Trim();
+            _chatModel.ApiKey = settings.ChatModelApiKey.Trim();
         }
 
         if (!string.IsNullOrEmpty(settings.ChatApiVersion))
         {
-            _chatModel.ModelOption.ApiVersion = settings.ChatApiVersion.Trim();
+            _chatModel.ApiVersion = settings.ChatApiVersion.Trim();
         }
 
         if (!string.IsNullOrEmpty(settings.ChatDeploymentId))
         {
-            _chatModel.ModelOption.DeploymentId = settings.ChatDeploymentId.Trim();
+            _chatModel.DeploymentId = settings.ChatDeploymentId.Trim();
         }
 
         if (!string.IsNullOrEmpty(settings.ChatBaseAddress))
         {
-            _chatModel.ModelOption.BaseAddress = settings.ChatBaseAddress.Trim();
+            _chatModel.BaseAddress = settings.ChatBaseAddress.Trim();
         }
 
         if (!string.IsNullOrEmpty(settings.EmbeddingsModelApiKey) && _embeddingModel is not null)
         {
-            _embeddingModel.ModelOption.ApiKey = settings.EmbeddingsModelApiKey.Trim();
+            _embeddingModel.ApiKey = settings.EmbeddingsModelApiKey.Trim();
         }
 
         if (!string.IsNullOrEmpty(settings.EmbeddingsApiVersion) && _embeddingModel is not null)
         {
-            _embeddingModel.ModelOption.ApiVersion = settings.EmbeddingsApiVersion.Trim();
+            _embeddingModel.ApiVersion = settings.EmbeddingsApiVersion.Trim();
         }
 
         if (!string.IsNullOrEmpty(settings.EmbeddingsDeploymentId) && _embeddingModel is not null)
         {
-            _embeddingModel.ModelOption.DeploymentId = settings.EmbeddingsDeploymentId.Trim();
+            _embeddingModel.DeploymentId = settings.EmbeddingsDeploymentId.Trim();
         }
 
         if (!string.IsNullOrEmpty(settings.EmbeddingsBaseAddress) && _embeddingModel is not null)
         {
-            _embeddingModel.ModelOption.BaseAddress = settings.EmbeddingsBaseAddress.Trim();
+            _embeddingModel.BaseAddress = settings.EmbeddingsBaseAddress.Trim();
         }
 
         _appOptions.ContextWorkingDirectory = !string.IsNullOrEmpty(settings.ContextWorkingDirectory)
@@ -246,21 +258,37 @@ public class CodeAssistCommand(
         if (settings.CodeDiffType is not null)
         {
             _llmOptions.CodeDiffType = settings.CodeDiffType.Value;
+            _chatModel.CodeDiffType = settings.CodeDiffType.Value;
+
+            if (_embeddingModel != null)
+                _embeddingModel.CodeDiffType = settings.CodeDiffType.Value;
         }
 
         if (settings.CodeAssistType is not null)
         {
             _llmOptions.CodeAssistType = settings.CodeAssistType.Value;
+            _chatModel.CodeAssistType = settings.CodeAssistType.Value;
+
+            if (_embeddingModel != null)
+                _embeddingModel.CodeAssistType = settings.CodeAssistType.Value;
         }
 
-        if (settings.Threshold is not null && _embeddingModel is not null)
+        if (settings.Threshold is not null)
         {
             _llmOptions.Threshold = settings.Threshold.Value;
+            _chatModel.Threshold = settings.Threshold.Value;
+
+            if (_embeddingModel != null)
+                _embeddingModel.Threshold = settings.Threshold.Value;
         }
 
         if (settings.Temperature is not null)
         {
             _llmOptions.Temperature = settings.Temperature.Value;
+            _chatModel.Temperature = settings.Temperature.Value;
+
+            if (_embeddingModel != null)
+                _embeddingModel.Temperature = settings.Temperature.Value;
         }
     }
 }

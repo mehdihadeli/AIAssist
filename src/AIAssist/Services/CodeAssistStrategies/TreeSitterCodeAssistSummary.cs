@@ -50,8 +50,8 @@ public class TreeSitterCodeAssistSummary(
 
         var systemPrompt = promptManager.GetSystemPrompt(
             summaryTreeCodes,
-            llmClientManager.ChatModel.ModelOption.CodeAssistType,
-            llmClientManager.ChatModel.ModelOption.CodeDiffType
+            llmClientManager.ChatModel.CodeAssistType,
+            llmClientManager.ChatModel.CodeDiffType
         );
 
         // Generate a response from the language model (e.g., OpenAI or Llama)

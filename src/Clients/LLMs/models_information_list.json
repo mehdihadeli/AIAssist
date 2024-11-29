@@ -14,6 +14,7 @@
   "text-embedding-3-large": {
     "MaxTokens": 8191,
     "MaxInputTokens": 8191,
+    "MaxOutputTokens": 8191,
     "OutputVectorSize": 3072,
     "InputCostPerToken": 0.00000013,
     "OutputCostPerToken": 0.000000,
@@ -24,6 +25,7 @@
   "text-embedding-3-small": {
     "MaxTokens": 8191,
     "MaxInputTokens": 8191,
+    "MaxOutputTokens": 8191,
     "OutputVectorSize": 1536,
     "InputCostPerToken": 0.00000002,
     "OutputCostPerToken": 0.000000,
@@ -33,8 +35,8 @@
   },
   "azure/gpt-4o": {
     "MaxTokens": 8192,
-    "MaxInputTokens": 128000,
     "MaxOutputTokens": 16384,
+    "MaxInputTokens": 128000,
     "InputCostPerToken": 0.000005,
     "OutputCostPerToken": 0.000015,
     "AIProvider": "Azure",
@@ -45,6 +47,7 @@
   "azure/text-embedding-3-large": {
     "MaxTokens": 8191,
     "MaxInputTokens": 8191,
+    "MaxOutputTokens": 8191,
     "InputCostPerToken": 0.00000013,
     "OutputCostPerToken": 0.000000,
     "AIProvider": "Azure",
@@ -54,6 +57,7 @@
   "azure/text-embedding-3-small": {
     "MaxTokens": 8191,
     "MaxInputTokens": 8191,
+    "MaxOutputTokens": 8191,
     "InputCostPerToken": 0.00000002,
     "OutputCostPerToken": 0.000000,
     "AIProvider": "Azure",
@@ -159,6 +163,7 @@
   "ollama/nomic-embed-text": {
     "MaxTokens": 8192,
     "MaxInputTokens": 8192,
+    "MaxOutputTokens": 8192,
     "InputCostPerToken": 0.0,
     "OutputCostPerToken": 0.0,
     "AIProvider": "Ollama",
@@ -168,6 +173,7 @@
   "ollama/mxbai-embed-large": {
     "MaxTokens": 8192,
     "MaxInputTokens": 8192,
+    "MaxOutputTokens": 8192,
     "InputCostPerToken": 0.0,
     "OutputCostPerToken": 0.0,
     "AIProvider": "Ollama",

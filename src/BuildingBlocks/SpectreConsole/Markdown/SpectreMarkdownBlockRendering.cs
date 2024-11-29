@@ -272,7 +272,7 @@ internal class SpectreMarkdownBlockRendering : IDisposable
         var bold = styleBase.Bold ? "bold" : "default";
         var underline = styleBase.Underline ? "underline" : "default";
 
-        return $"{styleBase.Foreground ?? "default"} on {styleBase.Background ?? "default"} {italic} {bold} {underline}";
+        return $"{styleBase.Foreground ?? _colorTheme.Foreground ?? "default"} on {styleBase.Background ?? "default"} {italic} {bold} {underline}";
     }
 
     public void Dispose()

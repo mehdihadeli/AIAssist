@@ -53,7 +53,7 @@ public class OllamaClient(
                 role = x.Role.Humanize(LetterCasing.LowerCase),
                 content = x.Prompt,
             }),
-            options = new { temperature = _chatModel.ModelOption.Temperature },
+            options = new { temperature = _chatModel.Temperature },
             keep_alive = "30m",
             stream = false,
         };
@@ -79,8 +79,8 @@ public class OllamaClient(
 
         var inputTokens = completionResponse.PromptEvalCount;
         var outTokens = completionResponse.EvalCount;
-        var inputCostPerToken = _chatModel.ModelInformation.InputCostPerToken;
-        var outputCostPerToken = _chatModel.ModelInformation.OutputCostPerToken;
+        var inputCostPerToken = _chatModel.InputCostPerToken;
+        var outputCostPerToken = _chatModel.OutputCostPerToken;
 
         ValidateChatMaxToken(inputTokens + outTokens);
 
@@ -109,7 +109,7 @@ public class OllamaClient(
                 role = x.Role.Humanize(LetterCasing.LowerCase),
                 content = x.Prompt,
             }),
-            options = new { temperature = _chatModel.ModelOption.Temperature },
+            options = new { temperature = _chatModel.Temperature },
             stream = true,
             keep_alive = "30m",
         };
@@ -158,8 +158,8 @@ public class OllamaClient(
                     // https://github.com/ollama/ollama/blob/main/docs/api.md#response-9
                     var inputTokens = completionStreamResponse.PromptEvalCount;
                     var outTokens = completionStreamResponse.EvalCount;
-                    var inputCostPerToken = _chatModel.ModelInformation.InputCostPerToken;
-                    var outputCostPerToken = _chatModel.ModelInformation.OutputCostPerToken;
+                    var inputCostPerToken = _chatModel.InputCostPerToken;
+                    var outputCostPerToken = _chatModel.OutputCostPerToken;
 
                     ValidateChatMaxToken(inputTokens + outTokens);
 
@@ -199,7 +199,7 @@ public class OllamaClient(
         {
             input = inputs,
             model = _embeddingModel.Name,
-            options = new { temperature = _embeddingModel.ModelOption.Temperature },
+            options = new { temperature = _embeddingModel.Temperature },
             keep_alive = "30m",
         };
 
@@ -225,8 +225,8 @@ public class OllamaClient(
 
         var inputTokens = embeddingResponse.PromptEvalCount;
         var outTokens = embeddingResponse.EvalCount;
-        var inputCostPerToken = _embeddingModel.ModelInformation.InputCostPerToken;
-        var outputCostPerToken = _embeddingModel.ModelInformation.OutputCostPerToken;
+        var inputCostPerToken = _embeddingModel.InputCostPerToken;
+        var outputCostPerToken = _embeddingModel.OutputCostPerToken;
 
         ValidateEmbeddingMaxToken(inputTokens + outTokens, path);
 
@@ -262,13 +262,10 @@ public class OllamaClient(
             string.Concat(chatCompletionRequest.Items.Select(x => x.Prompt))
         );
 
-        if (
-            _chatModel.ModelInformation.MaxInputTokens > 0
-            && inputTokenCount > _chatModel.ModelInformation.MaxInputTokens
-        )
+        if (_chatModel.MaxInputTokens > 0 && inputTokenCount > _chatModel.MaxInputTokens)
         {
             throw new OllamaException(
-                $"current chat 'max_input_token' count: {inputTokenCount.FormatCommas()} is larger than configured 'max_input_token' count: {_chatModel.ModelInformation.MaxInputTokens.FormatCommas()}.",
+                $"current chat 'max_input_token' count: {inputTokenCount.FormatCommas()} is larger than configured 'max_input_token' count: {_chatModel.MaxInputTokens.FormatCommas()}.",
                 HttpStatusCode.BadRequest
             );
         }
@@ -278,10 +275,8 @@ public class OllamaClient(
     {
         var inputTokenCount = await tokenizer.GetTokenCount(input);
 
-        if (
-            _embeddingModel.ModelInformation.MaxInputTokens > 0
-            && inputTokenCount > _embeddingModel.ModelInformation.MaxInputTokens
-        )
+        ArgumentNullException.ThrowIfNull(_embeddingModel);
+        if (_embeddingModel.MaxInputTokens > 0 && inputTokenCount > _embeddingModel.MaxInputTokens)
         {
             var moreInfo = path is not null
                 ? $"if file '{
@@ -290,7 +285,7 @@ public class OllamaClient(
                 : "";
 
             throw new OllamaException(
-                $"embedding {path} 'max_input_token' count: {inputTokenCount.FormatCommas()} is larger than configured 'max_input_token' count: {_embeddingModel.ModelInformation.MaxInputTokens.FormatCommas()}. {moreInfo}",
+                $"embedding {path} 'max_input_token' count: {inputTokenCount.FormatCommas()} is larger than configured 'max_input_token' count: {_embeddingModel.MaxInputTokens.FormatCommas()}. {moreInfo}",
                 HttpStatusCode.BadRequest
             );
         }
@@ -298,10 +293,10 @@ public class OllamaClient(
 
     private void ValidateChatMaxToken(int maxTokenCount)
     {
-        if (_chatModel.ModelInformation.MaxTokens > 0 && maxTokenCount > _chatModel.ModelInformation.MaxTokens)
+        if (_chatModel.MaxTokens > 0 && maxTokenCount > _chatModel.MaxTokens)
         {
             throw new OllamaException(
-                $"current chat 'max_token' count: {maxTokenCount.FormatCommas()} is larger than configured 'max_token' count: {_chatModel.ModelInformation.MaxTokens.FormatCommas()}.",
+                $"current chat 'max_token' count: {maxTokenCount.FormatCommas()} is larger than configured 'max_token' count: {_chatModel.MaxTokens.FormatCommas()}.",
                 HttpStatusCode.BadRequest
             );
         }
@@ -309,13 +304,11 @@ public class OllamaClient(
 
     private void ValidateEmbeddingMaxToken(int maxTokenCount, string? path)
     {
-        if (
-            _embeddingModel.ModelInformation.MaxTokens > 0
-            && maxTokenCount > _embeddingModel.ModelInformation.MaxTokens
-        )
+        ArgumentNullException.ThrowIfNull(_embeddingModel);
+        if (_embeddingModel.MaxTokens > 0 && maxTokenCount > _embeddingModel.MaxTokens)
         {
             throw new OllamaException(
-                $"embedding {path} 'max_token' count: {maxTokenCount.FormatCommas()} is larger than configured 'max_token' count: {_embeddingModel.ModelInformation.MaxTokens.FormatCommas()}.",
+                $"embedding {path} 'max_token' count: {maxTokenCount.FormatCommas()} is larger than configured 'max_token' count: {_embeddingModel.MaxTokens.FormatCommas()}.",
                 HttpStatusCode.BadRequest
             );
         }

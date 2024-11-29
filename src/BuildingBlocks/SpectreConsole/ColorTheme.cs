@@ -7,6 +7,8 @@ public class ColorTheme
 {
     public string Name { get; set; } = default!;
 
+    public string? Foreground { get; set; } = default!;
+
     [JsonPropertyName("console")]
     public ConsoleStyle ConsoleStyle { get; set; } = default!;
 

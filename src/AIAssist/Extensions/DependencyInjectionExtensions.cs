@@ -212,7 +212,9 @@ public static class DependencyInjectionExtensions
 
             var chatModel = cacheModels.GetModel(llmOptions.Value.ChatModel);
 
-            ICodeAssist codeAssist = factory.Create(chatModel.ModelOption.CodeAssistType);
+            ArgumentNullException.ThrowIfNull(chatModel);
+
+            ICodeAssist codeAssist = factory.Create(chatModel.CodeAssistType);
 
             return new CodeAssistantManager(codeAssist, codeDiffManager);
         });
@@ -284,17 +286,19 @@ public static class DependencyInjectionExtensions
                 var options = sp.GetRequiredService<IOptions<LLMOptions>>().Value;
                 var policyOptions = sp.GetRequiredService<IOptions<PolicyOptions>>().Value;
 
-                var cacheModels = sp.GetRequiredService<ICacheModels>();
                 ArgumentException.ThrowIfNullOrEmpty(options.ChatModel);
+
+                var cacheModels = sp.GetRequiredService<ICacheModels>();
                 var chatModel = cacheModels.GetModel(options.ChatModel);
+                ArgumentNullException.ThrowIfNull(chatModel);
 
                 client.Timeout = TimeSpan.FromSeconds(policyOptions.TimeoutSeconds);
 
                 var chatApiKey =
                     Environment.GetEnvironmentVariable(ClientsConstants.Environments.ChatModelApiKey)
-                    ?? chatModel.ModelOption.ApiKey;
+                    ?? chatModel.ApiKey;
 
-                switch (chatModel.ModelInformation.AIProvider)
+                switch (chatModel.AIProvider)
                 {
                     case AIProvider.Openai:
                     {
@@ -303,7 +307,7 @@ public static class DependencyInjectionExtensions
 
                         var baseAddress =
                             Environment.GetEnvironmentVariable(ClientsConstants.Environments.ChatBaseAddress)
-                            ?? chatModel.ModelOption.BaseAddress
+                            ?? chatModel.BaseAddress
                             ?? "https://api.openai.com";
 
                         client.BaseAddress = new Uri(baseAddress.Trim());
@@ -320,7 +324,7 @@ public static class DependencyInjectionExtensions
 
                         var baseAddress =
                             Environment.GetEnvironmentVariable(ClientsConstants.Environments.ChatBaseAddress)
-                            ?? chatModel.ModelOption.BaseAddress;
+                            ?? chatModel.BaseAddress;
                         ArgumentException.ThrowIfNullOrEmpty(baseAddress);
 
                         client.BaseAddress = new Uri(baseAddress.Trim());
@@ -332,7 +336,7 @@ public static class DependencyInjectionExtensions
                     {
                         var baseAddress =
                             Environment.GetEnvironmentVariable(ClientsConstants.Environments.ChatBaseAddress)
-                            ?? chatModel.ModelOption.BaseAddress
+                            ?? chatModel.BaseAddress
                             ?? "http://localhost:11434";
 
                         // https://github.com/ollama/ollama/blob/main/docs/api.md
@@ -359,15 +363,17 @@ public static class DependencyInjectionExtensions
                 var cacheModels = sp.GetRequiredService<ICacheModels>();
 
                 ArgumentException.ThrowIfNullOrEmpty(options.EmbeddingsModel);
+
                 var embeddingModel = cacheModels.GetModel(options.EmbeddingsModel);
+                ArgumentNullException.ThrowIfNull(embeddingModel);
 
                 client.Timeout = TimeSpan.FromSeconds(policyOptions.TimeoutSeconds);
 
                 var embeddingsApiKey =
                     Environment.GetEnvironmentVariable(ClientsConstants.Environments.EmbeddingsModelApiKey)
-                    ?? embeddingModel.ModelOption.ApiKey;
+                    ?? embeddingModel.ApiKey;
 
-                switch (embeddingModel.ModelInformation.AIProvider)
+                switch (embeddingModel.AIProvider)
                 {
                     case AIProvider.Openai:
                     {
@@ -376,7 +382,7 @@ public static class DependencyInjectionExtensions
 
                         var baseAddress =
                             Environment.GetEnvironmentVariable(ClientsConstants.Environments.EmbeddingsBaseAddress)
-                            ?? embeddingModel.ModelOption.BaseAddress
+                            ?? embeddingModel.BaseAddress
                             ?? "https://api.openai.com";
 
                         client.BaseAddress = new Uri(baseAddress.Trim());
@@ -393,7 +399,7 @@ public static class DependencyInjectionExtensions
 
                         var baseAddress =
                             Environment.GetEnvironmentVariable(ClientsConstants.Environments.EmbeddingsBaseAddress)
-                            ?? embeddingModel.ModelOption.BaseAddress;
+                            ?? embeddingModel.BaseAddress;
                         ArgumentException.ThrowIfNullOrEmpty(baseAddress);
 
                         client.BaseAddress = new Uri(baseAddress.Trim());
@@ -405,7 +411,7 @@ public static class DependencyInjectionExtensions
                     {
                         var baseAddress =
                             Environment.GetEnvironmentVariable(ClientsConstants.Environments.EmbeddingsBaseAddress)
-                            ?? embeddingModel.ModelOption.BaseAddress
+                            ?? embeddingModel.BaseAddress
                             ?? "http://localhost:11434";
 
                         // https://github.com/ollama/ollama/blob/main/docs/api.md
@@ -505,7 +511,9 @@ public static class DependencyInjectionExtensions
             var cacheModels = sp.GetRequiredService<ICacheModels>();
             var chatModel = cacheModels.GetModel(options.Value.ChatModel);
 
-            var codeDiffParser = factory.Create(chatModel.ModelOption.CodeDiffType);
+            ArgumentNullException.ThrowIfNull(chatModel);
+
+            var codeDiffParser = factory.Create(chatModel.CodeDiffType);
 
             var codeDiffUpdater = sp.GetRequiredService<ICodeDiffUpdater>();
 

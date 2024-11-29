@@ -51,10 +51,11 @@ public class CacheModels : ICacheModels
     private bool TryGetModelWithFallback(string modelName, out Model model)
     {
         var parts = modelName.Split('/');
+
         if (
             parts.Length == 2
             && _models.TryGetValue(parts[1], out var fallbackModel)
-            && fallbackModel.ModelInformation.AIProvider.ToString() == parts[0]
+            && fallbackModel.AIProvider.ToString() == parts[0]
         )
         {
             model = fallbackModel;
@@ -104,66 +105,68 @@ public class CacheModels : ICacheModels
             {
                 Name = GetName(originalName),
                 OriginalName = originalName,
-                ModelOption = new ModelOption
-                {
-                    CodeAssistType =
-                        overrideModelOption?.CodeAssistType
-                        ?? _llmOptions.CodeAssistType
-                        ?? predefinedModelOption?.CodeAssistType
-                        ?? CodeAssistType.Embedding,
-                    CodeDiffType =
-                        overrideModelOption?.CodeDiffType
-                        ?? _llmOptions.CodeDiffType
-                        ?? predefinedModelOption?.CodeDiffType
-                        ?? CodeDiffType.CodeBlockDiff,
-                    Threshold =
-                        overrideModelOption?.Threshold
-                        ?? _llmOptions.Threshold
-                        ?? predefinedModelOption?.Threshold
-                        ?? 0.4m,
-                    Temperature =
-                        overrideModelOption?.Temperature
-                        ?? _llmOptions.Temperature
-                        ?? predefinedModelOption?.Temperature
-                        ?? 0.2m,
-                    ApiVersion = overrideModelOption?.ApiVersion ?? predefinedModelOption?.ApiVersion,
-                    BaseAddress = overrideModelOption?.BaseAddress ?? predefinedModelOption?.BaseAddress,
-                    DeploymentId = overrideModelOption?.DeploymentId ?? predefinedModelOption?.DeploymentId,
-                },
-                ModelInformation = new ModelInformation
-                {
-                    AIProvider = overrideModelInformation?.AIProvider ?? predefinedModelInformation.AIProvider,
-                    ModelType = overrideModelInformation?.ModelType ?? predefinedModelInformation.ModelType,
-                    MaxTokens = overrideModelInformation?.MaxTokens ?? predefinedModelInformation.MaxTokens,
-                    MaxInputTokens =
-                        overrideModelInformation?.MaxInputTokens ?? predefinedModelInformation.MaxInputTokens,
-                    MaxOutputTokens =
-                        overrideModelInformation?.MaxOutputTokens ?? predefinedModelInformation.MaxOutputTokens,
-                    InputCostPerToken =
-                        overrideModelInformation?.InputCostPerToken ?? predefinedModelInformation.InputCostPerToken,
-                    OutputCostPerToken =
-                        overrideModelInformation?.OutputCostPerToken ?? predefinedModelInformation.OutputCostPerToken,
-                    OutputVectorSize =
-                        overrideModelInformation?.OutputVectorSize ?? predefinedModelInformation.OutputVectorSize,
-                    Enabled = overrideModelInformation?.Enabled ?? predefinedModelInformation.Enabled,
-                    SupportsFunctionCalling =
-                        overrideModelInformation?.SupportsFunctionCalling
-                        ?? predefinedModelInformation.SupportsFunctionCalling,
-                    SupportsParallelFunctionCalling =
-                        overrideModelInformation?.SupportsParallelFunctionCalling
-                        ?? predefinedModelInformation.SupportsParallelFunctionCalling,
-                    SupportsVision =
-                        overrideModelInformation?.SupportsVision ?? predefinedModelInformation.SupportsVision,
-                    EmbeddingDimensions =
-                        overrideModelInformation?.EmbeddingDimensions ?? predefinedModelInformation.EmbeddingDimensions,
-                    SupportsAudioInput =
-                        overrideModelInformation?.SupportsAudioInput ?? predefinedModelInformation.SupportsAudioInput,
-                    SupportsAudioOutput =
-                        overrideModelInformation?.SupportsAudioOutput ?? predefinedModelInformation.SupportsAudioOutput,
-                    SupportsPromptCaching =
-                        overrideModelInformation?.SupportsPromptCaching
-                        ?? predefinedModelInformation.SupportsPromptCaching,
-                },
+
+                // Model Options
+                CodeAssistType =
+                    overrideModelOption?.CodeAssistType
+                    ?? _llmOptions.CodeAssistType
+                    ?? predefinedModelOption?.CodeAssistType
+                    ?? CodeAssistType.Embedding,
+                CodeDiffType =
+                    overrideModelOption?.CodeDiffType
+                    ?? _llmOptions.CodeDiffType
+                    ?? predefinedModelOption?.CodeDiffType
+                    ?? CodeDiffType.CodeBlockDiff,
+                Threshold =
+                    overrideModelOption?.Threshold ?? _llmOptions.Threshold ?? predefinedModelOption?.Threshold ?? 0.4m,
+                Temperature =
+                    overrideModelOption?.Temperature
+                    ?? _llmOptions.Temperature
+                    ?? predefinedModelOption?.Temperature
+                    ?? 0.2m,
+                ApiVersion = overrideModelOption?.ApiVersion ?? predefinedModelOption?.ApiVersion,
+                BaseAddress = overrideModelOption?.BaseAddress ?? predefinedModelOption?.BaseAddress,
+                DeploymentId = overrideModelOption?.DeploymentId ?? predefinedModelOption?.DeploymentId,
+
+                // Model Information
+                AIProvider =
+                    overrideModelInformation?.AIProvider
+                    ?? predefinedModelInformation.AIProvider
+                    ?? throw new ArgumentException($"AI Provider not set for model {originalName}."),
+                ModelType =
+                    overrideModelInformation?.ModelType
+                    ?? predefinedModelInformation.ModelType
+                    ?? throw new ArgumentException($"Model Type not set for model {originalName}."),
+                MaxTokens =
+                    overrideModelInformation?.MaxTokens
+                    ?? predefinedModelInformation.MaxTokens
+                    ?? throw new ArgumentException($"Max tokens not set for model {originalName}."),
+                MaxInputTokens =
+                    overrideModelInformation?.MaxInputTokens
+                    ?? predefinedModelInformation.MaxInputTokens
+                    ?? throw new ArgumentException($"Max input tokens not set for model {originalName}."),
+                MaxOutputTokens =
+                    overrideModelInformation?.MaxOutputTokens
+                    ?? predefinedModelInformation.MaxOutputTokens
+                    ?? throw new ArgumentException($"Max output tokens not set for model {originalName}."),
+                InputCostPerToken =
+                    overrideModelInformation?.InputCostPerToken ?? predefinedModelInformation.InputCostPerToken,
+                OutputCostPerToken =
+                    overrideModelInformation?.OutputCostPerToken ?? predefinedModelInformation.OutputCostPerToken,
+                OutputVectorSize =
+                    overrideModelInformation?.OutputVectorSize ?? predefinedModelInformation.OutputVectorSize,
+                Enabled = overrideModelInformation?.Enabled ?? predefinedModelInformation.Enabled,
+                SupportsFunctionCalling =
+                    overrideModelInformation?.SupportsFunctionCalling
+                    ?? predefinedModelInformation.SupportsFunctionCalling,
+                SupportsParallelFunctionCalling =
+                    overrideModelInformation?.SupportsParallelFunctionCalling
+                    ?? predefinedModelInformation.SupportsParallelFunctionCalling,
+                SupportsVision = overrideModelInformation?.SupportsVision ?? predefinedModelInformation.SupportsVision,
+                EmbeddingDimensions =
+                    overrideModelInformation?.EmbeddingDimensions ?? predefinedModelInformation.EmbeddingDimensions,
+                SupportsPromptCaching =
+                    overrideModelInformation?.SupportsPromptCaching ?? predefinedModelInformation.SupportsPromptCaching,
             };
 
             _models[originalName] = model;
