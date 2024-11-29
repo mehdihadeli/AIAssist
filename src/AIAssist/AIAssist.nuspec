@@ -7,9 +7,6 @@
     <!-- https://tedspence.com/publishing-a-dotnet-tool-on-nuget-e1df7909ec5a-->
     <!-- https://ml-software.ch/posts/versioning-made-easier-with-nerdbank-gitversioning-->
     <!-- https://learn.microsoft.com/en-us/dotnet/core/tools/dotnet-pack#examples-->
-
-    <!-- dotnet pack -p:NuspecFile=AIAssist.nuspec -o nuget -c Debug /p:NuspecProperties="version=1.0.1"-->
-    <!-- dotnet tool install &#45;&#45;global AIAssist &#45;&#45;version 1.0.1 &#45;&#45;add-source .-->
     <metadata>
         <id>AIAssist</id>
         <title>AIAssist</title>
