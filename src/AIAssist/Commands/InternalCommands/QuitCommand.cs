@@ -15,7 +15,7 @@ public class QuitCommand(ISpectreUtilities spectreUtilities, IOptions<AppOptions
 
     public Task<bool> ExecuteAsync(IServiceScope scope, string? input)
     {
-        spectreUtilities.ErrorText("Process interrupted. Exiting...");
+        spectreUtilities.ErrorTextLine("Process interrupted. Exiting...");
 
         // stop running commands
         return Task.FromResult(false);

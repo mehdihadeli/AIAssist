@@ -9,6 +9,8 @@ public class ConsoleStyle
     public StyleBase Success { get; set; } = default!;
     public StyleBase Tree { get; set; } = default!;
     public StyleBase Information { get; set; } = default!;
+    public StyleBase Summary { get; set; } = default!;
+    public StyleBase Highlight { get; set; } = default!;
     public StyleBase Warning { get; set; } = default!;
     public StyleBase Confirmation { get; set; } = default!;
 }

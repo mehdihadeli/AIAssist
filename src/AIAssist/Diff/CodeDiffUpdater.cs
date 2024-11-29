@@ -12,7 +12,7 @@ public class CodeDiffUpdater(ISpectreUtilities spectreUtilities) : ICodeDiffUpda
 
         if (string.IsNullOrWhiteSpace(contextWorkingDirectory))
         {
-            spectreUtilities.ErrorText("Working directory cannot be null or whitespace.");
+            spectreUtilities.ErrorTextLine("Working directory cannot be null or whitespace.");
         }
 
         foreach (var diffResult in diffResults)
@@ -53,11 +53,11 @@ public class CodeDiffUpdater(ISpectreUtilities spectreUtilities) : ICodeDiffUpda
             {
                 var updatedLines = ApplyReplacements(new List<string>(), diffResult.Replacements);
                 File.WriteAllText(modifiedFilePath, string.Join("\n", updatedLines));
-                spectreUtilities.SuccessText($"File created: {modifiedFilePath}");
+                spectreUtilities.SuccessTextLine($"File created: {modifiedFilePath}");
             }
             else
             {
-                spectreUtilities.ErrorText("No modified lines provided for new file creation.");
+                spectreUtilities.ErrorTextLine("No modified lines provided for new file creation.");
             }
         }
         else if (diffResult.ModifiedPath == noneExistPath && diffResult.OriginalPath != noneExistPath)
@@ -68,11 +68,11 @@ public class CodeDiffUpdater(ISpectreUtilities spectreUtilities) : ICodeDiffUpda
             if (File.Exists(originalFilePath) && diffResult.Replacements is not null && diffResult.Replacements.Any())
             {
                 File.Delete(originalFilePath);
-                spectreUtilities.SuccessText($"File deleted: {originalFilePath}");
+                spectreUtilities.SuccessTextLine($"File deleted: {originalFilePath}");
             }
             else
             {
-                spectreUtilities.ErrorText($"File not found for deletion: {originalFilePath}");
+                spectreUtilities.ErrorTextLine($"File not found for deletion: {originalFilePath}");
             }
         }
         else if (diffResult.OriginalPath != diffResult.ModifiedPath)
@@ -94,7 +94,7 @@ public class CodeDiffUpdater(ISpectreUtilities spectreUtilities) : ICodeDiffUpda
             }
             else
             {
-                spectreUtilities.ErrorText($"Original file not found for rename/move: {originalFilePath}");
+                spectreUtilities.ErrorTextLine($"Original file not found for rename/move: {originalFilePath}");
             }
         }
         else
@@ -108,7 +108,7 @@ public class CodeDiffUpdater(ISpectreUtilities spectreUtilities) : ICodeDiffUpda
 
             if (!File.Exists(originalFilePath))
             {
-                spectreUtilities.ErrorText($"Original file not found: {originalFilePath}");
+                spectreUtilities.ErrorTextLine($"Original file not found: {originalFilePath}");
             }
 
             var originalLines = File.ReadAllLines(originalFilePath).ToList();
@@ -117,7 +117,7 @@ public class CodeDiffUpdater(ISpectreUtilities spectreUtilities) : ICodeDiffUpda
             Directory.CreateDirectory(Path.GetDirectoryName(modifiedFilePath)!);
             File.WriteAllText(modifiedFilePath, string.Join("\n", updatedLines));
 
-            spectreUtilities.SuccessText($"File updated: {modifiedFilePath}");
+            spectreUtilities.SuccessTextLine($"File updated: {modifiedFilePath}");
         }
     }
 
@@ -167,7 +167,7 @@ public class CodeDiffUpdater(ISpectreUtilities spectreUtilities) : ICodeDiffUpda
                     Directory.CreateDirectory(Path.GetDirectoryName(modifiedFullPath)!);
                     // Normalize and write lines to prevent extra blank lines because WriteAllLines
                     File.WriteAllText(modifiedFullPath, string.Join("\n", modifiedLines));
-                    spectreUtilities.SuccessText($"File created: {modifiedPath}");
+                    spectreUtilities.SuccessTextLine($"File created: {modifiedPath}");
 
                     break;
                 }
@@ -180,11 +180,11 @@ public class CodeDiffUpdater(ISpectreUtilities spectreUtilities) : ICodeDiffUpda
                     {
                         // Normalize and write lines to prevent blank lines
                         File.WriteAllText(modifiedFullPath, string.Join("\n", modifiedLines));
-                        spectreUtilities.SuccessText($"File updated: {modifiedPath}");
+                        spectreUtilities.SuccessTextLine($"File updated: {modifiedPath}");
                     }
                     else
                     {
-                        spectreUtilities.ErrorText($"File {modifiedPath} does not exist to modify.");
+                        spectreUtilities.ErrorTextLine($"File {modifiedPath} does not exist to modify.");
                     }
                     break;
                 }
@@ -195,23 +195,23 @@ public class CodeDiffUpdater(ISpectreUtilities spectreUtilities) : ICodeDiffUpda
                     if (File.Exists(originalFullPath))
                     {
                         File.Delete(originalFullPath);
-                        spectreUtilities.SuccessText($"File deleted: {originalPath}");
+                        spectreUtilities.SuccessTextLine($"File deleted: {originalPath}");
                     }
                     else
                     {
-                        spectreUtilities.ErrorText($"File {originalPath} not found for deletion.");
+                        spectreUtilities.ErrorTextLine($"File {originalPath} not found for deletion.");
                     }
                     break;
                 }
 
                 default:
-                    spectreUtilities.ErrorText($"Unsupported action type: {actionType}");
+                    spectreUtilities.ErrorTextLine($"Unsupported action type: {actionType}");
                     break;
             }
         }
         catch (Exception ex)
         {
-            spectreUtilities.ErrorText($"Failed to update file {modifiedPath} \n {ex.Message}");
+            spectreUtilities.ErrorTextLine($"Failed to update file {modifiedPath} \n {ex.Message}");
         }
     }
 }

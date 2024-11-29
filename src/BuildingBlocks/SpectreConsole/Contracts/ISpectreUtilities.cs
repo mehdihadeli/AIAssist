@@ -6,11 +6,18 @@ public interface ISpectreUtilities
 {
     bool ConfirmationPrompt(string message);
     string? UserPrompt(string? promptMessage = null);
+    void InformationTextLine(string message, Justify? justify = null, Overflow? overflow = null);
     void InformationText(string message, Justify? justify = null, Overflow? overflow = null);
+    public void SummaryTextLine(string message, Justify? justify = null, Overflow? overflow = null);
+    public void SummaryText(string message, Justify? justify = null, Overflow? overflow = null);
+    public void HighlightTextLine(string message, Justify? justify = null, Overflow? overflow = null);
+    public void HighlightText(string message, Justify? justify = null, Overflow? overflow = null);
+    void NormalTextLine(string message, Justify? justify = null, Overflow? overflow = null);
     void NormalText(string message, Justify? justify = null, Overflow? overflow = null);
+    void WarningTextLine(string message, Justify? justify = null, Overflow? overflow = null);
     void WarningText(string message, Justify? justify = null, Overflow? overflow = null);
-    void ErrorText(string message, Justify? justify = null, Overflow? overflow = null);
-    void SuccessText(string message, Justify? justify = null, Overflow? overflow = null);
+    void ErrorTextLine(string message, Justify? justify = null, Overflow? overflow = null);
+    void SuccessTextLine(string message, Justify? justify = null, Overflow? overflow = null);
     void WriteCursor();
     void WriteRule();
     void Exception(string errorMessage, Exception ex);

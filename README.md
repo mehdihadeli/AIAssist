@@ -1,8 +1,13 @@
 # AI Assist
 
-> `Context Aware` AI assistant for coding, chat, code explanation, review with supporting local and online language models.
+> `Context Aware` AI coding assistant inside terminal to help in code development, code explanation, code refactor and review, bug fix and chat with supporting local and online language models
 
-`AIAssist` is compatible with [OpenAI](https://platform.openai.com/docs/api-reference/introduction) and [Azure AI Services](https://azure.microsoft.com/en-us/products/ai-services) through apis and [Ollama models](https://ollama.com/search) through [ollama engine](https://ollama.com/) locally.
+`AIAssist` is compatible with bellow AI Services: 
+- [x] [OpenAI](https://platform.openai.com/docs/api-reference/introduction) through apis
+- [x] [Azure AI Services](https://azure.microsoft.com/en-us/products/ai-services) through apis
+- [x] [Ollama](https://ollama.com/) with using [ollama models](https://ollama.com/search) locally
+- [ ] [Anthropic](https://docs.anthropic.com/en/api/getting-started) through apis
+- [ ] [OpenRouter](https://openrouter.ai/docs/quick-start) through apis
 
 > [!TIP]
 > You can use ollama and its models that are more compatible with code like [deepseek-v2.5](https://ollama.com/library/deepseek-v2.5) or [qwen2.5-coder](https://ollama.com/library/qwen2.5-coder) locally. To use local models, you will need to run [Ollama](https://github.com/ollama/ollama) process first. For running ollama you can use [ollama docker](https://ollama.com/blog/ollama-is-now-available-as-an-official-docker-image) container.
@@ -30,16 +35,17 @@
 
 AIAssist uses [Azure AI Services](https://azure.microsoft.com/en-us/products/ai-services) or [OpenAI](https://platform.openai.com/docs/api-reference/introduction) apis by default. For using `OpenAI` or `Azure AI` apis we need to have a `ApiKey`.
 
--   Install `aiassist` with `dotnet tool install ` and bellow command:
+- To access `dotnet tool`, we need to install [latest .net sdk](https://dotnet.microsoft.com/en-us/download) first.
+- Install `aiassist` with `dotnet tool install` and bellow command:
 
 ```bash
-TODO: Add Nuget Soon
+dotnet tool install --global AIAssist 
 ```
 
--   For OpenAI If you don't have a API key you can [sign up](https://platform.openai.com/signup) in OpenAI and get a ApiKey.
--   For Azure AI service you can [signup](https://azure.microsoft.com/en-us/products/ai-services) a azure account and get a AI model API key.
--   After getting Api key we should set API key for chat and embedding models through environment variable or command options.
--   Now got to `project directory` with `cd` command in terminal, For running `aiassist` and setting api key.
+- For OpenAI If you don't have a API key you can [sign up](https://platform.openai.com/signup) in OpenAI and get a ApiKey.
+- For Azure AI service you can [signup](https://azure.microsoft.com/en-us/products/ai-services) a azure account and get a AI model API key.
+- After getting Api key we should set API key for chat and embedding models through environment variable or command options.
+- Now got to `project directory` with `cd` command in terminal, For running `aiassist` and setting api key.
 
 ```bash
 # Go to project directory
@@ -49,14 +55,12 @@ cd /to/project/directory
 -   Set `Api Key` through `environment variable`:
 
 Linux terminal:
-
 ```bash
 export CHAT_MODEL_API_KEY=your-chat-api-key-here
 export EMBEDDINGS_MODEL_API_KEY=your-embedding-api-key-here
 ```
 
 Windows Powershell Terminal:
-
 ```powershell
 $env:CHAT_MODEL_API_KEY=your-chat-api-key-here
 $env:EMBEDDINGS_MODEL_API_KEY=your-embedding-api-key-here
@@ -72,7 +76,6 @@ aiassist code --chat-api-key your-chat-api-key-here  --embeddings-api-key your-e
 -   Set `ApiVersion`, `DeploymentId` and `BaseAddress` through`environment variable`:
 
 Linux terminal:
-
 ```bash
 export CHAT_BASE_ADDRESS=your-chat-base-address-here
 export CHAT_API_VERSION=your-chat-api-version-here
@@ -83,7 +86,6 @@ export EMBEDDINGS_DEPLOYMENT_ID=your-embedding-deployment-id-here
 ```
 
 Windows Powershell Terminal:
-
 ```powershell
 $env:CHAT_BASE_ADDRESS=your-chat-base-address-here
 $env:CHAT_API_VERSION=your-chat-api-version-here

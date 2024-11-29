@@ -19,9 +19,6 @@
       <CopyToOutputDirectory>Always</CopyToOutputDirectory>
     </Content>
     <Compile Remove="TestData\Calculator\Program.cs" />
-    <Content Include="TestData\Calculator\node_modules\package.json">
-      <CopyToOutputDirectory>Always</CopyToOutputDirectory>
-    </Content>
     <Content Include="TestData\Calculator\Program.cs">
       <CopyToOutputDirectory>Always</CopyToOutputDirectory>
     </Content>
@@ -62,9 +59,6 @@
       <CopyToOutputDirectory>Always</CopyToOutputDirectory>
     </Content>
     <None Remove="TestData\Calculator\.env" />
-    <Content Include="TestData\Calculator\.env">
-      <CopyToOutputDirectory>Always</CopyToOutputDirectory>
-    </Content>
     <None Remove="TestData\Calculator\cache\temp.txt" />
     <Content Include="TestData\Calculator\cache\temp.txt">
       <CopyToOutputDirectory>Always</CopyToOutputDirectory>

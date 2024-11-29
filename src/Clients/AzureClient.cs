@@ -24,14 +24,16 @@ namespace Clients;
 
 public class AzureClient(
     IHttpClientFactory httpClientFactory,
-    IOptions<LLMOptions> options,
+    IOptions<LLMOptions> llmOptions,
     ICacheModels cacheModels,
     ITokenizer tokenizer,
     AsyncPolicyWrap<HttpResponseMessage> combinedPolicy
 ) : ILLMClient
 {
-    private readonly Model _chatModel = cacheModels.GetModel(options.Value.ChatModel);
-    private readonly Model _embeddingModel = cacheModels.GetModel(options.Value.EmbeddingsModel);
+    private readonly Model _chatModel =
+        cacheModels.GetModel(llmOptions.Value.ChatModel)
+        ?? throw new KeyNotFoundException($"Model '{llmOptions.Value.ChatModel}' not found in the ModelCache.");
+    private readonly Model? _embeddingModel = cacheModels.GetModel(llmOptions.Value.EmbeddingsModel);
     private const int MaxRequestSizeInBytes = 100 * 1024; // 100KB
 
     public async Task<ChatCompletionResponse?> GetCompletionAsync(
@@ -247,6 +249,7 @@ public class AzureClient(
         await ValidateEmbeddingMaxInputToken(string.Concat(inputs));
         ValidateRequestSizeAndContent(string.Concat(inputs));
 
+        ArgumentNullException.ThrowIfNull(_embeddingModel);
         var requestBody = new
         {
             input = inputs,
@@ -258,11 +261,11 @@ public class AzureClient(
 
         var apiVersion =
             Environment.GetEnvironmentVariable(ClientsConstants.Environments.EmbeddingsApiVersion)
-            ?? _chatModel.ModelOption.ApiVersion;
+            ?? _embeddingModel.ModelOption.ApiVersion;
 
         var deploymentId =
             Environment.GetEnvironmentVariable(ClientsConstants.Environments.EmbeddingsDeploymentId)
-            ?? _chatModel.ModelOption.DeploymentId;
+            ?? _embeddingModel.ModelOption.DeploymentId;
 
         ArgumentException.ThrowIfNullOrEmpty(apiVersion);
         ArgumentException.ThrowIfNullOrEmpty(deploymentId);

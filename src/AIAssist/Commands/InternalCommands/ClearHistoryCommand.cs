@@ -16,7 +16,7 @@ public class ClearHistoryCommand(ISpectreUtilities spectreUtilities, IOptions<Ap
 
     public Task<bool> ExecuteAsync(IServiceScope scope, string? input)
     {
-        spectreUtilities.InformationText("History cleared.");
+        spectreUtilities.InformationTextLine("History cleared.");
 
         return Task.FromResult(true);
     }
