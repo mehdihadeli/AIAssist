@@ -7,14 +7,12 @@
     <PackageReference Include="xunit"/>
     <PackageReference Include="xunit.runner.visualstudio"/>
   </ItemGroup>
+  
   <ItemGroup>
     <ProjectReference Include="..\..\..\src\BuildingBlocks\BuildingBlocks.csproj" />
   </ItemGroup>
+  
   <ItemGroup>
-    <Content Include="..\..\..\.gitignore">
-      <Link>TestData\Calculator\.gitignore</Link>
-      <CopyToOutputDirectory>Always</CopyToOutputDirectory>
-    </Content>
     <Content Include="TestData\Calculator\Calculator.csproj">
       <CopyToOutputDirectory>Always</CopyToOutputDirectory>
     </Content>
@@ -58,14 +56,6 @@
     <Content Include="TestData\Calculator\logs\logfile.log">
       <CopyToOutputDirectory>Always</CopyToOutputDirectory>
     </Content>
-    <None Remove="TestData\Calculator\.env" />
-    <None Remove="TestData\Calculator\cache\temp.txt" />
-    <Content Include="TestData\Calculator\cache\temp.txt">
-      <CopyToOutputDirectory>Always</CopyToOutputDirectory>
-    </Content>
-  </ItemGroup>
-  <ItemGroup>
-    <Folder Include="TestData\" />
   </ItemGroup>
   
 </Project>
