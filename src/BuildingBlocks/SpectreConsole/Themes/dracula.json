@@ -1,6 +1,7 @@
 {
   "$schema": "./spectre_console_schema.json",
   "name": "dracula",
+  "foreground": "#f8f8f2",
   "console": {
     "prompt": {
       "foreground": "#bd93f9"  

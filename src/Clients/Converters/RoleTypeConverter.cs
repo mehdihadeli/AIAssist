@@ -5,6 +5,7 @@ using Humanizer;
 
 namespace Clients.Converters;
 
+// we use RoleTypeConverter when Role type particpate in a model and we use the model inside of serialization mechanism nor binding configuration because they are not serialization based
 public class RoleTypeConverter : JsonConverter<RoleType>
 {
     public override RoleType Read(ref Utf8JsonReader reader, Type typeToConvert, JsonSerializerOptions options)

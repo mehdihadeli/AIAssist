@@ -85,8 +85,8 @@ public class EmbeddingCodeAssist(
 
         var systemPrompt = promptManager.GetSystemPrompt(
             embeddingOriginalTreeCodes,
-            llmClientManager.ChatModel.ModelOption.CodeAssistType,
-            llmClientManager.ChatModel.ModelOption.CodeDiffType
+            llmClientManager.ChatModel.CodeAssistType,
+            llmClientManager.ChatModel.CodeDiffType
         );
 
         // Generate a response from the language model (e.g., OpenAI or Llama)

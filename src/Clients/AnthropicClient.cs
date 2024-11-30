@@ -51,7 +51,7 @@ public class AnthropicClient(
                 role = x.Role.Humanize(LetterCasing.LowerCase),
                 content = x.Prompt,
             }),
-            temperature = _chatModel.ModelOption.Temperature,
+            temperature = _chatModel.Temperature,
         };
 
         var client = httpClientFactory.CreateClient("llm_chat_client");
@@ -80,8 +80,8 @@ public class AnthropicClient(
 
         var inputTokens = completionResponse.Usage?.InputTokens ?? 0;
         var outTokens = completionResponse.Usage?.OutputTokens ?? 0;
-        var inputCostPerToken = _chatModel.ModelInformation.InputCostPerToken;
-        var outputCostPerToken = _chatModel.ModelInformation.OutputCostPerToken;
+        var inputCostPerToken = _chatModel.InputCostPerToken;
+        var outputCostPerToken = _chatModel.OutputCostPerToken;
 
         ValidateChatMaxToken(inputTokens + outTokens);
 
@@ -107,7 +107,7 @@ public class AnthropicClient(
                 role = x.Role.Humanize(LetterCasing.LowerCase),
                 content = x.Prompt,
             }),
-            temperature = _chatModel.ModelOption.Temperature,
+            temperature = _chatModel.Temperature,
             stream = true,
         };
 
@@ -165,8 +165,8 @@ public class AnthropicClient(
                         // we have the usage in the last chunk and done state
                         var inputTokens = completionStreamResponse.Usage?.InputTokens ?? 0;
                         var outTokens = completionStreamResponse.Usage?.OutputTokens ?? 0;
-                        var inputCostPerToken = _chatModel.ModelInformation.InputCostPerToken;
-                        var outputCostPerToken = _chatModel.ModelInformation.OutputCostPerToken;
+                        var inputCostPerToken = _chatModel.InputCostPerToken;
+                        var outputCostPerToken = _chatModel.OutputCostPerToken;
 
                         ValidateChatMaxToken(inputTokens + outTokens);
 
@@ -241,17 +241,14 @@ public class AnthropicClient(
             string.Concat(chatCompletionRequest.Items.Select(x => x.Prompt))
         );
 
-        if (
-            _chatModel.ModelInformation.MaxInputTokens > 0
-            && inputTokenCount > _chatModel.ModelInformation.MaxInputTokens
-        )
+        if (_chatModel.MaxInputTokens > 0 && inputTokenCount > _chatModel.MaxInputTokens)
         {
             throw new AnthropicException(
                 new AnthropicError
                 {
                     StatusCode = (int)HttpStatusCode.BadRequest,
                     Message =
-                        $"current chat 'max_input_token' count: {inputTokenCount.FormatCommas()} is larger than configured 'max_input_token' count: {_chatModel.ModelInformation.MaxInputTokens.FormatCommas()}",
+                        $"current chat 'max_input_token' count: {inputTokenCount.FormatCommas()} is larger than configured 'max_input_token' count: {_chatModel.MaxInputTokens.FormatCommas()}",
                 },
                 HttpStatusCode.BadRequest
             );
@@ -260,14 +257,14 @@ public class AnthropicClient(
 
     private void ValidateChatMaxToken(int maxTokenCount)
     {
-        if (_chatModel.ModelInformation.MaxTokens > 0 && maxTokenCount > _chatModel.ModelInformation.MaxTokens)
+        if (_chatModel.MaxTokens > 0 && maxTokenCount > _chatModel.MaxTokens)
         {
             throw new AnthropicException(
                 new AnthropicError
                 {
                     StatusCode = (int)HttpStatusCode.BadRequest,
                     Message =
-                        $"current chat 'max_token' count: {maxTokenCount.FormatCommas()} is larger than configured 'max_token' count: {_chatModel.ModelInformation.MaxTokens.FormatCommas()}.",
+                        $"current chat 'max_token' count: {maxTokenCount.FormatCommas()} is larger than configured 'max_token' count: {_chatModel.MaxTokens.FormatCommas()}.",
                 },
                 HttpStatusCode.BadRequest
             );

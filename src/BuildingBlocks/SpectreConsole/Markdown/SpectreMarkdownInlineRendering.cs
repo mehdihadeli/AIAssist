@@ -120,7 +120,7 @@ internal sealed class SpectreMarkdownInlineRendering(ColorTheme colorTheme)
 
         var style =
             $"{
-                styleBase.Foreground ?? "default"
+                styleBase.Foreground ?? colorTheme.Foreground ?? "default"
             } on {
                 styleBase.Background ?? "default"
             } {

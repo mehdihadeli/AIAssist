@@ -29,16 +29,29 @@ public class SpectreUtilities(ColorTheme theme, IAnsiConsole console) : ISpectre
         return input;
     }
 
-    public void InformationTextLine(string message, Justify? justify = null, Overflow? overflow = null)
+    public void InformationTextLine(
+        string message,
+        Justify? justify = null,
+        Overflow? overflow = null,
+        Decoration? decoration = null
+    )
     {
-        InformationText(message, justify: justify, overflow: overflow);
+        InformationText(message, justify: justify, overflow: overflow, decoration: decoration);
         console.WriteLine();
     }
 
-    public void InformationText(string message, Justify? justify = null, Overflow? overflow = null)
+    public void InformationText(
+        string message,
+        Justify? justify = null,
+        Overflow? overflow = null,
+        Decoration? decoration = null
+    )
     {
         console.Write(
-            new Markup($"[{CreateStringStyle(theme.ConsoleStyle.Information)}]{message}[/]")
+            new Markup(
+                $"[{CreateStringStyle(theme.ConsoleStyle.Information)}]{message}[/]",
+                new Style(decoration: decoration)
+            )
             {
                 Overflow = overflow,
                 Justification = justify,
@@ -46,16 +59,29 @@ public class SpectreUtilities(ColorTheme theme, IAnsiConsole console) : ISpectre
         );
     }
 
-    public void SummaryTextLine(string message, Justify? justify = null, Overflow? overflow = null)
+    public void SummaryTextLine(
+        string message,
+        Justify? justify = null,
+        Overflow? overflow = null,
+        Decoration? decoration = null
+    )
     {
-        SummaryText(message, justify: justify, overflow: overflow);
+        SummaryText(message, justify: justify, overflow: overflow, decoration: decoration);
         console.WriteLine();
     }
 
-    public void SummaryText(string message, Justify? justify = null, Overflow? overflow = null)
+    public void SummaryText(
+        string message,
+        Justify? justify = null,
+        Overflow? overflow = null,
+        Decoration? decoration = null
+    )
     {
         console.Write(
-            new Markup($"[{CreateStringStyle(theme.ConsoleStyle.Summary)}]{message}[/]")
+            new Markup(
+                $"[{CreateStringStyle(theme.ConsoleStyle.Summary)}]{message}[/]",
+                new Style(decoration: decoration)
+            )
             {
                 Overflow = overflow,
                 Justification = justify,
@@ -63,16 +89,29 @@ public class SpectreUtilities(ColorTheme theme, IAnsiConsole console) : ISpectre
         );
     }
 
-    public void HighlightTextLine(string message, Justify? justify = null, Overflow? overflow = null)
+    public void HighlightTextLine(
+        string message,
+        Justify? justify = null,
+        Overflow? overflow = null,
+        Decoration? decoration = null
+    )
     {
-        HighlightText(message, justify: justify, overflow: overflow);
+        HighlightText(message, justify: justify, overflow: overflow, decoration: decoration);
         console.WriteLine();
     }
 
-    public void HighlightText(string message, Justify? justify = null, Overflow? overflow = null)
+    public void HighlightText(
+        string message,
+        Justify? justify = null,
+        Overflow? overflow = null,
+        Decoration? decoration = null
+    )
     {
         console.Write(
-            new Markup($"[{CreateStringStyle(theme.ConsoleStyle.Highlight)}]{message}[/]")
+            new Markup(
+                $"[{CreateStringStyle(theme.ConsoleStyle.Highlight)}]{message}[/]",
+                new Style(decoration: decoration)
+            )
             {
                 Overflow = overflow,
                 Justification = justify,
@@ -80,16 +119,26 @@ public class SpectreUtilities(ColorTheme theme, IAnsiConsole console) : ISpectre
         );
     }
 
-    public void NormalTextLine(string message, Justify? justify = null, Overflow? overflow = null)
+    public void NormalTextLine(
+        string message,
+        Justify? justify = null,
+        Overflow? overflow = null,
+        Decoration? decoration = null
+    )
     {
-        NormalText(message, justify: justify, overflow: overflow);
+        NormalText(message, justify: justify, overflow: overflow, decoration: decoration);
         console.WriteLine();
     }
 
-    public void NormalText(string message, Justify? justify = null, Overflow? overflow = null)
+    public void NormalText(
+        string message,
+        Justify? justify = null,
+        Overflow? overflow = null,
+        Decoration? decoration = null
+    )
     {
         console.Write(
-            new Markup($"[{CreateStringStyle(theme.ConsoleStyle.Text)}]{message}[/]")
+            new Markup($"[{CreateStringStyle(theme.ConsoleStyle.Text)}]{message}[/]", new Style(decoration: decoration))
             {
                 Overflow = overflow,
                 Justification = justify,
@@ -97,16 +146,29 @@ public class SpectreUtilities(ColorTheme theme, IAnsiConsole console) : ISpectre
         );
     }
 
-    public void WarningTextLine(string message, Justify? justify = null, Overflow? overflow = null)
+    public void WarningTextLine(
+        string message,
+        Justify? justify = null,
+        Overflow? overflow = null,
+        Decoration? decoration = null
+    )
     {
-        WarningText(message, justify: justify, overflow: overflow);
+        WarningText(message, justify: justify, overflow: overflow, decoration: decoration);
         console.WriteLine();
     }
 
-    public void WarningText(string message, Justify? justify = null, Overflow? overflow = null)
+    public void WarningText(
+        string message,
+        Justify? justify = null,
+        Overflow? overflow = null,
+        Decoration? decoration = null
+    )
     {
         console.Write(
-            new Markup($"[{CreateStringStyle(theme.ConsoleStyle.Warning)}]{message}[/]")
+            new Markup(
+                $"[{CreateStringStyle(theme.ConsoleStyle.Warning)}]{message}[/]",
+                new Style(decoration: decoration)
+            )
             {
                 Overflow = overflow,
                 Justification = justify,
@@ -114,10 +176,18 @@ public class SpectreUtilities(ColorTheme theme, IAnsiConsole console) : ISpectre
         );
     }
 
-    public void ErrorTextLine(string message, Justify? justify = null, Overflow? overflow = null)
+    public void ErrorTextLine(
+        string message,
+        Justify? justify = null,
+        Overflow? overflow = null,
+        Decoration? decoration = null
+    )
     {
         console.Write(
-            new Markup($"[{CreateStringStyle(theme.ConsoleStyle.Error)}]{message}[/]" + Environment.NewLine)
+            new Markup(
+                $"[{CreateStringStyle(theme.ConsoleStyle.Error)}]{message}[/]" + Environment.NewLine,
+                new Style(decoration: decoration)
+            )
             {
                 Overflow = overflow,
                 Justification = justify,
@@ -125,10 +195,18 @@ public class SpectreUtilities(ColorTheme theme, IAnsiConsole console) : ISpectre
         );
     }
 
-    public void SuccessTextLine(string message, Justify? justify = null, Overflow? overflow = null)
+    public void SuccessTextLine(
+        string message,
+        Justify? justify = null,
+        Overflow? overflow = null,
+        Decoration? decoration = null
+    )
     {
         console.Write(
-            new Markup($"[{CreateStringStyle(theme.ConsoleStyle.Success)}]{message}[/]" + Environment.NewLine)
+            new Markup(
+                $"[{CreateStringStyle(theme.ConsoleStyle.Success)}]{message}[/]" + Environment.NewLine,
+                new Style(decoration: decoration)
+            )
             {
                 Overflow = overflow,
                 Justification = justify,

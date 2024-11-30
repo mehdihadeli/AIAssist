@@ -29,12 +29,14 @@ public class LLMClientManager : ILLMClientManager
         _tokenizer = tokenizer;
 
         EmbeddingModel = cacheModels.GetModel(llmOptions.Value.EmbeddingsModel);
-        ChatModel = cacheModels.GetModel(llmOptions.Value.ChatModel);
-        EmbeddingThreshold = EmbeddingModel.ModelOption.Threshold;
+        ChatModel =
+            cacheModels.GetModel(llmOptions.Value.ChatModel)
+            ?? throw new ArgumentNullException($"Model '{llmOptions.Value.ChatModel}' not found in the CacheModels.");
+        EmbeddingThreshold = EmbeddingModel?.Threshold ?? 0.2m;
     }
 
     public Model ChatModel { get; }
-    public Model EmbeddingModel { get; }
+    public Model? EmbeddingModel { get; }
     public decimal EmbeddingThreshold { get; }
 
     public async IAsyncEnumerable<string?> GetCompletionStreamAsync(
@@ -50,7 +52,7 @@ public class LLMClientManager : ILLMClientManager
 
         var chatItems = chatSession.GetChatItemsFromHistory();
 
-        var llmClientStratgey = _clientFactory.CreateClient(ChatModel.ModelInformation.AIProvider);
+        var llmClientStratgey = _clientFactory.CreateClient(ChatModel.AIProvider);
 
         var chatCompletionResponseStreams = llmClientStratgey.GetCompletionStreamAsync(
             new ChatCompletionRequest(chatItems.Select(x => new ChatCompletionRequestItem(x.Role, x.Prompt))),
@@ -94,14 +96,15 @@ public class LLMClientManager : ILLMClientManager
         CancellationToken cancellationToken = default
     )
     {
-        var llmClientStratgey = _clientFactory.CreateClient(EmbeddingModel.ModelInformation.AIProvider);
+        ArgumentNullException.ThrowIfNull(EmbeddingModel);
+        var llmClientStratgey = _clientFactory.CreateClient(EmbeddingModel.AIProvider);
 
         var embeddingResponse = await llmClientStratgey.GetEmbeddingAsync(inputs, path, cancellationToken);
 
         // in embedding output tokens and its cost is 0
         var inputTokens =
             embeddingResponse?.TokenUsage?.InputTokens ?? await _tokenizer.GetTokenCount(string.Concat(inputs));
-        var cost = inputTokens * EmbeddingModel.ModelInformation.InputCostPerToken;
+        var cost = inputTokens * EmbeddingModel.InputCostPerToken;
 
         return new GetEmbeddingResult(embeddingResponse?.Embeddings ?? new List<IList<double>>(), inputTokens, cost);
     }
