@@ -81,13 +81,13 @@ public class CodeFilesTreeGeneratorService(
         var codeFileMap = new CodeFileMap
         {
             RelativePath = codeFile.RelativePath.NormalizePath(),
+            Path = codeFile.Path,
             OriginalCode = GetOriginalCode(fileCapturesGroup),
             TreeSitterFullCode = treeStructureGeneratorService.GenerateTreeSitter(fileCapturesGroup, true),
             TreeOriginalCode = originalCode,
             TreeSitterSummarizeCode = useShortSummary
                 ? treeStructureGeneratorService.GenerateTreeSitter(fileCapturesGroup, false)
                 : originalCode,
-            ReferencedCodesMap = GenerateRelatedCodeFilesMap(fileCapturesGroup),
         };
 
         if (_codeFilesMap.Any(x => x.Key.NormalizePath() == codeFile.RelativePath.NormalizePath()))
@@ -101,24 +101,6 @@ public class CodeFilesTreeGeneratorService(
         }
 
         return codeFileMap;
-    }
-
-    private static IEnumerable<ReferencedCodeMap> GenerateRelatedCodeFilesMap(
-        List<DefinitionCaptureItem> definitionItems
-    )
-    {
-        // Collect related references for each DefinitionCaptureItem
-        return definitionItems
-            .SelectMany(item =>
-                item.DefinitionCaptureReferences.Select(reference => new ReferencedCodeMap
-                {
-                    RelativePath = reference.RelativePath.NormalizePath(),
-                    ReferencedValue = reference.ReferencedValue,
-                    ReferencedUsage = reference.ReferencedUsage,
-                })
-            )
-            .Distinct()
-            .ToList();
     }
 
     private IList<CodeFile> ReadCodeFiles(IList<string>? files)
@@ -135,13 +117,13 @@ public class CodeFilesTreeGeneratorService(
             var relativePath = Path.GetRelativePath(_appOptions.ContextWorkingDirectory, file);
             var fileContent = File.ReadAllText(file);
 
-            applicationCodes.Add(new CodeFile(fileContent, relativePath.NormalizePath()));
+            applicationCodes.Add(new CodeFile(fileContent, relativePath.NormalizePath(), file));
         }
 
         return applicationCodes;
     }
 
-    private static string GetOriginalCode(List<DefinitionCaptureItem> definitionItems)
+    private static string GetOriginalCode(List<DefinitionCapture> definitionItems)
     {
         return definitionItems.First().OriginalCode;
     }

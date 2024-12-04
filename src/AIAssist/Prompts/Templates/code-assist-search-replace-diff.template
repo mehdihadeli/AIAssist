@@ -34,6 +34,8 @@ For creating a new file show original path `--- /dev/null` and modified path to 
 For deleting a file, show the original path as --- [relativeFilePath of deleted file] and the modified path as `+++ /dev/null`.
 For file moves or renames, show a deletion with `--- [original relativeFilePath]` and `+++ /dev/null`, and a creation at the new path with `--- /dev/null` and `+++ [new relativeFilePath]`, including any modified content.
 Keep original `code style` and `formating` during apply unified diff format, Indentation is very important, Ensure that indentation is accurate in the diffs.
+Don't Skip codes logic with adding some comments for summarize your response, it should be complete.
+Don't respond your code blocks suggestion as tree structure.
 
 For better understanding the response format based on user request here you can see a sample:
 

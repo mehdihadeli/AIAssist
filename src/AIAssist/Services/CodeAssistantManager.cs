@@ -22,7 +22,7 @@ public class CodeAssistantManager(ICodeAssist codeAssist, ICodeDiffManager diffM
         return codeAssist.AddOrUpdateCodeFiles(codeFiles);
     }
 
-    public Task<IEnumerable<string>> GetCodeTreeContentsFromCache(IList<string>? codeFiles)
+    public Task<IEnumerable<string>> GetCodeTreeContents(IList<string>? codeFiles)
     {
         return codeAssist.GetCodeTreeContents(codeFiles);
     }
@@ -30,31 +30,23 @@ public class CodeAssistantManager(ICodeAssist codeAssist, ICodeDiffManager diffM
     public bool CheckExtraContextForResponse(string response, out IList<string> requiredFiles)
     {
         requiredFiles = new List<string>();
-        var pattern = @"Required Files for Context:\s*(?:```[\w]*\s*([\s\S]*?)\s*```|((?:- .*\r?\n?)+))";
+
+        var pattern = @"Required files for Context:\s*(- .*(?:\r?\n- .*)*)";
 
         var match = Regex.Match(response, pattern);
         if (match.Success)
         {
-            // Check for code block content first
-            var codeBlockContent = match.Groups[1].Value;
-            if (!string.IsNullOrEmpty(codeBlockContent))
-            {
-                var lines = codeBlockContent.Split(new[] { '\n', '\r' }, StringSplitOptions.RemoveEmptyEntries);
-                foreach (var line in lines)
-                {
-                    requiredFiles.Add(line.TrimStart('-').Trim());
-                }
-                return true;
-            }
-
-            // If no code block content, check for inline list
-            var inlineListContent = match.Groups[2].Value;
+            var inlineListContent = match.Groups[1].Value;
             if (!string.IsNullOrEmpty(inlineListContent))
             {
-                var lines = inlineListContent.Split(new[] { '\n', '\r' }, StringSplitOptions.RemoveEmptyEntries);
+                var lines = inlineListContent.Split(['\n', '\r'], StringSplitOptions.RemoveEmptyEntries);
                 foreach (var line in lines)
                 {
-                    requiredFiles.Add(line.TrimStart('-').Trim());
+                    if (line.StartsWith('-'))
+                    {
+                        // Remove the leading '-' and trim whitespace
+                        requiredFiles.Add(line.TrimStart('-').Trim());
+                    }
                 }
                 return true;
             }

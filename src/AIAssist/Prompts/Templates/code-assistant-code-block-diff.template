@@ -27,6 +27,8 @@ We have 3 `action types` for each code block:
 For each change you make, you MUST return the `FULL CONTENT` of the modified or new file. for delete file we don't need the content.
 For changes for each file you should consider a seperated `CodeBlock` section.
 Keep original `code style` and `formating` and `indentation` during apply unified diff format, `Indentation` is very IMPORTANT, Ensure to KEEP INDENTATION is accurate in the diffs.
+Don't Skip codes logic with adding some comments for summarize your response, it should be complete.
+Don't respond your code blocks suggestion as tree structure.
 
 For better understanding the response format based on user request here you can see a sample:
 
