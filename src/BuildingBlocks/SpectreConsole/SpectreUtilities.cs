@@ -6,11 +6,14 @@ namespace BuildingBlocks.SpectreConsole;
 
 public class SpectreUtilities(ColorTheme theme, IAnsiConsole console) : ISpectreUtilities
 {
+    public ColorTheme Theme { get; } = theme;
+
     public bool ConfirmationPrompt(string message)
     {
+        var styledMessage = $"[{CreateStringStyle(Theme.ConsoleStyle.Confirmation)}]{message}[/]";
         var confirmation = console.Prompt(
-            new TextPrompt<bool>(message)
-                .PromptStyle(CreateStyle(theme.ConsoleStyle.Confirmation))
+            new TextPrompt<bool>(styledMessage)
+                .PromptStyle(CreateStyle(Theme.ConsoleStyle.Confirmation))
                 .AddChoice(true) // Corresponds to "Yes"
                 .AddChoice(false) // Corresponds to "No"
                 .DefaultValue(false) // Default choice
@@ -24,7 +27,7 @@ public class SpectreUtilities(ColorTheme theme, IAnsiConsole console) : ISpectre
     {
         var input = string.IsNullOrEmpty(promptMessage)
             ? Console.ReadLine()
-            : console.Prompt(new TextPrompt<string>(promptMessage).PromptStyle(CreateStyle(theme.ConsoleStyle.Prompt)));
+            : console.Prompt(new TextPrompt<string>(promptMessage).PromptStyle(CreateStyle(Theme.ConsoleStyle.Prompt)));
 
         return input;
     }
@@ -49,7 +52,7 @@ public class SpectreUtilities(ColorTheme theme, IAnsiConsole console) : ISpectre
     {
         console.Write(
             new Markup(
-                $"[{CreateStringStyle(theme.ConsoleStyle.Information)}]{message}[/]",
+                $"[{CreateStringStyle(Theme.ConsoleStyle.Information)}]{message}[/]",
                 new Style(decoration: decoration)
             )
             {
@@ -79,7 +82,7 @@ public class SpectreUtilities(ColorTheme theme, IAnsiConsole console) : ISpectre
     {
         console.Write(
             new Markup(
-                $"[{CreateStringStyle(theme.ConsoleStyle.Summary)}]{message}[/]",
+                $"[{CreateStringStyle(Theme.ConsoleStyle.Summary)}]{message}[/]",
                 new Style(decoration: decoration)
             )
             {
@@ -109,7 +112,7 @@ public class SpectreUtilities(ColorTheme theme, IAnsiConsole console) : ISpectre
     {
         console.Write(
             new Markup(
-                $"[{CreateStringStyle(theme.ConsoleStyle.Highlight)}]{message}[/]",
+                $"[{CreateStringStyle(Theme.ConsoleStyle.Highlight)}]{message}[/]",
                 new Style(decoration: decoration)
             )
             {
@@ -138,7 +141,7 @@ public class SpectreUtilities(ColorTheme theme, IAnsiConsole console) : ISpectre
     )
     {
         console.Write(
-            new Markup($"[{CreateStringStyle(theme.ConsoleStyle.Text)}]{message}[/]", new Style(decoration: decoration))
+            new Markup($"[{CreateStringStyle(Theme.ConsoleStyle.Text)}]{message}[/]", new Style(decoration: decoration))
             {
                 Overflow = overflow,
                 Justification = justify,
@@ -166,7 +169,7 @@ public class SpectreUtilities(ColorTheme theme, IAnsiConsole console) : ISpectre
     {
         console.Write(
             new Markup(
-                $"[{CreateStringStyle(theme.ConsoleStyle.Warning)}]{message}[/]",
+                $"[{CreateStringStyle(Theme.ConsoleStyle.Warning)}]{message}[/]",
                 new Style(decoration: decoration)
             )
             {
@@ -185,7 +188,7 @@ public class SpectreUtilities(ColorTheme theme, IAnsiConsole console) : ISpectre
     {
         console.Write(
             new Markup(
-                $"[{CreateStringStyle(theme.ConsoleStyle.Error)}]{message}[/]" + Environment.NewLine,
+                $"[{CreateStringStyle(Theme.ConsoleStyle.Error)}]{message}[/]" + Environment.NewLine,
                 new Style(decoration: decoration)
             )
             {
@@ -204,7 +207,7 @@ public class SpectreUtilities(ColorTheme theme, IAnsiConsole console) : ISpectre
     {
         console.Write(
             new Markup(
-                $"[{CreateStringStyle(theme.ConsoleStyle.Success)}]{message}[/]" + Environment.NewLine,
+                $"[{CreateStringStyle(Theme.ConsoleStyle.Success)}]{message}[/]" + Environment.NewLine,
                 new Style(decoration: decoration)
             )
             {
@@ -216,7 +219,7 @@ public class SpectreUtilities(ColorTheme theme, IAnsiConsole console) : ISpectre
 
     public void WriteCursor()
     {
-        console.Markup($"[{CreateStringStyle(theme.ConsoleStyle.Cursor)}]> [/]");
+        console.Markup($"[{CreateStringStyle(Theme.ConsoleStyle.Cursor)}]> [/]");
     }
 
     public void WriteRule()
@@ -237,13 +240,13 @@ public class SpectreUtilities(ColorTheme theme, IAnsiConsole console) : ISpectre
 
         var indent = new string(' ', indentLevel * 4);
 
-        console.MarkupLine($"{indent}[{CreateStringStyle(theme.ConsoleStyle.Tree)}]{Path.GetFileName(path)}[/]"); // Bold the directory name
+        console.MarkupLine($"{indent}[{CreateStringStyle(Theme.ConsoleStyle.Tree)}]{Path.GetFileName(path)}[/]"); // Bold the directory name
 
         // Print each file in the current directory
         foreach (var file in files)
         {
             console.MarkupLine(
-                $"{indent}  └── [{CreateStringStyle(theme.ConsoleStyle.Tree)}]{Path.GetFileName(file)}[/]"
+                $"{indent}  └── [{CreateStringStyle(Theme.ConsoleStyle.Tree)}]{Path.GetFileName(file)}[/]"
             ); // Cyan for files
         }
 
@@ -302,14 +305,14 @@ public class SpectreUtilities(ColorTheme theme, IAnsiConsole console) : ISpectre
         console.Clear();
     }
 
-    private Style CreateStyle(StyleBase styleBase)
+    public Style CreateStyle(StyleBase styleBase)
     {
         var style = Style.Parse(CreateStringStyle(styleBase));
 
         return style;
     }
 
-    private string CreateStringStyle(StyleBase styleBase)
+    public string CreateStringStyle(StyleBase styleBase)
     {
         var italic = styleBase.Italic ? "italic" : "default";
         var bold = styleBase.Bold ? "bold" : "default";

@@ -21,4 +21,11 @@ public class StyleBase
 
     [JsonPropertyName("underline")]
     public bool Underline { get; set; }
+
+    public StyleBase CombineStyle(Action<StyleBase> styleAction)
+    {
+        styleAction(this);
+
+        return this;
+    }
 }

@@ -13,6 +13,7 @@ public class TreeSitterCodeAssistSummary(
     public Task LoadInitCodeFiles(string contextWorkingDirectory, IList<string>? codeFiles)
     {
         contextService.AddContextFolder(contextWorkingDirectory);
+        // fully load passed files definition
         contextService.AddOrUpdateFiles(codeFiles);
 
         return Task.CompletedTask;
@@ -23,6 +24,7 @@ public class TreeSitterCodeAssistSummary(
         if (codeFiles is null || codeFiles.Count == 0)
             return Task.CompletedTask;
 
+        // fully load files definition
         contextService.AddOrUpdateFiles(codeFiles);
 
         return Task.CompletedTask;

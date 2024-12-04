@@ -14,8 +14,6 @@ public class StreamPrinter(IAnsiConsole console, bool useMarkdown)
         CancellationToken cancellationToken = default
     )
     {
-        var initialContent = new Panel(new Markup(string.Empty)) { Expand = true, Border = BoxBorder.None };
-
         var enumerator = textStream.GetAsyncEnumerator(cancellationToken);
         string? firstStream = string.Empty;
 
@@ -36,7 +34,7 @@ public class StreamPrinter(IAnsiConsole console, bool useMarkdown)
 
         // Start the live display for console
         await console
-            .Live(initialContent)
+            .Live(new Panel(new Markup(string.Empty)) { Expand = true, Border = BoxBorder.None })
             .AutoClear(false)
             .Overflow(VerticalOverflow.Ellipsis)
             .Cropping(VerticalOverflowCropping.Top)
@@ -49,7 +47,11 @@ public class StreamPrinter(IAnsiConsole console, bool useMarkdown)
                     while (await enumerator.MoveNextAsync())
                     {
                         var text = enumerator.Current;
-                        await UpdateLiveDisplay(text, ctx);
+
+                        if (!string.IsNullOrEmpty(text))
+                        {
+                            await UpdateLiveDisplay(text, ctx);
+                        }
                     }
                 }
             });

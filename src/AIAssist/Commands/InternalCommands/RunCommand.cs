@@ -40,14 +40,15 @@ public class RunCommand(
         // Check if more context is needed
         if (codeAssistantManager.CheckExtraContextForResponse(responseContent, out var requiredFiles))
         {
+            var style = spectreUtilities.Theme.ConsoleStyle.Highlight.CombineStyle(s => s.Underline = true);
             var confirmation = spectreUtilities.ConfirmationPrompt(
-                $"Do you want to add ${string.Join(", ", requiredFiles.Select(file => $"'{file}'"))} to the context?"
+                $"Do you want to add [{spectreUtilities.CreateStringStyle(style)}]{string.Join(", ", requiredFiles.Select(file => $"'{file}'"))}[/] to the context?"
             );
 
             if (confirmation)
             {
                 await codeAssistantManager.AddOrUpdateCodeFiles(requiredFiles);
-                var fullFilesContentForContext = await codeAssistantManager.GetCodeTreeContentsFromCache(requiredFiles);
+                var fullFilesContentForContext = await codeAssistantManager.GetCodeTreeContents(requiredFiles);
 
                 var newQueryWithAddedFiles = promptManager.FilesAddedToChat(fullFilesContentForContext);
                 spectreUtilities.SuccessTextLine(

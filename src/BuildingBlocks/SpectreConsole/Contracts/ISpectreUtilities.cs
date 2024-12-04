@@ -1,9 +1,12 @@
+using BuildingBlocks.SpectreConsole.StyleElements;
 using Spectre.Console;
 
 namespace BuildingBlocks.SpectreConsole.Contracts;
 
 public interface ISpectreUtilities
 {
+    ColorTheme Theme { get; }
+
     bool ConfirmationPrompt(string message);
     string? UserPrompt(string? promptMessage = null);
     void InformationTextLine(
@@ -79,4 +82,6 @@ public interface ISpectreUtilities
         out string pressedKey
     );
     void Clear();
+    public Style CreateStyle(StyleBase styleBase);
+    public string CreateStringStyle(StyleBase styleBase);
 }

@@ -12,78 +12,97 @@ public class TreeStructureGeneratorService : ITreeStructureGeneratorService
         var sb = new StringBuilder();
 
         sb.AppendLine($"{relativePath.NormalizePath()}:");
-        WriteRootCodeLine(sb, "│   ", originalCode);
+        sb.AppendLine("│");
+
+        var indent = "│   ";
+        sb.AppendLine("├── definition: ");
+        WriteMultiLine(sb, indent, originalCode);
 
         return sb.ToString();
     }
 
-    public string GenerateTreeSitter(IList<DefinitionCaptureItem> definitionItems, bool isFull)
+    public string GenerateTreeSitter(IList<DefinitionCapture> definitionCaptures, bool isFull)
     {
         var sb = new StringBuilder();
 
-        var relativePath = definitionItems.FirstOrDefault()?.RelativePath.NormalizePath() ?? "Unknown File";
+        var normalizedRelativePath = definitionCaptures.First().RelativePath.NormalizePath();
 
-        sb.AppendLine($"{relativePath}:");
+        // Start tree with file path
+        sb.AppendLine($"{normalizedRelativePath}:");
         sb.AppendLine("│");
 
-        var groupedItems = definitionItems
-            .GroupBy(item => item.CaptureKey)
-            .Select(group => new { CaptureKey = group.Key, Values = group.ToList() })
-            .Where(x =>
-                x.Values.All(v =>
-                    (!string.IsNullOrWhiteSpace(v.CodeChunk) && !isFull)
-                    || (!string.IsNullOrWhiteSpace(v.Definition) && isFull)
-                )
-            )
-            .OrderBy(g => g.CaptureKey)
+        // Group definition items by their capture group
+        var groupedItems = definitionCaptures
+            .GroupBy(item => item.CaptureGroup)
+            .Select(group => new { CaptureKey = group.Key, Items = group.ToList() })
+            .OrderBy(group => group.CaptureKey)
             .ToList();
 
-        foreach (var groupedItem in groupedItems)
+        foreach (var group in groupedItems)
         {
-            // Add the CaptureKey as a top-level tree node
-            sb.AppendLine($"├── {GetNormalizedKeyName(groupedItem.CaptureKey)}:");
-            // Recursively add children for each CaptureValue under this CaptureKey
-            AddChildItems(sb, groupedItem.Values, "│   ");
+            foreach (var definitionCapture in group.Items)
+            {
+                var captureGroup = group.CaptureKey;
+                sb.AppendLine($"├── {captureGroup}:");
+
+                AddCaptureItems(sb, definitionCapture.CaptureItems, "│   ", isFull);
+
+                if (!isFull)
+                {
+                    AddSigniture(sb, definitionCapture, "│   ");
+                }
+            }
         }
 
         return sb.ToString();
     }
 
-    private static void AddChildItems(StringBuilder sb, List<DefinitionCaptureItem> items, string indent)
+    private static void AddCaptureItems(
+        StringBuilder sb,
+        IList<DefinitionCaptureItem> items,
+        string indent,
+        bool isFull
+    )
     {
         foreach (var item in items)
         {
-            var code = !string.IsNullOrWhiteSpace(item.CodeChunk) ? item.CodeChunk : item.Definition;
-            if (string.IsNullOrWhiteSpace(code))
-                continue;
+            var normalizedKeyProperty = GetNormalizedKeyProperty(item.CaptureKey);
 
-            // Add first line (signature or declaration) with current indentation
-            WriteChildrenCodeLine(sb, indent, code);
-        }
-
-        // Add omitted code indicator if there are no further child nodes
-        if (items.Count != 0)
-        {
-            sb.AppendLine($"{indent}⋮...");
-        }
-    }
-
-    private static string GetNormalizedKeyName(string input)
-    {
-        string[] prefixes = { "name.", "reference.", "definition.", "reference_name" };
-
-        foreach (var prefix in prefixes)
-        {
-            if (input.StartsWith(prefix, StringComparison.OrdinalIgnoreCase))
+            if (normalizedKeyProperty.StartsWith("definition") && !isFull)
             {
-                return input.Substring(prefix.Length);
+                continue;
             }
-        }
 
-        return input;
+            if (normalizedKeyProperty.StartsWith("definition") && isFull)
+            {
+                sb.AppendLine($"{indent}├── definition: ");
+                WriteMultiLine(sb, indent, item.CaptureValue);
+                continue;
+            }
+
+            WriteSingleLine(sb, normalizedKeyProperty, item.CaptureValue, indent);
+        }
     }
 
-    private static void WriteChildrenCodeLine(StringBuilder sb, string indent, string itemDefinition)
+    private static void AddSigniture(StringBuilder sb, DefinitionCapture item, string indent)
+    {
+        if (string.IsNullOrWhiteSpace(item.Signiture))
+            return;
+
+        WriteSingleLine(sb, "signiture", item.Signiture, indent);
+    }
+
+    private static void WriteSingleLine(
+        StringBuilder sb,
+        string normalizedCaptureKey,
+        string captureValue,
+        string indent
+    )
+    {
+        sb.AppendLine($"{indent}├── {normalizedCaptureKey}: {captureValue}");
+    }
+
+    private static void WriteMultiLine(StringBuilder sb, string indent, string itemDefinition)
     {
         // Split lines into an array while preserving leading whitespace and handling blank lines
         var lines = itemDefinition
@@ -94,14 +113,11 @@ public class TreeStructureGeneratorService : ITreeStructureGeneratorService
         if (lines.Length == 0)
             return;
 
-        // Write the first line (e.g., method signature or declaration) with a tree branch
-        sb.AppendLine($"{indent}├── {lines[0]}");
-
         // Apply additional indentation to method bodies or any nested blocks
         string lineIndent = indent + "│   ";
-        for (int i = 1; i < lines.Length; i++)
+        foreach (var line in lines)
         {
-            if (string.IsNullOrWhiteSpace(lines[i]))
+            if (string.IsNullOrWhiteSpace(line))
             {
                 // Preserve blank lines with appropriate tree indentation
                 sb.AppendLine(lineIndent);
@@ -109,14 +125,14 @@ public class TreeStructureGeneratorService : ITreeStructureGeneratorService
             else
             {
                 // Indent content lines correctly under the method or block
-                sb.AppendLine($"{lineIndent}{lines[i]}");
+                sb.AppendLine($"{lineIndent}{line}");
             }
         }
     }
 
-    private static void WriteRootCodeLine(StringBuilder sb, string indent, string originalCode)
+    private static string GetNormalizedKeyProperty(string key)
     {
-        sb.AppendLine("├── code:");
-        WriteChildrenCodeLine(sb, indent, originalCode);
+        var index = key.IndexOf('.', StringComparison.Ordinal);
+        return index >= 0 ? key.Substring(0, index) : key;
     }
 }

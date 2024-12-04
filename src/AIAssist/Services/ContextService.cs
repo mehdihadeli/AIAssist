@@ -2,69 +2,133 @@ using AIAssist.Contracts;
 using AIAssist.Models;
 using AIAssist.Models.Options;
 using BuildingBlocks.Utils;
+using Microsoft.Extensions.Logging;
 using Microsoft.Extensions.Options;
+using TreeSitter.Bindings.CustomTypes.TreeParser;
 
 namespace AIAssist.Services;
 
 public class ContextService(
     IOptions<AppOptions> appOptions,
     IFileService fileService,
-    ICodeFileTreeGeneratorService codeFileTreeGeneratorService
+    ICodeFileTreeGeneratorService codeFileTreeGeneratorService,
+    ILogger<ContextService> logger
 ) : IContextService
 {
     private readonly AppOptions _appOptions = appOptions.Value;
     private readonly Context _currentContext = new();
 
-    public void AddContextFolder(string contextFolder)
+    public void AddContextFolder(string rootContextFolder)
     {
         var contextWorkingDir = _appOptions.ContextWorkingDirectory;
         ArgumentException.ThrowIfNullOrEmpty(contextWorkingDir);
 
-        var foldersItemContext = InitFoldersItemContext([contextFolder], contextFolder, true);
-        foreach (var folderItemContext in foldersItemContext)
+        try
         {
-            _currentContext.ContextItems.Add(folderItemContext);
+            // traverse and generate folders in the root level based on relative path and summary code
+            var foldersItemContext = TraverseAndGenerateFoldersContext([rootContextFolder], rootContextFolder, true);
+
+            foreach (var folderItemContext in foldersItemContext)
+            {
+                _currentContext.ContextItems.Add(folderItemContext);
+            }
+        }
+        catch (UnauthorizedAccessException ex)
+        {
+            logger.LogError("Access denied to folder: {Message}", ex.Message);
+            throw;
+        }
+        catch (IOException ex)
+        {
+            logger.LogError("I/O error while accessing folders: {Message}", ex.Message);
+            throw;
+        }
+        catch (Exception ex)
+        {
+            logger.LogError("Unexpected error: {Message}", ex.Message);
+            throw;
         }
 
         ValidateLoadedFilesLimit();
     }
 
-    public void AddOrUpdateFolder(IList<string>? foldersRelativePath)
+    public void AddOrUpdateFolder(IList<string>? rootFoldersRelativePath)
     {
-        if (foldersRelativePath is null || foldersRelativePath.Count == 0)
+        // check folders in root level
+        if (rootFoldersRelativePath is null || rootFoldersRelativePath.Count == 0)
             return;
 
-        var contextWorkingDir = _appOptions.ContextWorkingDirectory;
-        ArgumentException.ThrowIfNullOrEmpty(contextWorkingDir);
-
-        var folders = foldersRelativePath
-            .Select(folder => Path.Combine(contextWorkingDir, folder.NormalizePath()))
-            .ToList();
-
-        var foldersItemsContext = InitFoldersItemContext(folders, contextWorkingDir, false);
-
-        foreach (var folderItemsContext in foldersItemsContext)
+        try
         {
-            var existingItem = _currentContext
-                .ContextItems.OfType<FolderItemContext>()
-                .FirstOrDefault(x => x.RelativePath != folderItemsContext.RelativePath.NormalizePath());
+            var contextWorkingDir = _appOptions.ContextWorkingDirectory;
+            ArgumentException.ThrowIfNullOrEmpty(contextWorkingDir);
 
-            if (existingItem is null)
+            var folders = rootFoldersRelativePath
+                .Select(folder => Path.Combine(contextWorkingDir, folder.NormalizePath()))
+                .ToList();
+
+            // traverse and generate folders in the root level based on relative path
+            var traversedFoldersContext = TraverseAndGenerateFoldersContext(folders, contextWorkingDir, false);
+
+            foreach (var traversedFolderContext in traversedFoldersContext)
             {
-                _currentContext.ContextItems.Add(folderItemsContext);
+                // check for existing folders in the context root
+                var existingFolderContext = _currentContext
+                    .ContextItems.OfType<FolderItemContext>()
+                    .FirstOrDefault(x =>
+                        x.RelativePath.NormalizePath() == traversedFolderContext.RelativePath.NormalizePath()
+                    );
+
+                if (existingFolderContext is null)
+                {
+                    _currentContext.ContextItems.Add(traversedFolderContext);
+                }
+                else
+                {
+                    // Remove the old folder context entirely
+                    _currentContext.ContextItems.Remove(existingFolderContext);
+
+                    // Add the new folder context, replacing the old one
+                    _currentContext.ContextItems.Add(traversedFolderContext);
+                }
             }
-            else
-            {
-                _currentContext.ContextItems.Remove(existingItem);
-                _currentContext.ContextItems.Add(folderItemsContext);
-            }
+        }
+        catch (UnauthorizedAccessException ex)
+        {
+            logger.LogError("Access denied to folder: {Message}", ex.Message);
+            throw;
+        }
+        catch (IOException ex)
+        {
+            logger.LogError("I/O error while accessing folders: {Message}", ex.Message);
+            throw;
+        }
+        catch (Exception ex)
+        {
+            logger.LogError("Unexpected error: {Message}", ex.Message);
+            throw;
         }
 
         ValidateLoadedFilesLimit();
+    }
+
+    public void RemoveFolder(IList<string>? rootFoldersRelativePath)
+    {
+        if (rootFoldersRelativePath is null || rootFoldersRelativePath.Count == 0)
+            return;
+
+        var normalizedPaths = rootFoldersRelativePath
+            .Select(path => path.NormalizePath())
+            .ToHashSet(StringComparer.OrdinalIgnoreCase);
+
+        // Remove folders from the root context items
+        RemoveFoldersFromContext(_currentContext.ContextItems, normalizedPaths);
     }
 
     public void AddOrUpdateFiles(IList<string>? filesRelativePath)
     {
+        // add or update files in all levels
+
         if (filesRelativePath is null || filesRelativePath.Count == 0)
             return;
 
@@ -72,32 +136,45 @@ public class ContextService(
         ArgumentException.ThrowIfNullOrEmpty(contextWorkingDir);
 
         var files = filesRelativePath.Select(file => Path.Combine(contextWorkingDir, file.NormalizePath())).ToList();
-        var filesItemsContext = InitFilesItemContext(files, contextWorkingDir, false);
 
-        foreach (var fileItemContext in filesItemsContext)
+        // traverse and generate files in all levels based on relative path
+        var traversedFilesContext = TraverseAndGenerateFilesContext(files, contextWorkingDir, false);
+
+        foreach (var traversedFileContext in traversedFilesContext)
         {
-            var existingItem = _currentContext
-                .ContextItems.OfType<FileItemContext>()
-                .FirstOrDefault(x => x.RelativePath != fileItemContext.RelativePath.NormalizePath());
+            // check for existing file in the context
+            var existingFileContext = GetFiles([traversedFileContext.RelativePath.NormalizePath()]).FirstOrDefault();
 
-            if (existingItem is null)
+            if (existingFileContext is null)
             {
-                _currentContext.ContextItems.Add(fileItemContext);
+                _currentContext.ContextItems.Add(traversedFileContext);
             }
             else
             {
-                _currentContext.ContextItems.Remove(existingItem);
-                _currentContext.ContextItems.Add(fileItemContext);
+                // Update the existing file in all levels it appears
+                UpdateFileInContext(_currentContext.ContextItems, traversedFileContext);
             }
         }
 
         ValidateLoadedFilesLimit();
     }
 
+    public void RemoveFiles(IList<string>? filesRelativePath)
+    {
+        if (filesRelativePath is null || filesRelativePath.Count == 0)
+            return;
+
+        var normalizedPaths = filesRelativePath
+            .Select(path => path.NormalizePath())
+            .ToHashSet(StringComparer.OrdinalIgnoreCase);
+
+        // Recursively remove files in the context
+        RemoveFilesFromContext(_currentContext.ContextItems, normalizedPaths);
+    }
+
     public void AddOrUpdateUrls(IList<string>? urls)
     {
-        if (urls is null || urls.Count == 0)
-            return;
+        throw new NotImplementedException();
     }
 
     public Context GetContext()
@@ -168,6 +245,231 @@ public class ContextService(
         }
     }
 
+    private IList<FolderItemContext> TraverseAndGenerateFoldersContext(
+        IList<string> folders,
+        string contextWorkingDir,
+        bool useShortSummary
+    )
+    {
+        List<FolderItemContext> foldersItemContext = new List<FolderItemContext>();
+        string currentFolder = string.Empty;
+
+        try
+        {
+            var validFolders = folders.Where(folder => !fileService.IsPathIgnored(folder)).ToList();
+            int treeLevel = _appOptions.TreeLevel;
+
+            foreach (var folderPath in validFolders)
+            {
+                currentFolder = folderPath;
+
+                // traverse and generate subfolders in this level
+                // Start recursion with current depth set to 1
+                var subFoldersItemContext = TraverseAndGenerateSubFoldersContext(
+                    folderPath,
+                    contextWorkingDir,
+                    useShortSummary,
+                    1,
+                    treeLevel
+                );
+
+                // traverse and generate files in all levels based on relative path
+                var traversedFilesContext = TraverseAndGenerateFilesContext(
+                    folderPath,
+                    contextWorkingDir,
+                    useShortSummary
+                );
+
+                var folderRelativePath = Path.GetRelativePath(contextWorkingDir, folderPath).NormalizePath();
+
+                var folderResultContext = new FolderItemContext(
+                    folderPath,
+                    folderRelativePath,
+                    subFoldersItemContext,
+                    traversedFilesContext
+                );
+
+                foldersItemContext.Add(folderResultContext);
+            }
+        }
+        catch (UnauthorizedAccessException ex)
+        {
+            logger.LogError("Access denied to folder '{Folder}': {Message}", currentFolder, ex.Message);
+            throw;
+        }
+        catch (IOException ex)
+        {
+            logger.LogError("I/O error accessing folder '{Folder}': {Message}", currentFolder, ex.Message);
+            throw;
+        }
+        catch (Exception ex)
+        {
+            logger.LogError("Error loading folder contents for '{Folder}': {Message}", currentFolder, ex.Message);
+            throw;
+        }
+
+        return foldersItemContext;
+    }
+
+    private IList<FolderItemContext> TraverseAndGenerateSubFoldersContext(
+        string folderPath,
+        string contextWorkingDir,
+        bool useShortSummary,
+        int currentDepth,
+        int treeLevel
+    )
+    {
+        IList<FolderItemContext> subFolders = new List<FolderItemContext>();
+        string currentSubFolder = string.Empty;
+
+        try
+        {
+            // Stop recursion if the tree level is exceeded
+            if (treeLevel > 0 && currentDepth >= treeLevel)
+            {
+                return subFolders;
+            }
+
+            foreach (
+                var subFolder in Directory
+                    .GetDirectories(folderPath)
+                    .Where(subFolder => !fileService.IsPathIgnored(subFolder))
+            )
+            {
+                currentSubFolder = subFolder;
+
+                // traverse and generate files in all levels based on relative path
+                var filesItemContext = TraverseAndGenerateFilesContext(subFolder, contextWorkingDir, useShortSummary);
+
+                var subFolderRelativePath = Path.GetRelativePath(contextWorkingDir, subFolder).NormalizePath();
+
+                // Recursive call for each subfolder, incrementing the depth
+                var subFolderResultContext = new FolderItemContext(
+                    subFolder,
+                    subFolderRelativePath,
+                    TraverseAndGenerateSubFoldersContext(
+                        subFolder,
+                        contextWorkingDir,
+                        useShortSummary,
+                        currentDepth + 1,
+                        treeLevel
+                    ),
+                    filesItemContext
+                );
+
+                subFolders.Add(subFolderResultContext);
+            }
+        }
+        catch (UnauthorizedAccessException ex)
+        {
+            logger.LogError("Access denied to folder '{Folder}': {Message}", currentSubFolder, ex.Message);
+            throw;
+        }
+        catch (IOException ex)
+        {
+            logger.LogError("I/O error accessing folder '{Folder}': {Message}", currentSubFolder, ex.Message);
+            throw;
+        }
+        catch (Exception ex)
+        {
+            logger.LogError("Error loading folder contents for '{Folder}': {Message}", currentSubFolder, ex.Message);
+            throw;
+        }
+
+        return subFolders;
+    }
+
+    private IList<FileItemContext> TraverseAndGenerateFilesContext(
+        IList<string> files,
+        string contextWorkingDir,
+        bool useShortSummary
+    )
+    {
+        // Generate new updated FileItemContext for file path
+        string currentFile = string.Empty;
+        List<FileItemContext> filesItemContext = [];
+
+        try
+        {
+            var validFiles = files.Where(file => !fileService.IsPathIgnored(file)).ToList();
+
+            IList<CodeFileMap> codeFilesMap = useShortSummary
+                ? codeFileTreeGeneratorService.AddContextCodeFilesMap(validFiles)
+                : codeFileTreeGeneratorService.AddOrUpdateCodeFilesMap(validFiles);
+
+            foreach (var codeFileMap in codeFilesMap)
+            {
+                var fileRelativePath = Path.GetRelativePath(contextWorkingDir, codeFileMap.RelativePath)
+                    .NormalizePath();
+
+                filesItemContext.Add(new FileItemContext(codeFileMap.Path, fileRelativePath, codeFileMap));
+            }
+        }
+        catch (UnauthorizedAccessException ex)
+        {
+            logger.LogError("Access denied to file '{Folder}': {Message}", currentFile, ex.Message);
+            throw;
+        }
+        catch (IOException ex)
+        {
+            logger.LogError("I/O error accessing file '{Folder}': {Message}", currentFile, ex.Message);
+            throw;
+        }
+        catch (Exception ex)
+        {
+            logger.LogError("Error loading file contents for '{Folder}': {Message}", currentFile, ex.Message);
+            throw;
+        }
+
+        return filesItemContext;
+    }
+
+    private IList<FileItemContext> TraverseAndGenerateFilesContext(
+        string folderPath,
+        string contextWorkingDir,
+        bool useShortSummary
+    )
+    {
+        // Generate new updated FileItemContext for file path
+        List<FileItemContext> filesItemContext = [];
+        string currentFile = string.Empty;
+
+        try
+        {
+            var validFiles = Directory.GetFiles(folderPath).Where(file => !fileService.IsPathIgnored(file)).ToList();
+
+            // to store and update cache in the tree-sitter map
+            IList<CodeFileMap> codeFilesMap = useShortSummary
+                ? codeFileTreeGeneratorService.AddContextCodeFilesMap(validFiles)
+                : codeFileTreeGeneratorService.AddOrUpdateCodeFilesMap(validFiles);
+
+            foreach (var codeFileMap in codeFilesMap)
+            {
+                var fileRelativePath = Path.GetRelativePath(contextWorkingDir, codeFileMap.RelativePath)
+                    .NormalizePath();
+
+                filesItemContext.Add(new FileItemContext(codeFileMap.Path, fileRelativePath, codeFileMap));
+            }
+        }
+        catch (UnauthorizedAccessException ex)
+        {
+            logger.LogError("Access denied to file '{Folder}': {Message}", currentFile, ex.Message);
+            throw;
+        }
+        catch (IOException ex)
+        {
+            logger.LogError("I/O error accessing file '{Folder}': {Message}", currentFile, ex.Message);
+            throw;
+        }
+        catch (Exception ex)
+        {
+            logger.LogError("Error loading file contents for '{Folder}': {Message}", currentFile, ex.Message);
+            throw;
+        }
+
+        return filesItemContext;
+    }
+
     private void CollectFilesFromFolder(FolderItemContext folder, List<FileItemContext> fileList)
     {
         // Add all files from the folder
@@ -196,221 +498,79 @@ public class ContextService(
         }
     }
 
-    private IList<FolderItemContext> InitFoldersItemContext(
-        IList<string> folders,
-        string contextWorkingDir,
-        bool useShortSummary
-    )
+    private void UpdateFileInContext(IList<BaseContextItem> contextItems, FileItemContext newFileContext)
     {
-        List<FolderItemContext> foldersItemContext = new List<FolderItemContext>();
-        string currentFolder = string.Empty;
-
-        try
+        for (int i = 0; i < contextItems.Count; i++)
         {
-            var validFolders = folders.Where(folder => !fileService.IsPathIgnored(folder)).ToList();
-            int treeLevel = _appOptions.TreeLevel;
-
-            foreach (var folderPath in validFolders)
+            var item = contextItems[i];
+            switch (item)
             {
-                currentFolder = folderPath;
+                case FileItemContext fileContext
+                    when fileContext.RelativePath.NormalizePath() == newFileContext.RelativePath.NormalizePath():
+                    // Replace the file with the updated version
+                    contextItems[i] = newFileContext;
+                    break;
 
-                // Start recursion with current depth set to 1
-                var subFoldersItemContext = InitSubFoldersItemContext(
-                    folderPath,
-                    contextWorkingDir,
-                    useShortSummary,
-                    1,
-                    treeLevel
-                );
-                var filesItemsContext = InitFilesItemContext(folderPath, contextWorkingDir, useShortSummary);
+                case FolderItemContext folderContext:
+                    // Check and update files inside this folder
+                    UpdateFileInContext(folderContext.Files.Cast<BaseContextItem>().ToList(), newFileContext);
 
-                var folderRelativePath = Path.GetRelativePath(contextWorkingDir, folderPath).NormalizePath();
-
-                var folderItemContext = new FolderItemContext(
-                    folderPath,
-                    folderRelativePath,
-                    subFoldersItemContext,
-                    filesItemsContext
-                );
-
-                foldersItemContext.Add(folderItemContext);
+                    // Recursively process subfolders
+                    UpdateFileInContext(
+                        folderContext.SubFoldersItemContext.Cast<BaseContextItem>().ToList(),
+                        newFileContext
+                    );
+                    break;
             }
         }
-        catch (UnauthorizedAccessException ex)
-        {
-            Console.WriteLine($"Access denied to folder '{currentFolder}': {ex.Message}");
-        }
-        catch (IOException ex)
-        {
-            Console.WriteLine($"I/O error accessing folder '{currentFolder}': {ex.Message}");
-        }
-        catch (Exception ex)
-        {
-            Console.WriteLine($"Error loading folder contents for '{currentFolder}': {ex.Message}");
-        }
-
-        return foldersItemContext;
     }
 
-    private IList<FolderItemContext> InitSubFoldersItemContext(
-        string folderPath,
-        string contextWorkingDir,
-        bool useShortSummary,
-        int currentDepth,
-        int treeLevel
-    )
+    private void RemoveFilesFromContext(IList<BaseContextItem> contextItems, HashSet<string> normalizedPaths)
     {
-        IList<FolderItemContext> subFolders = new List<FolderItemContext>();
-        string currentSubFolder = string.Empty;
-
-        try
+        for (int i = contextItems.Count - 1; i >= 0; i--)
         {
-            // Stop recursion if the tree level is exceeded
-            if (treeLevel > 0 && currentDepth >= treeLevel)
-            {
-                // Return empty list as no deeper levels are loaded
-                return subFolders;
-            }
-
-            foreach (
-                var subFolder in Directory
-                    .GetDirectories(folderPath)
-                    .Where(subFolder => !fileService.IsPathIgnored(subFolder))
+            if (
+                contextItems[i] is FileItemContext fileContext
+                && normalizedPaths.Contains(fileContext.RelativePath.NormalizePath())
             )
             {
-                currentSubFolder = subFolder;
+                // Remove matching file
+                contextItems.RemoveAt(i);
+            }
+            else if (contextItems[i] is FolderItemContext folderContext)
+            {
+                // Remove files from the folder's files list
+                RemoveFilesFromContext(folderContext.Files.Cast<BaseContextItem>().ToList(), normalizedPaths);
 
-                var subFolderFilesItemContext = InitFilesItemContext(subFolder, contextWorkingDir, useShortSummary);
-                var subFolderRelativePath = Path.GetRelativePath(contextWorkingDir, subFolder).NormalizePath();
-
-                // Recursive call for each subfolder, incrementing the depth
-                var subFolderContext = new FolderItemContext(
-                    subFolder,
-                    subFolderRelativePath,
-                    InitSubFoldersItemContext(
-                        subFolder,
-                        contextWorkingDir,
-                        useShortSummary,
-                        currentDepth + 1,
-                        treeLevel
-                    ),
-                    subFolderFilesItemContext
+                // Recursively remove files from subfolders
+                RemoveFilesFromContext(
+                    folderContext.SubFoldersItemContext.Cast<BaseContextItem>().ToList(),
+                    normalizedPaths
                 );
-
-                subFolders.Add(subFolderContext);
             }
         }
-        catch (UnauthorizedAccessException ex)
-        {
-            Console.WriteLine($"Access denied to folder '{currentSubFolder}': {ex.Message}");
-        }
-        catch (IOException ex)
-        {
-            Console.WriteLine($"I/O error accessing folder '{currentSubFolder}': {ex.Message}");
-        }
-        catch (Exception ex)
-        {
-            Console.WriteLine($"Error loading folder contents for '{currentSubFolder}': {ex.Message}");
-        }
-
-        return subFolders;
     }
 
-    private IList<FileItemContext> InitFilesItemContext(
-        IList<string> files,
-        string contextWorkingDir,
-        bool useShortSummary
-    )
+    private void RemoveFoldersFromContext(IList<BaseContextItem> contextItems, HashSet<string> normalizedPaths)
     {
-        string currentFile = string.Empty;
-        List<FileItemContext> filesItemContext = new List<FileItemContext>();
-
-        try
+        for (int i = contextItems.Count - 1; i >= 0; i--)
         {
-            var validFiles = files.Where(file => !fileService.IsPathIgnored(file)).ToList();
-
-            if (useShortSummary)
+            if (
+                contextItems[i] is FolderItemContext currentFolderContext
+                && normalizedPaths.Contains(currentFolderContext.RelativePath.NormalizePath())
+            )
             {
-                codeFileTreeGeneratorService.AddContextCodeFilesMap(validFiles);
+                // Remove matching folder
+                contextItems.RemoveAt(i);
             }
-            else
+            else if (contextItems[i] is FolderItemContext subFolderContext)
             {
-                codeFileTreeGeneratorService.AddOrUpdateCodeFilesMap(validFiles);
-            }
-
-            foreach (var file in validFiles)
-            {
-                currentFile = file;
-                var fileRelativePath = Path.GetRelativePath(contextWorkingDir, file).NormalizePath();
-                var codeFileMap = codeFileTreeGeneratorService.GetCodeFileMap(fileRelativePath);
-                if (codeFileMap is null)
-                    continue;
-
-                filesItemContext.Add(new FileItemContext(file, fileRelativePath, codeFileMap));
+                // Recursively check and remove matching subfolders
+                RemoveFoldersFromContext(
+                    subFolderContext.SubFoldersItemContext.Cast<BaseContextItem>().ToList(),
+                    normalizedPaths
+                );
             }
         }
-        catch (UnauthorizedAccessException ex)
-        {
-            Console.WriteLine($"Access denied to file '{currentFile}': {ex.Message}");
-        }
-        catch (IOException ex)
-        {
-            Console.WriteLine($"I/O error accessing file '{currentFile}': {ex.Message}");
-        }
-        catch (Exception ex)
-        {
-            Console.WriteLine($"Error loading file contents for '{currentFile}': {ex.Message}");
-        }
-
-        return filesItemContext;
-    }
-
-    private IList<FileItemContext> InitFilesItemContext(
-        string folderPath,
-        string contextWorkingDir,
-        bool useShortSummary
-    )
-    {
-        List<FileItemContext> filesItemContext = new List<FileItemContext>();
-        string currentFile = string.Empty;
-
-        try
-        {
-            var validFiles = Directory.GetFiles(folderPath).Where(file => !fileService.IsPathIgnored(file)).ToList();
-
-            if (useShortSummary)
-            {
-                codeFileTreeGeneratorService.AddContextCodeFilesMap(validFiles);
-            }
-            else
-            {
-                codeFileTreeGeneratorService.AddOrUpdateCodeFilesMap(validFiles);
-            }
-
-            foreach (var file in validFiles)
-            {
-                currentFile = file;
-                var fileRelativePath = Path.GetRelativePath(contextWorkingDir, file).NormalizePath();
-                var codeFileMap = codeFileTreeGeneratorService.GetCodeFileMap(fileRelativePath);
-                if (codeFileMap is null)
-                    continue;
-
-                filesItemContext.Add(new FileItemContext(file, fileRelativePath, codeFileMap));
-            }
-        }
-        catch (UnauthorizedAccessException ex)
-        {
-            Console.WriteLine($"Access denied to file '{currentFile}': {ex.Message}");
-        }
-        catch (IOException ex)
-        {
-            Console.WriteLine($"I/O error accessing file '{currentFile}': {ex.Message}");
-        }
-        catch (Exception ex)
-        {
-            Console.WriteLine($"Error loading file contents for '{currentFile}': {ex.Message}");
-        }
-
-        return filesItemContext;
     }
 }

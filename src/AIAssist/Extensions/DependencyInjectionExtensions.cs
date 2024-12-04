@@ -98,7 +98,7 @@ public static class DependencyInjectionExtensions
 
     private static void AddSpectreConsoleDependencies(HostApplicationBuilder builder)
     {
-        builder.Services.AddSingleton(AnsiConsole.Console);
+        builder.Services.AddSingleton<IAnsiConsole>(AnsiConsole.Console);
 
         builder.Services.AddSingleton<ISpectreUtilities>(sp =>
         {

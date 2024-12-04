@@ -1,30 +1,14 @@
-(
-  (comment)* @doc
-  .
-  (function_declaration
-    name: (identifier) @name) @definition.function
-  (#strip! @doc "^//\\s*")
-  (#set-adjacent! @doc @definition.function)
-)
+; Packages
+(package_clause (package_identifier) @name.package) @definition.package
 
-(
-  (comment)* @doc
-  .
-  (method_declaration
-    name: (field_identifier) @name) @definition.method
-  (#strip! @doc "^//\\s*")
-  (#set-adjacent! @doc @definition.method)
-)
+; Functions 
+(function_declaration name: (identifier) @name.function) @definition.function
 
-(call_expression
-  function: [
-    (identifier) @name
-    (parenthesized_expression (identifier) @name)
-    (selector_expression field: (field_identifier) @name)
-    (parenthesized_expression (selector_expression field: (field_identifier) @name))
-  ]) @reference.call
+; Methods 
+(method_declaration name: (field_identifier) @name.method) @definition.method
 
-(type_spec
-  name: (type_identifier) @name) @definition.type
+; Interfaces 
+(type_declaration (type_spec name: (type_identifier) @name.interface type: (interface_type))) @definition.interface
 
-(type_identifier) @name @reference.type
+; Structs 
+(type_declaration (type_spec name: name: (type_identifier) @name.struct type: (struct_type))) @definition.struct

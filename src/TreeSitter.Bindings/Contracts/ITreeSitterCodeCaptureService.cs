@@ -4,5 +4,5 @@ namespace TreeSitter.Bindings.Contracts;
 
 public interface ITreeSitterCodeCaptureService
 {
-    IReadOnlyList<DefinitionCaptureItem> CreateTreeSitterMap(IEnumerable<CodeFile> codeFiles);
+    IReadOnlyList<DefinitionCapture> CreateTreeSitterMap(IEnumerable<CodeFile> codeFiles);
 }
