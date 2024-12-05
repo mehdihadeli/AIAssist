@@ -66,8 +66,12 @@ internal class SpectreMarkdownBlockRendering : IDisposable
 
     private IRenderable AppendBreakAfter(IRenderable renderable)
     {
+        //  // or using SpectreHorizontalCompositeRenderable
+        // return new SpectreHorizontalCompositeRenderable(new List<IRenderable> { renderable, new Text(string.Empty) });
+
         return new SpectreVerticalCompositeRenderable(
-            new List<IRenderable> { renderable, new Text(Environment.NewLine) }
+            //  break current line with `\n` and create a empty line with `NewLine`
+            new List<IRenderable> { renderable, new Text("\n"), new Text(Environment.NewLine) }
         );
     }
 
@@ -81,7 +85,13 @@ internal class SpectreMarkdownBlockRendering : IDisposable
     private IRenderable AppendBreakBeforeAfter(IRenderable renderable)
     {
         return new SpectreVerticalCompositeRenderable(
-            new List<IRenderable> { new Text(Environment.NewLine), renderable, new Text(Environment.NewLine) }
+            new List<IRenderable>
+            {
+                new Text(Environment.NewLine),
+                renderable,
+                new Text("\n"),
+                new Text(Environment.NewLine),
+            }
         );
     }
 
