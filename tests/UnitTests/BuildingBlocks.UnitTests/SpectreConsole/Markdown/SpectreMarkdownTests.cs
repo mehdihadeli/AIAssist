@@ -36,13 +36,11 @@ public class SpectreMarkdownTests
     public void Test3()
     {
         var s = new SpectreMarkdown(
-            @"To add a method overload to the `Add` class, we need to modify the `Add` class in the `Models/Add.cs` file. Since the current context does not provide the full implementation of the `Add` class, I will assume a basic structure and add an overloaded method.
+            @"method.
 
 Here's the updated code:
 
-Update: Models/Add.cs
-```csharp
-namespace Calculator;"
+Update: Models/Add.cs"
         );
         AnsiConsole.Write(s);
     }
