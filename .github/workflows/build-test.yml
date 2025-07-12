@@ -15,7 +15,7 @@ on:
     - "scripts/**"
 
 env:
-  DOTNET_VERSION: "8.0.*"
+  DOTNET_VERSION: "9.0.*"
 
 jobs:
 
