@@ -14,9 +14,9 @@ env:
   FEED_SOURCE: https://api.nuget.org/v3/index.json
   FEED_API_KEY: ${{ secrets.FEED_API_KEY }}
   NuGetDirectory: nuget
-  AIAssistBuildOutput: src/AIAssist/bin/Release/net8.0
+  AIAssistBuildOutput: src/AIAssist/bin/Release/net9.0
   DownloadOutput: download
-  DOTNET_VERSION: "8.0.*"
+  DOTNET_VERSION: "9.0.*"
   
 jobs:
 
