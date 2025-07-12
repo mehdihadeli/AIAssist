@@ -4,5 +4,6 @@ namespace Clients.Contracts;
 
 public interface ILLMClientFactory
 {
-    ILLMClient CreateClient(AIProvider aiProvider);
+    IChatClient CreateChatClient(AIProvider aiProvider);
+    IEmbeddingsClient CreateEmbeddingsClient(AIProvider aiProvider);
 }

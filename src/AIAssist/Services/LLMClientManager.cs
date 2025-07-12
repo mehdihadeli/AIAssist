@@ -52,7 +52,7 @@ public class LLMClientManager : ILLMClientManager
 
         var chatItems = chatSession.GetChatItemsFromHistory();
 
-        var llmClientStratgey = _clientFactory.CreateClient(ChatModel.AIProvider);
+        var llmClientStratgey = _clientFactory.CreateChatClient(ChatModel.AIProvider);
 
         var chatCompletionResponseStreams = llmClientStratgey.GetCompletionStreamAsync(
             new ChatCompletionRequest(chatItems.Select(x => new ChatCompletionRequestItem(x.Role, x.Prompt))),
@@ -97,7 +97,7 @@ public class LLMClientManager : ILLMClientManager
     )
     {
         ArgumentNullException.ThrowIfNull(EmbeddingModel);
-        var llmClientStratgey = _clientFactory.CreateClient(EmbeddingModel.AIProvider);
+        var llmClientStratgey = _clientFactory.CreateEmbeddingsClient(EmbeddingModel.AIProvider);
 
         var embeddingResponse = await llmClientStratgey.GetEmbeddingAsync(inputs, path, cancellationToken);
 
