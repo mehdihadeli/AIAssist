@@ -6,8 +6,12 @@
 - [x] [OpenAI](https://platform.openai.com/docs/api-reference/introduction) through apis
 - [x] [Azure AI Services](https://azure.microsoft.com/en-us/products/ai-services) through apis
 - [x] [Ollama](https://ollama.com/) with using [ollama models](https://ollama.com/search) locally
-- [ ] [Anthropic](https://docs.anthropic.com/en/api/getting-started) through apis
-- [ ] [OpenRouter](https://openrouter.ai/docs/quick-start) through apis
+- [x] [Anthropic](https://docs.anthropic.com/en/api/getting-started) through apis
+- [x] [OpenRouter](https://openrouter.ai/docs/quick-start) through apis
+- [x] [Grok](https://x.ai/api) through apis
+- [x] [Gemini](https://ai.google.dev) through apis
+- [x] [DeepSeek](https://api-docs.deepseek.com/) through apis
+- [x] [Qwen](https://qwen.ai/apiplatform) through apis
 
 > [!TIP]
 > You can use ollama and its models that are more compatible with code like [deepseek-v2.5](https://ollama.com/library/deepseek-v2.5) or [qwen2.5-coder](https://ollama.com/library/qwen2.5-coder) locally. To use local models, you will need to run [Ollama](https://github.com/ollama/ollama) process first. For running ollama you can use [ollama docker](https://ollama.com/blog/ollama-is-now-available-as-an-official-docker-image) container.
