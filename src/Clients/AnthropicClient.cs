@@ -27,69 +27,13 @@ public class AnthropicClient(
     ICacheModels cacheModels,
     ITokenizer tokenizer,
     AsyncPolicyWrap<HttpResponseMessage> combinedPolicy
-) : ILLMClient
+) : IChatClient
 {
     private readonly Model _chatModel =
         cacheModels.GetModel(llmOptions.Value.ChatModel)
         ?? throw new KeyNotFoundException($"Model '{llmOptions.Value.ChatModel}' not found in the ModelCache.");
     private readonly Model? _embeddingModel = cacheModels.GetModel(llmOptions.Value.EmbeddingsModel);
     private const int MaxRequestSizeInBytes = 100 * 1024; // 100KB
-
-    public async Task<ChatCompletionResponse?> GetCompletionAsync(
-        ChatCompletionRequest chatCompletionRequest,
-        CancellationToken cancellationToken = default
-    )
-    {
-        await ValidateChatMaxInputToken(chatCompletionRequest);
-        ValidateRequestSizeAndContent(chatCompletionRequest);
-
-        var requestBody = new
-        {
-            model = _chatModel.Name.Trim(),
-            messages = chatCompletionRequest.Items.Select(x => new
-            {
-                role = x.Role.Humanize(LetterCasing.LowerCase),
-                content = x.Prompt,
-            }),
-            temperature = _chatModel.Temperature,
-        };
-
-        var client = httpClientFactory.CreateClient("llm_chat_client");
-
-        // https://github.com/App-vNext/Polly#handing-return-values-and-policytresult
-        var httpResponseMessage = await combinedPolicy.ExecuteAsync(async () =>
-        {
-            // https://docs.anthropic.com/en/api/complete
-            var response = await client.PostAsJsonAsync(
-                "v1/messages",
-                requestBody,
-                cancellationToken: cancellationToken
-            );
-
-            return response;
-        });
-
-        var completionResponse = await httpResponseMessage.Content.ReadFromJsonAsync<AnthropicChatResponse>(
-            options: JsonObjectSerializer.SnakeCaseOptions,
-            cancellationToken: cancellationToken
-        );
-
-        HandleException(httpResponseMessage, completionResponse);
-
-        var completionMessage = completionResponse.Content.FirstOrDefault(x => x.Type == "text")?.Text;
-
-        var inputTokens = completionResponse.Usage?.InputTokens ?? 0;
-        var outTokens = completionResponse.Usage?.OutputTokens ?? 0;
-        var inputCostPerToken = _chatModel.InputCostPerToken;
-        var outputCostPerToken = _chatModel.OutputCostPerToken;
-
-        ValidateChatMaxToken(inputTokens + outTokens);
-
-        return new ChatCompletionResponse(
-            completionMessage,
-            new TokenUsageResponse(inputTokens, inputCostPerToken, outTokens, outputCostPerToken)
-        );
-    }
 
     public async IAsyncEnumerable<ChatCompletionResponse?> GetCompletionStreamAsync(
         ChatCompletionRequest chatCompletionRequest,
@@ -194,15 +138,6 @@ public class AnthropicClient(
             );
             HandleException(httpResponseMessage, completionResponse);
         }
-    }
-
-    public Task<EmbeddingsResponse?> GetEmbeddingAsync(
-        IList<string> inputs,
-        string? path,
-        CancellationToken cancellationToken = default
-    )
-    {
-        throw new NotImplementedException();
     }
 
     private void HandleException(

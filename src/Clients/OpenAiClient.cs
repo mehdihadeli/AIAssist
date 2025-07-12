@@ -27,72 +27,13 @@ public class OpenAiClient(
     ICacheModels cacheModels,
     ITokenizer tokenizer,
     AsyncPolicyWrap<HttpResponseMessage> combinedPolicy
-) : ILLMClient
+) : IChatClient, IEmbeddingsClient
 {
     private readonly Model _chatModel =
         cacheModels.GetModel(llmOptions.Value.ChatModel)
         ?? throw new KeyNotFoundException($"Model '{llmOptions.Value.ChatModel}' not found in the ModelCache.");
     private readonly Model? _embeddingModel = cacheModels.GetModel(llmOptions.Value.EmbeddingsModel);
     private const int MaxRequestSizeInBytes = 100 * 1024; // 100KB
-
-    public async Task<ChatCompletionResponse?> GetCompletionAsync(
-        ChatCompletionRequest chatCompletionRequest,
-        CancellationToken cancellationToken = default
-    )
-    {
-        await ValidateChatMaxInputToken(chatCompletionRequest);
-        ValidateRequestSizeAndContent(chatCompletionRequest);
-
-        // https://platform.openai.com/docs/api-reference/chat/create
-        var requestBody = new
-        {
-            model = _chatModel.Name.Trim(),
-            messages = chatCompletionRequest.Items.Select(x => new
-            {
-                role = x.Role.Humanize(LetterCasing.LowerCase),
-                content = x.Prompt,
-            }),
-            temperature = _chatModel.Temperature,
-        };
-
-        var client = httpClientFactory.CreateClient("llm_chat_client");
-
-        // https://github.com/App-vNext/Polly#handing-return-values-and-policytresult
-        var httpResponseMessage = await combinedPolicy.ExecuteAsync(async () =>
-        {
-            // https://platform.openai.com/docs/api-reference/chat/create
-            var response = await client.PostAsJsonAsync(
-                "v1/chat/completions",
-                requestBody,
-                cancellationToken: cancellationToken
-            );
-
-            return response;
-        });
-
-        var completionResponse = await httpResponseMessage.Content.ReadFromJsonAsync<OpenAIChatResponse>(
-            options: JsonObjectSerializer.SnakeCaseOptions,
-            cancellationToken: cancellationToken
-        );
-
-        HandleException(httpResponseMessage, completionResponse);
-
-        var completionMessage = completionResponse
-            .Choices?.FirstOrDefault(x => x.Message.Role == RoleType.Assistant)
-            ?.Message.Content;
-
-        var inputTokens = completionResponse.Usage?.PromptTokens ?? 0;
-        var outTokens = completionResponse.Usage?.CompletionTokens ?? 0;
-        var inputCostPerToken = _chatModel.InputCostPerToken;
-        var outputCostPerToken = _chatModel.OutputCostPerToken;
-
-        ValidateChatMaxToken(inputTokens + outTokens);
-
-        return new ChatCompletionResponse(
-            completionMessage,
-            new TokenUsageResponse(inputTokens, inputCostPerToken, outTokens, outputCostPerToken)
-        );
-    }
 
     public async IAsyncEnumerable<ChatCompletionResponse?> GetCompletionStreamAsync(
         ChatCompletionRequest chatCompletionRequest,

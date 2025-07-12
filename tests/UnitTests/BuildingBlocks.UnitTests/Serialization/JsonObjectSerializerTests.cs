@@ -6,7 +6,7 @@ namespace BuildingBlocks.UnitTests.Serialization;
 
 public class JsonObjectSerializerTests
 {
-    private readonly JsonObjectSerializer _serializer = new(JsonObjectSerializer.SnakeCaseOptions);
+    private readonly JsonObjectSerializer _serializer = new(JsonSerializationOptions.SnakeCaseOptions);
 
     [Fact]
     public void Serialize_ShouldReturnJsonString_WhenGivenValidObject()

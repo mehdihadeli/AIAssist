@@ -6,4 +6,9 @@ public enum AIProvider
     Ollama,
     Anthropic,
     Azure,
+    Gemini,
+    Grok,
+    Qwen,
+    DeepSeek,
+    OpenRouter
 }

@@ -3,10 +3,15 @@ using Clients.Models;
 
 namespace Clients;
 
-public class LLMClientFactory(IDictionary<AIProvider, ILLMClient> clientStrategies) : ILLMClientFactory
+public class LLMClientFactory(IDictionary<AIProvider, IChatClient> clientChatStrategies, IDictionary<AIProvider, IEmbeddingsClient> clientEmbeddingsStrategies) : ILLMClientFactory
 {
-    public ILLMClient CreateClient(AIProvider aiProvider)
+    public IChatClient CreateChatClient(AIProvider aiProvider)
     {
-        return clientStrategies[aiProvider];
+        return clientChatStrategies[aiProvider];
+    }
+
+    public IEmbeddingsClient CreateEmbeddingsClient(AIProvider aiProvider)
+    {
+        return clientEmbeddingsStrategies[aiProvider];
     }
 }

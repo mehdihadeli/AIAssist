@@ -253,28 +253,59 @@ public static class DependencyInjectionExtensions
     {
         builder.AddConfigurationOptions<LLMOptions>(nameof(LLMOptions));
 
-        builder.Services.AddKeyedSingleton<ILLMClient, OllamaClient>(AIProvider.Ollama);
-        builder.Services.AddKeyedSingleton<ILLMClient, OpenAiClient>(AIProvider.Openai);
-        builder.Services.AddKeyedSingleton<ILLMClient, AzureClient>(AIProvider.Azure);
-        //builder.Services.AddKeyedSingleton<ILLMClient, AnthropicClient>(AIProvider.Anthropic);
+        builder.Services.AddKeyedSingleton<IChatClient, OllamaClient>(AIProvider.Ollama);
+        builder.Services.AddKeyedSingleton<IChatClient, OpenAiClient>(AIProvider.Openai);
+        builder.Services.AddKeyedSingleton<IChatClient, AzureClient>(AIProvider.Azure);
+        builder.Services.AddKeyedSingleton<IChatClient, AnthropicClient>(AIProvider.Anthropic);
+        builder.Services.AddKeyedSingleton<IChatClient, GeminiClient>(AIProvider.Gemini);
+        builder.Services.AddKeyedSingleton<IChatClient, GrokClient>(AIProvider.Grok);
+        builder.Services.AddKeyedSingleton<IChatClient, DeepSeekClient>(AIProvider.DeepSeek);
+        builder.Services.AddKeyedSingleton<IChatClient, OpenRouterClient>(AIProvider.OpenRouter);
+        builder.Services.AddKeyedSingleton<IChatClient, QwenClient>(AIProvider.Qwen);
+
+        builder.Services.AddKeyedSingleton<IEmbeddingsClient, OllamaClient>(AIProvider.Ollama);
+        builder.Services.AddKeyedSingleton<IEmbeddingsClient, OpenAiClient>(AIProvider.Openai);
+        builder.Services.AddKeyedSingleton<IEmbeddingsClient, AzureClient>(AIProvider.Azure);
+
         builder.Services.AddSingleton<ILLMClientManager, LLMClientManager>();
 
         builder.Services.AddSingleton<ILLMClientFactory, LLMClientFactory>(sp =>
         {
-            var ollamaClient = sp.GetRequiredKeyedService<ILLMClient>(AIProvider.Ollama);
-            var openaiClient = sp.GetRequiredKeyedService<ILLMClient>(AIProvider.Openai);
-            var azureClient = sp.GetRequiredKeyedService<ILLMClient>(AIProvider.Azure);
-            //var anthropicClient = sp.GetRequiredKeyedService<ILLMClient>(AIProvider.Anthropic);
+            var ollamaChatClient = sp.GetRequiredKeyedService<IChatClient>(AIProvider.Ollama);
+            var openaiChatClient = sp.GetRequiredKeyedService<IChatClient>(AIProvider.Openai);
+            var azureChatClient = sp.GetRequiredKeyedService<IChatClient>(AIProvider.Azure);
+            var anthropicChatClient = sp.GetRequiredKeyedService<IChatClient>(AIProvider.Anthropic);
+            var geminiChatClient = sp.GetRequiredKeyedService<IChatClient>(AIProvider.Gemini);
+            var deepSeekChatClient = sp.GetRequiredKeyedService<IChatClient>(AIProvider.DeepSeek);
+            var grokChatClient = sp.GetRequiredKeyedService<IChatClient>(AIProvider.Grok);
+            var qwenChatClient = sp.GetRequiredKeyedService<IChatClient>(AIProvider.Qwen);
+            var openRouterChatClient = sp.GetRequiredKeyedService<IChatClient>(AIProvider.OpenRouter);
 
-            IDictionary<AIProvider, ILLMClient> clientStrategies = new Dictionary<AIProvider, ILLMClient>
+            var openaiEmbeddingsClient = sp.GetRequiredKeyedService<IEmbeddingsClient>(AIProvider.Openai);
+            var azureEmbeddingsClient = sp.GetRequiredKeyedService<IEmbeddingsClient>(AIProvider.Azure);
+            var ollamaEmbeddingsClient = sp.GetRequiredKeyedService<IEmbeddingsClient>(AIProvider.Ollama);
+
+            IDictionary<AIProvider, IChatClient> clientChatStrategies = new Dictionary<AIProvider, IChatClient>
             {
-                { AIProvider.Ollama, ollamaClient },
-                { AIProvider.Openai, openaiClient },
-                { AIProvider.Azure, azureClient },
-                //{ AIProvider.Anthropic, anthropicClient },
+                { AIProvider.Ollama, ollamaChatClient },
+                { AIProvider.Openai, openaiChatClient },
+                { AIProvider.Azure, azureChatClient },
+                { AIProvider.Anthropic, anthropicChatClient },
+                { AIProvider.Gemini, geminiChatClient },
+                { AIProvider.DeepSeek, deepSeekChatClient },
+                { AIProvider.Grok, grokChatClient },
+                { AIProvider.Qwen, qwenChatClient },
+                { AIProvider.OpenRouter, openRouterChatClient },
             };
+            
+            IDictionary<AIProvider, IEmbeddingsClient> clientEmbeddingsStrategies = new Dictionary<AIProvider, IEmbeddingsClient>
+                {
+                    { AIProvider.Ollama, ollamaEmbeddingsClient },
+                    { AIProvider.Openai, openaiEmbeddingsClient },
+                    { AIProvider.Azure, azureEmbeddingsClient },
+                };
 
-            return new LLMClientFactory(clientStrategies);
+            return new LLMClientFactory(clientChatStrategies, clientEmbeddingsStrategies);
         });
 
         // https://learn.microsoft.com/en-us/dotnet/architecture/microservices/implement-resilient-applications/use-httpclientfactory-to-implement-resilient-http-requests

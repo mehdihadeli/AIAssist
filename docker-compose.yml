@@ -21,11 +21,6 @@ services:
     tty: true
     restart: unless-stopped
     image: ollama/ollama:latest
-    command: >
-      /bin/sh -c "
-        sleep 3 &&
-        ollama pull llama3.1
-      "
     networks:
       - ai-network
 networks:
